@@ -20,7 +20,7 @@
 > （编号 `T-xx`）。其中 `T-02` 解释了为什么一个 P0 缺陷（`F-01` 限流未接入）
 > 能在 200 个用例全绿的情况下潜伏至今——该缺陷**已于本说明 v1.2 修复并补上行为断言**
 > （`EnterpriseRateLimitFilterTest`，7 例），测试规模 200 → 207。**v1.3 继续接线 `P-01`/`P-02`
-> 并补齐行为断言（`DistributedTaskLockTest` / `VehicleOnlineSweeperTest`），当前规模 21 类 220 例。**
+> 并补齐行为断言（`DistributedTaskLockTest` / `VehicleOnlineSweeperTest` / `MqttCommandServiceTest`），当前规模 22 类 227 例。**
 
 ---
 
@@ -726,7 +726,7 @@ mvn -B test -Dtest=SchemaDdlGeneratorTest -Dddl.gen=true
 
 | 编号 | 归属文档 | 共同特征 |
 |---|---|---|
-| `F-01` | 性能报告 | 限流器**写了 145 行实现 + 单测 + 配置**，但 `tryAcquireHttp`/`tryAcquireMqttPublish` **零调用点** —— ✅ HTTP 侧已修复（企业侧过滤器），MQTT 发布侧维持未接线（已如实登记） |
+| `F-01` | 性能报告 | 限流器**写了 145 行实现 + 单测 + 配置**，但 `tryAcquireHttp`/`tryAcquireMqttPublish` **零调用点** —— ✅ **全部修复**：HTTP 侧（企业侧过滤器，v1.3）+ MQTT 发布侧（`MqttCommandService` 唯一出口，被拒转离线队列缓发，v1.4，断言见 `MqttCommandServiceTest`） |
 | `T-01` / `E-03` | 本文 / 部署说明 | 覆盖率门槛**属性声明 + 报告生成**，但无 `check` 执行 → 从未生效 |
 | `P-02` | 详细设计 | `markOfflineVehicles` 有完整实现，但**无任何调用方** → 车辆 `online` 永不回落 —— ✅ 已修复（`VehicleOnlineSweeper` 30s 扫描 + 分布式锁，含行为断言测试）|
 | `E-01` | 部署说明 | `health-check` **如实返回 `mqttConnected`**，但**没有任何探针或告警消费它** |
@@ -799,4 +799,5 @@ mvn -B test -Dtest=SchemaDdlGeneratorTest -Dddl.gen=true
 | v1.0 | 2026-09-23 | 首次发布。覆盖测试策略与分层依据、14 个测试类逐类详述（含「在保护什么风险」）、覆盖率实测与门槛策略、测试隔离与幽灵用例防治、未自动化覆盖清单、以及 8 项测试体系缺陷（`T-01`~`T-08`）。其中 `T-01` 已修复并验证；`T-02`（限流能力无行为断言）确认是 P0 缺陷 `F-01` 未被发现的直接原因。 |
 | v1.2 | 2026-09-23 | **修复 `T-02`/`F-01`**：新增 `EnterpriseRateLimitFilterTest`（3.5a 节，7 例行为断言：同 VIN `limit+5` 次断言出现 `4001`、反向对照、窗口恢复、开关关闭、fail-open、multipart 跳过、`Retry-After`），测试规模 200 → 207；探针脚本升级为发布门禁（默认企业侧已接线路径）。「同类问题行为断言化」累计 3 例（`O-01`/`O-03`/限流）。 |
 | v1.3 | 2026-09-23 | **`P-01`/`P-02` 修复接线**：新增 `DistributedTaskLockTest`（5 例：互斥/跳过/释放/异常释放/键隔离）与 `VehicleOnlineSweeperTest`（3 例：统计累加/多轮累计/锁被占跳过）；限流触发计数断言并入 `SlidingWindowRateLimiterTest`（+2 例）；新增 `MqttMonitorControllerTest`（3 例，钉死 `httpRejectedTotal`/`mqttPublishRejectedTotal`/`lastRejectedAt`/`vehicleOnlineSweep` 监控字段契约）。测试规模 17 类 207 例 → **21 类 220 例**。「同类问题行为断言化」累计 5 例（+`P-01` 分布式锁、`P-02` 在线回落）。第 8 章「多实例行为」与 9 章族谱、10 章计划同步更新。 |
+| v1.4 | 2026-09-23 | **`P-03` 收尾：MQTT 下行发布限流行为断言**：新增 `MqttCommandServiceTest`（7 例：窗口内放行 / 超速转离线队列且审计记 `RATE_LIMITED` / 不同 VIN 反向对照 / 云云 Topic 不限流 / 窗口滑过恢复 / 开关关闭 / **未连接路径不消耗令牌**——用「未连接发 10 条后恢复连接首条必成」钉死令牌只在真实发布时消费）。测试规模 21 类 220 例 → **22 类 227 例**。「同类问题行为断言化」累计 6 例（+`P-03` MQTT 发布限流）。 |
 | v1.1 | 2026-09-23 | 新增 2 个测试类共 **36 个用例**：`MqttChannelProbeTest`（8 例，`O-01` 通道探活的行为断言）、`ActuatorAccessControlTest`（28 例，`O-03` Actuator 访问控制，含「空白名单全拒 / 非法 CIDR 启动失败 / 伪造 XFF 不得绕过」三条安全语义钉死）。测试规模 14 类 164 例 → **16 类 200 例**；行覆盖 73.05% → **73.39%**。分层表与资产明细表按实测数据重算。 |

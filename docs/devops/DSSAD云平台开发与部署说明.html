@@ -1282,7 +1282,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 <tr>
 <td><code>dssad.rate-limit.enabled</code> / <code>http-per-minute</code> / <code>mqtt-per-second</code></td>
 <td><code>true</code> / <code>100</code> / <code>10</code></td>
-<td>限流参数。✅ HTTP 维度已接线（<code>EnterpriseRateLimitFilter</code>，企业侧按车辆限流，v1.3）；⚠️ MQTT 发布维度仍未接线（P-03 遗留）；管理端 <code>/api/v1/**</code> 按设计不限流</td>
+<td>限流参数。✅ HTTP 维度已接线（<code>EnterpriseRateLimitFilter</code>，企业侧按车辆限流，v1.3）；✅ MQTT 发布维度已接线（<code>MqttCommandService</code> 唯一出口，被拒转离线队列缓发，v1.5）；管理端 <code>/api/v1/**</code> 按设计不限流。触发计数在 <code>/monitor/cache</code> 可观测</td>
 </tr>
 <tr>
 <td><code>dssad.audit.mode</code> / <code>sample-rate</code> / <code>retention-days</code></td>
@@ -3010,6 +3010,11 @@ diff<span class="w"> </span>db/schema-mysql.generated.sql<span class="w"> </span
 <td>v1.4</td>
 <td>2026-09-23</td>
 <td><strong>修复 <code>P-01</code>/<code>P-02</code></strong>：新增 <code>DistributedTaskLock</code>（SETNX + token 比对释放，单机退化为无锁直通、Redis 多实例互斥），接入地图拉取/留痕清理/遥测清理/在线回落 4 个定时任务——11.4 / 11.6 的「多实例前必须先修」前置解除；新增 <code>VehicleOnlineSweeper</code>（30s 扫描 + 分布式锁）接线在线状态回落，「6 例同族缺陷」全部闭环。限流触发计数与回落统计暴露到监控端点（<code>/monitor/cache</code>、<code>/monitor/mqtt</code>）。新增测试 13 例（<code>DistributedTaskLockTest</code> 5 + <code>VehicleOnlineSweeperTest</code> 3 + <code>SlidingWindowRateLimiterTest</code> 2 + <code>MqttMonitorControllerTest</code> 3），全套 <strong>220 用例 / 0 失败</strong>、覆盖率门禁通过。</td>
+</tr>
+<tr>
+<td>v1.5</td>
+<td>2026-09-23</td>
+<td><strong>P-03 收尾：MQTT 下行发布限流接线</strong>：<code>tryAcquireMqttPublish</code> 接入业务发布唯一出口 <code>MqttCommandService.publish()</code>（VIN 取自 Topic 第 3 段，云云 Topic 无 VIN 不限流）；被拒报文<strong>转离线队列缓发</strong>而非丢弃——补传通道以 20 条/秒全局受控速率倾倒，突发摊平，且不破坏 ACK 收敛（触发源一半是 MQTT 入站事故报告的难点就此消解）；审计状态新增 <code>RATE_LIMITED</code>。ACK 回复与入站维持不限流（ACK 丢失会引发对端重投放大流量 / 队列容量兜底）。新增 <code>MqttCommandServiceTest</code> 7 例，全套 <strong>227 用例 / 0 失败</strong>。<strong>至此三条限流维度全部接线完毕</strong>。</td>
 </tr>
 </tbody>
 </table></div>

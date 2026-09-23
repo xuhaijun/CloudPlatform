@@ -486,7 +486,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 （编号 <code>T-xx</code>）。其中 <code>T-02</code> 解释了为什么一个 P0 缺陷（<code>F-01</code> 限流未接入）
 能在 200 个用例全绿的情况下潜伏至今——该缺陷<strong>已于本说明 v1.2 修复并补上行为断言</strong>
 （<code>EnterpriseRateLimitFilterTest</code>，7 例），测试规模 200 → 207。<strong>v1.3 继续接线 <code>P-01</code>/<code>P-02</code>
-并补齐行为断言（<code>DistributedTaskLockTest</code> / <code>VehicleOnlineSweeperTest</code>），当前规模 21 类 220 例。</strong></p>
+并补齐行为断言（<code>DistributedTaskLockTest</code> / <code>VehicleOnlineSweeperTest</code> / <code>MqttCommandServiceTest</code>），当前规模 22 类 227 例。</strong></p>
 </blockquote>
 <hr>
 <h2 id="0-文档说明">0 文档说明<a class="headerlink" href="#0-文档说明" title="永久链接">#</a></h2>
@@ -1816,7 +1816,7 @@ mvn<span class="w"> </span>-B<span class="w"> </span><span class="nb">test</span
 <tr>
 <td><code>F-01</code></td>
 <td>性能报告</td>
-<td>限流器<strong>写了 145 行实现 + 单测 + 配置</strong>，但 <code>tryAcquireHttp</code>/<code>tryAcquireMqttPublish</code> <strong>零调用点</strong> —— ✅ HTTP 侧已修复（企业侧过滤器），MQTT 发布侧维持未接线（已如实登记）</td>
+<td>限流器<strong>写了 145 行实现 + 单测 + 配置</strong>，但 <code>tryAcquireHttp</code>/<code>tryAcquireMqttPublish</code> <strong>零调用点</strong> —— ✅ <strong>全部修复</strong>：HTTP 侧（企业侧过滤器，v1.3）+ MQTT 发布侧（<code>MqttCommandService</code> 唯一出口，被拒转离线队列缓发，v1.4，断言见 <code>MqttCommandServiceTest</code>）</td>
 </tr>
 <tr>
 <td><code>T-01</code> / <code>E-03</code></td>
@@ -2023,6 +2023,11 @@ mvn<span class="w"> </span>-B<span class="w"> </span><span class="nb">test</span
 <td>v1.3</td>
 <td>2026-09-23</td>
 <td><strong><code>P-01</code>/<code>P-02</code> 修复接线</strong>：新增 <code>DistributedTaskLockTest</code>（5 例：互斥/跳过/释放/异常释放/键隔离）与 <code>VehicleOnlineSweeperTest</code>（3 例：统计累加/多轮累计/锁被占跳过）；限流触发计数断言并入 <code>SlidingWindowRateLimiterTest</code>（+2 例）；新增 <code>MqttMonitorControllerTest</code>（3 例，钉死 <code>httpRejectedTotal</code>/<code>mqttPublishRejectedTotal</code>/<code>lastRejectedAt</code>/<code>vehicleOnlineSweep</code> 监控字段契约）。测试规模 17 类 207 例 → <strong>21 类 220 例</strong>。「同类问题行为断言化」累计 5 例（+<code>P-01</code> 分布式锁、<code>P-02</code> 在线回落）。第 8 章「多实例行为」与 9 章族谱、10 章计划同步更新。</td>
+</tr>
+<tr>
+<td>v1.4</td>
+<td>2026-09-23</td>
+<td><strong><code>P-03</code> 收尾：MQTT 下行发布限流行为断言</strong>：新增 <code>MqttCommandServiceTest</code>（7 例：窗口内放行 / 超速转离线队列且审计记 <code>RATE_LIMITED</code> / 不同 VIN 反向对照 / 云云 Topic 不限流 / 窗口滑过恢复 / 开关关闭 / <strong>未连接路径不消耗令牌</strong>——用「未连接发 10 条后恢复连接首条必成」钉死令牌只在真实发布时消费）。测试规模 21 类 220 例 → <strong>22 类 227 例</strong>。「同类问题行为断言化」累计 6 例（+<code>P-03</code> MQTT 发布限流）。</td>
 </tr>
 <tr>
 <td>v1.1</td>

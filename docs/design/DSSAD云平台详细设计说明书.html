@@ -3345,8 +3345,8 @@ TwoLevelCache（AbstractValueAdaptingCache 子类）
 </tr>
 <tr>
 <td>单车辆 MQTT 发布（10/秒）</td>
-<td>⚠️</td>
-<td><strong>能力已备、未接线</strong>：<code>tryAcquireMqttPublish(vin)</code> 仍零调用。难点：下行发布的触发源一半是 MQTT 入站事故报告（<code>AccidentMessageHandler</code>），抛异常会引发对端整条报文重投；需先设计好失败模式（延后入离线队列 or 仅对 HTTP 触发源生效）再接入。<strong>此前本行标 ✅ 与事实不符，已修正</strong></td>
+<td>✅</td>
+<td><strong>已接线（v1.0.4）</strong>：在业务发布唯一出口 <code>MqttCommandService.publish()</code> 执行 <code>tryAcquireMqttPublish(vin)</code>（VIN 取自 Topic 第 3 段，云云 Topic 无 VIN 不参与单车辆限流）。<strong>被拒不丢弃</strong>——报文转离线队列缓发，每秒 tick 的补传通道以受控速率（20 条/秒全局）倾倒，突发被自然摊平；审计状态记 <code>RATE_LIMITED</code>。ACK 回复<strong>刻意不限流</strong>：ACK 丢失会引发对端重投整条原报文，限流反而放大流量（协议自带收敛）。行为断言见 <code>MqttCommandServiceTest</code>（7 例）</td>
 </tr>
 <tr>
 <td>单车辆上行报文（入站）</td>
@@ -4541,9 +4541,9 @@ java<span class="w"> </span>-jar<span class="w"> </span>dssad-cloud-platform.jar
 <tr>
 <td><strong>P-03</strong></td>
 <td><strong>高</strong></td>
-<td>~~<strong>限流器完全未接入请求链路</strong>~~ ✅ <strong>已修复（HTTP 侧，v1.0.2）</strong>：原问题——<code>RateLimiter</code> 的 <code>tryAcquireHttp</code> / <code>tryAcquireMqttPublish</code> 在全项目<strong>零调用点</strong>，配置的「单车辆 HTTP 100 次/分钟」一条都未生效（经《性能优化与压测报告》F-01 实测确认）</td>
+<td>~~<strong>限流器完全未接入请求链路</strong>~~ ✅ <strong>已全部修复（HTTP 侧 v1.0.2 / MQTT 发布侧 v1.0.4）</strong>：原问题——<code>RateLimiter</code> 的 <code>tryAcquireHttp</code> / <code>tryAcquireMqttPublish</code> 在全项目<strong>零调用点</strong>，配置的「单车辆 HTTP 100 次/分钟」「单车辆 MQTT 10 条/秒」一条都未生效（经《性能优化与压测报告》F-01 实测确认）</td>
 <td>修复前：一台异常企业集成可无上限占用业务线程与数据库写入能力，且监控端点仍报告 <code>enabled: true</code>（「显示已开启、实际没接线」的最危险组合）</td>
-<td>✅ HTTP 侧已落地：新增 <code>EnterpriseRateLimitFilter</code>（企业侧 <code>/enterprise/api/v1/**</code>，order 紧跟签名过滤器，VIN 取自请求体缓存；拒绝响应 HTTP 200 + <code>4001</code> + <code>Retry-After: 60</code>，按接口文档 2.7.1 契约），7 个行为断言用例，探针升级为发布门禁（详见性能报告 5.5）。⚠️ 遗留：<code>tryAcquireMqttPublish</code>（下行发布维度）仍未接线——其触发源一半是 MQTT 入站事故报告，简单抛异常会引发对端整条报文重投，需单独设计失败模式后接入；入站报文按 6.4 维持不限流（队列容量兜底）</td>
+<td>✅ HTTP 侧：<code>EnterpriseRateLimitFilter</code>（企业侧，拒绝响应 HTTP 200 + <code>4001</code> + <code>Retry-After: 60</code>），7 例行为断言，探针升级为发布门禁。✅ MQTT 发布侧（v1.0.4）：在 <code>MqttCommandService.publish()</code> 唯一出口接线，<strong>被拒不丢弃</strong>——转离线队列缓发（补传通道受控速率倾倒摊平突发），审计记 <code>RATE_LIMITED</code>；ACK 回复刻意不限流（丢失会引发对端重投放大流量）；7 例行为断言（<code>MqttCommandServiceTest</code>，含「未连接路径不消耗令牌」「云云 Topic 不限流」）。入站报文按 6.4 维持不限流（队列容量兜底，属设计决策）。限流触发计数已在 <code>/monitor/cache</code> 暴露（v1.0.3）</td>
 </tr>
 <tr>
 <td><strong>P-04</strong></td>
@@ -4935,6 +4935,11 @@ java<span class="w"> </span>-jar<span class="w"> </span>dssad-cloud-platform.jar
 <td>v1.0.3</td>
 <td>2026-09-23</td>
 <td><strong>P-01 / P-02 修复落地</strong>：新增 <code>DistributedTaskLock</code>（<code>common/schedule</code>，SETNX + token 比对释放；单机退化无锁直通、Redis 多实例互斥，刻意不引入 Redisson 的取舍见类 Javadoc），接入 4 个定时任务；新增 <code>VehicleOnlineSweeper</code>（30s + 分布式锁）接线 <code>markOfflineVehicles</code>，在线回落闭环；限流触发计数（<code>httpRejectedTotal</code> / <code>mqttPublishRejectedTotal</code> / <code>lastRejectedAt</code>，毫秒口径）与回落统计（<code>vehicleOnlineSweep</code>）暴露到监控端点。测试规模 207 → 220。</td>
+</tr>
+<tr>
+<td>v1.0.4</td>
+<td>2026-09-23</td>
+<td><strong>P-03 收尾：MQTT 下行发布限流接线</strong>：在业务发布唯一出口 <code>MqttCommandService.publish()</code> 接入 <code>tryAcquireMqttPublish(vin)</code>（VIN 取自 Topic 第 3 段，云云 Topic 无 VIN 不参与单车辆限流）；<strong>失败模式采用「转离线队列缓发」而非丢弃/抛异常</strong>——不破坏 ACK 收敛（触发源一半是 MQTT 入站事故报告的问题就此消解），补传通道每秒受控倾倒自然摊平突发；审计状态新增 <code>RATE_LIMITED</code>。6.4 维度表「单车辆 MQTT 发布」由 ⚠️ 改 ✅。ACK 回复与入站维持不限流（原因见 6.4）。新增 <code>MqttCommandServiceTest</code> 7 例，测试规模 220 → 227。<strong>至此三条限流维度全部接线完毕</strong>。</td>
 </tr>
 </tbody>
 </table></div>

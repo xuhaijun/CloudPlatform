@@ -502,13 +502,17 @@ registry.addInterceptor(rateLimitInterceptor)
    防止"拒绝所有"这种假修好）、`enabled=false` 不限流、窗口滑过后恢复、取不到 VIN
    放行、multipart 跳过、`Retry-After` 头）。测试用 `StateStore#nowMillis()` 的
    时钟注入口固定时间，消除滑动窗口跨分钟边界导致的用例抖动。
-2. ⚠️ **入站 MQTT 报文接入**（原 P-03）→ **按设计文档 6.4 维持"不限流"**：
-   入站的兜底是队列容量保护（D-02），这是设计文档明确记录的决策而非遗漏；
-   但 6.4 中「单车辆 MQTT 发布（下行）✅」一行**与事实不符**——`tryAcquireMqttPublish`
-   同样零调用，已修正为「能力已备、未接线」并登记待办（其难点：下行发布的触发源
-   一半是 MQTT 入站事故报告，简单抛异常会引发对端整条报文重投，需单独设计失败模式）。
-3. ⚠️ **监控端点补充"限流触发次数"指标**：**仍未做**。当前只能靠日志与
-   `rate_limit_probe.py` 观察拦截行为，建议在监控端点增加 `rateLimitedCount` 计数器。
+2. ✅ **MQTT 发布（下行）限流接线**（原 P-03 遗留，已落地）：在业务发布唯一出口
+   `MqttCommandService.publish()` 执行 `tryAcquireMqttPublish(vin)`（VIN 取自 Topic 第 3 段）。
+   **失败模式采用「转离线队列缓发」而非丢弃/抛异常**——此前担心的「触发源一半是 MQTT 入站
+   事故报告、抛异常引发对端重投整条报文」就此消解：被拒报文进离线队列，由每秒 tick 的补传
+   通道以受控速率（20 条/秒全局）倾倒，突发自然摊平；审计状态记 `RATE_LIMITED`。
+   ACK 回复**刻意不限流**（ACK 丢失会引发对端重投放大流量），入站按 6.4 维持不限流。
+   行为断言 `MqttCommandServiceTest` 7 例（含「未连接路径不消耗令牌」「云云 Topic 不限流」
+   「不同 VIN 互不影响」反向对照）。
+3. ✅ **监控端点补充"限流触发次数"指标**：已在 `/api/v1/monitor/cache` 的 `rateLimit` 节点
+   暴露 `httpRejectedTotal` / `mqttPublishRejectedTotal` / `lastRejectedAt`（毫秒口径），
+   压测时可直接观测「限流在真实触发」而不只是配置存在。
 
 ---
 
@@ -876,7 +880,7 @@ python perf/rate_limit_probe.py --base-url http://127.0.0.1:18080 \
 
 | 既有编号 | 本报告的补充 |
 |---|---|
-| 《详细设计说明书》P-03「入站报文无频率限流」| **该描述不准确**：实际 HTTP 与 MQTT 发布限流也均未接入。P-03 已按 F-01 修订，并升级为 P0 |
+| 《详细设计说明书》P-03「入站报文无频率限流」| **该描述不准确**：实际 HTTP 与 MQTT 发布限流也均未接入。P-03 已按 F-01 修订，并升级为 P0。✅ 现 HTTP 侧（`EnterpriseRateLimitFilter`）与 MQTT 发布侧（`MqttCommandService` 唯一出口，被拒转离线队列缓发）均已接线，入站维持不限流（设计决策） |
 | 《详细设计说明书》P-01（多实例定时任务无锁）| ✅ 已修复（`DistributedTaskLock`）。8.4 扩容路径中「多实例前必须先解决」的前置已解除 |
 | 《数据库设计说明书》D-01（新增遥测清理任务）| 本报告 6.3 / 8.2 给出清理任务的运维配套要求（配置由磁盘反推）|
 
@@ -887,3 +891,4 @@ python perf/rate_limit_probe.py --base-url http://127.0.0.1:18080 \
 | v1.0 | 2026-09-23 | 首版。含 3 个数据集（基线 / 缓存 A/B 对照 / 限流探针）的实测数据、写入链路推演、8 项优化手段核查、3 个"先崩"场景推演与扩容路径；新增限流探针脚本 `rate_limit_probe.py`；修复压测脚本 4 个会污染数据的缺陷；发现 P0 级缺陷 F-01 |
 | v1.1 | 2026-09-23 | **修复 F-01**：新增 `EnterpriseRateLimitFilter`（企业侧，order 紧跟签名过滤器，VIN 取自请求体缓存；拒绝响应 HTTP 200 + `4001` + `Retry-After: 60`，按接口文档 2.7.1 契约），7 个行为断言用例（含反向对照），测试规模 200 → 207。探针脚本升级为发布门禁：默认打企业侧**已接线路径**（带签名 POST，绕过本机代理），管理端模式降为对照观察。同时修正 6.4 表「MQTT 发布 ✅」的不实表述（`tryAcquireMqttPublish` 仍零调用，登记待办）|
 | v1.2 | 2026-09-23 | **P-01/P-02 修复落地 + 限流可观测**：`DistributedTaskLock` 接入 4 个定时任务（扩容路径 ① 的前置解除）；`VehicleOnlineSweeper` 接线在线回落；限流触发计数（`httpRejectedTotal` / `mqttPublishRejectedTotal` / `lastRejectedAt`）暴露到 `/api/v1/monitor/cache`，压测时可直接观测「限流在真实触发」而不只是配置存在。测试规模 207 → 220 |
+| v1.3 | 2026-09-23 | **P-03 收尾：MQTT 下行发布限流接线**：`tryAcquireMqttPublish` 接入 `MqttCommandService.publish()` 唯一出口，**失败模式为「转离线队列缓发」**（非丢弃/抛异常——不破坏 ACK 收敛，触发源一半是 MQTT 入站事故报告的难点就此消解；补传通道受控速率倾倒摊平突发）。5.5 配套动作三条全部 ✅。新增 `MqttCommandServiceTest` 7 例，测试规模 220 → 227。**三条限流维度全部接线完毕** |

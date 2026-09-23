@@ -14,6 +14,7 @@ import com.genvict.dssad.cloud.mqtt.model.AckCode;
 import com.genvict.dssad.cloud.mqtt.model.MqttType;
 import com.genvict.dssad.cloud.mqtt.model.UploadPriority;
 import com.genvict.dssad.cloud.mqtt.topic.TopicBuilder;
+import com.genvict.dssad.cloud.ratelimit.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -22,11 +23,13 @@ import java.util.List;
 /**
  * MQTT 下行/上行指令服务：业务层发布报文的<b>唯一出口</b>。
  *
- * <p>统一处理四件事，避免业务代码各写一遍：
+ * <p>统一处理五件事，避免业务代码各写一遍：
  * <ol>
  *   <li><b>Topic 构造</b>：一律走 {@link TopicBuilder}，杜绝手工拼串导致消息静默丢失；</li>
  *   <li><b>连接态判断 + 离线缓存</b>：未连接时自动进 {@link OfflineMessageQueue}，
  *       按文档 8.4 的优先级（事件 &gt; 基础 &gt; 状态）在重连后补传；</li>
+ *   <li><b>单车辆发布限流</b>：文档 9.1 的 10 条/秒·车在唯一出口处执行，
+ *       被拒报文转离线队列缓发（而非丢弃）；</li>
  *   <li><b>待确认登记</b>：需要 ACK 的报文登记到 {@link PendingAckRegistry}，
  *       由 {@code MqttAckRetryScheduler} 按文档 5.1.4.1 / 8.1 的间隔重发；</li>
  *   <li><b>ID 生成</b>：统一生成 UUID 格式的 {@code msgId} 并在返回值中带出，
@@ -43,19 +46,22 @@ public class MqttCommandService {
     private final OfflineMessageQueue offlineQueue;
     private final MqttAuditService auditService;
     private final AppProperties properties;
+    private final RateLimiter rateLimiter;
 
     public MqttCommandService(MqttPublisher publisher,
                               TopicBuilder topicBuilder,
                               PendingAckRegistry pendingAckRegistry,
                               OfflineMessageQueue offlineQueue,
                               MqttAuditService auditService,
-                              AppProperties properties) {
+                              AppProperties properties,
+                              RateLimiter rateLimiter) {
         this.publisher = publisher;
         this.topicBuilder = topicBuilder;
         this.pendingAckRegistry = pendingAckRegistry;
         this.offlineQueue = offlineQueue;
         this.auditService = auditService;
         this.properties = properties;
+        this.rateLimiter = rateLimiter;
     }
 
     // ==================== 车云下行：事故媒体请求（5.1.5.2.1） ====================
@@ -185,6 +191,20 @@ public class MqttCommandService {
     public boolean publish(String topic, Object payload, String msgId, int qos,
                            UploadPriority priority, boolean expectAck) {
         if (publisher.isConnected()) {
+            // 文档 9.1：单车辆下行发布 10 条/秒。被拒时<b>不丢弃</b>而是转入离线队列缓发：
+            // 每秒 tick 的补传通道本身以受控速率（20 条/秒全局）倾倒，天然把突发摊平。
+            // 云云 Topic（无 VIN）与取不到 VIN 的场景由 tryAcquire 内部放行（fail-open）。
+            String vin = extractVinFromTopic(topic);
+            if (!rateLimiter.tryAcquireMqttPublish(vin)) {
+                String limitedJson = payload instanceof String s ? s : JsonUtils.toJson(payload);
+                boolean evicted = offlineQueue.offer(new OfflineMessageQueue.QueuedMessage(
+                        topic, limitedJson, qos,
+                        priority == null ? UploadPriority.BASE : priority, TimeUtils.nowMillis()));
+                auditService.recordOutbound(topic, extractType(topic), null, msgId, payload, "RATE_LIMITED");
+                log.warn("[限流] 下发发布超速，报文转入离线队列缓发 topic={} vin={} 队列长度={} 是否触发淘汰={}",
+                        topic, vin, offlineQueue.size(), evicted);
+                return false;
+            }
             boolean ok = publisher.publish(topic, payload, qos);
             auditService.recordOutbound(topic, extractType(topic), null, msgId, payload,
                     ok ? "OK" : "FAILED");
@@ -203,6 +223,19 @@ public class MqttCommandService {
         log.warn("[发布] MQTT 未连接，报文已进入离线队列 topic={} 队列长度={} 是否触发淘汰={}",
                 topic, offlineQueue.size(), evicted);
         return false;
+    }
+
+    /**
+     * 从 Topic 提取 VIN（限流键）。
+     *
+     * <p>车云 Topic 形如 {@code uvodp/low_speed/{vin}/{typeCode}/down}（5 段），
+     * 云云 Topic 形如 {@code uvodp/{enterpriseId}/{typeCode}/up}（4 段）——
+     * 按段数区分作用域；云云发布没有「单车辆」语义，返回 {@code null}
+     * 交由 {@link RateLimiter#tryAcquireMqttPublish} 放行。
+     */
+    private String extractVinFromTopic(String topic) {
+        String[] segments = topic.split("/");
+        return segments.length == 5 ? segments[2] : null;
     }
 
     private String extractType(String topic) {

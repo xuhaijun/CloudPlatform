@@ -1624,7 +1624,7 @@ private static final int TTL_WINDOW_MULTIPLIER = 2;
 | 维度 | 是否限流 | 说明 |
 |---|---|---|
 | 单车辆 HTTP（100/分钟） | ✅ | `tryAcquireHttp(vin)` —— **已接线（v1.0.2）**：`EnterpriseRateLimitFilter` 挂在签名过滤器之后，VIN 取自请求体缓存，拒绝返回 `4001` + `Retry-After: 60` |
-| 单车辆 MQTT 发布（10/秒） | ⚠️ | **能力已备、未接线**：`tryAcquireMqttPublish(vin)` 仍零调用。难点：下行发布的触发源一半是 MQTT 入站事故报告（`AccidentMessageHandler`），抛异常会引发对端整条报文重投；需先设计好失败模式（延后入离线队列 or 仅对 HTTP 触发源生效）再接入。**此前本行标 ✅ 与事实不符，已修正** |
+| 单车辆 MQTT 发布（10/秒） | ✅ | **已接线（v1.0.4）**：在业务发布唯一出口 `MqttCommandService.publish()` 执行 `tryAcquireMqttPublish(vin)`（VIN 取自 Topic 第 3 段，云云 Topic 无 VIN 不参与单车辆限流）。**被拒不丢弃**——报文转离线队列缓发，每秒 tick 的补传通道以受控速率（20 条/秒全局）倾倒，突发被自然摊平；审计状态记 `RATE_LIMITED`。ACK 回复**刻意不限流**：ACK 丢失会引发对端重投整条原报文，限流反而放大流量（协议自带收敛）。行为断言见 `MqttCommandServiceTest`（7 例） |
 | 单车辆上行报文（入站） | ❌ | **未限流**——依赖入站队列容量保护（见 10 章 D-02），刻意设计 |
 | 单企业对外 API 调用 | ❌ | 依赖上游自有约束与签名校验 |
 
@@ -2095,7 +2095,7 @@ server {
 |---|---|---|---|---|
 | **P-01** | **高** | ~~**多实例部署时定时任务会在每个实例重复执行**~~ ✅ **已修复（v1.0.3）**：新增 `DistributedTaskLock`（`common/schedule` 包，基于 `StateStore` 的 SETNX + token 比对释放），已接入 4 个定时任务——地图拉取（`map-barrier-pull`）、留痕清理（`mqtt-audit-purge`）、遥测清理（`telemetry-purge`）、在线回落扫描（`vehicle-offline-sweep`，随 P-02 新增）| 修复前：两个实例同时执行 `DELETE ... LIMIT` 会相互争抢行锁；地图拉取重复消耗监管平台配额 | ✅ 已落地：单机（内存 StateStore）恒可获锁、退化为无锁直通行为不变；Redis 多实例时互斥。刻意不引入 Redisson/ShedLock：释放非原子与无续期两个不严格处由「任务幂等 + TTL ≫ 最坏耗时」兜底（详见类 Javadoc）。⚠️ 两个秒级任务（ACK 重试、遥测刷盘）消费**实例本地内存缓冲**，**刻意不加全局锁**——加了会让抢不到锁的实例缓冲无人消费 |
 | **P-02** | **高** | ~~**车辆上下线状态缺少定时刷新**~~ ✅ **已修复（v1.0.3）**：新增 `VehicleOnlineSweeper`（`fixedDelay = 30s` + 分布式锁），每 30 秒调用一次 `markOfflineVehicles()`，离线判定最迟滞后约 2.5 分钟（2 分钟阈值 + 30 秒扫描间隔）| 修复前：车辆断连后 `online` 字段永远保持 `true`，大屏「在线车辆数」持续偏高 | ✅ 已落地：批量 UPDATE 幂等；执行统计（轮数 / 累计置离线 / 最近执行时间）暴露在 `/api/v1/monitor/mqtt` 的 `vehicleOnlineSweep` 节点，掉线速率与链路健康同屏对照；行为断言见 `VehicleOnlineSweeperTest` |
-| **P-03** | **高** | ~~**限流器完全未接入请求链路**~~ ✅ **已修复（HTTP 侧，v1.0.2）**：原问题——`RateLimiter` 的 `tryAcquireHttp` / `tryAcquireMqttPublish` 在全项目**零调用点**，配置的「单车辆 HTTP 100 次/分钟」一条都未生效（经《性能优化与压测报告》F-01 实测确认）| 修复前：一台异常企业集成可无上限占用业务线程与数据库写入能力，且监控端点仍报告 `enabled: true`（「显示已开启、实际没接线」的最危险组合）| ✅ HTTP 侧已落地：新增 `EnterpriseRateLimitFilter`（企业侧 `/enterprise/api/v1/**`，order 紧跟签名过滤器，VIN 取自请求体缓存；拒绝响应 HTTP 200 + `4001` + `Retry-After: 60`，按接口文档 2.7.1 契约），7 个行为断言用例，探针升级为发布门禁（详见性能报告 5.5）。⚠️ 遗留：`tryAcquireMqttPublish`（下行发布维度）仍未接线——其触发源一半是 MQTT 入站事故报告，简单抛异常会引发对端整条报文重投，需单独设计失败模式后接入；入站报文按 6.4 维持不限流（队列容量兜底） |
+| **P-03** | **高** | ~~**限流器完全未接入请求链路**~~ ✅ **已全部修复（HTTP 侧 v1.0.2 / MQTT 发布侧 v1.0.4）**：原问题——`RateLimiter` 的 `tryAcquireHttp` / `tryAcquireMqttPublish` 在全项目**零调用点**，配置的「单车辆 HTTP 100 次/分钟」「单车辆 MQTT 10 条/秒」一条都未生效（经《性能优化与压测报告》F-01 实测确认）| 修复前：一台异常企业集成可无上限占用业务线程与数据库写入能力，且监控端点仍报告 `enabled: true`（「显示已开启、实际没接线」的最危险组合）| ✅ HTTP 侧：`EnterpriseRateLimitFilter`（企业侧，拒绝响应 HTTP 200 + `4001` + `Retry-After: 60`），7 例行为断言，探针升级为发布门禁。✅ MQTT 发布侧（v1.0.4）：在 `MqttCommandService.publish()` 唯一出口接线，**被拒不丢弃**——转离线队列缓发（补传通道受控速率倾倒摊平突发），审计记 `RATE_LIMITED`；ACK 回复刻意不限流（丢失会引发对端重投放大流量）；7 例行为断言（`MqttCommandServiceTest`，含「未连接路径不消耗令牌」「云云 Topic 不限流」）。入站报文按 6.4 维持不限流（队列容量兜底，属设计决策）。限流触发计数已在 `/monitor/cache` 暴露（v1.0.3） |
 | **P-04** | 中 | **远驾接管配对依赖「最近一条未结束记录」**：协议未提供接管单号 | 同一车辆短时间内连续两次接管且第一次的结束报文丢失时，第二次的「结束」会错误配到第一次的「发起」上，产生错误的时长 | ① 平台侧生成接管单号并在上报时带回（需上游支持）；② 或增加「结束时间必须晚于发起时间 + 最短接管时长」的合理性校验，异常时落孤儿记录 |
 | **P-05** | 中 | **离线队列为进程内队列，重启即丢** | 重启前恰好未发出的下行指令丢失（任务/远驾） | 序列化到 Redis List 或本地 WAL；或用 `clean_session=false` + QoS 1 让 Broker 承担（当前已部分覆盖） |
 | **P-06** | 中 | **地图拉取的 `areaCode` 用 `System.getProperty` 读取** | 生产环境无法通过 `application.yml` 或环境变量配置；默认空字符串会导致拉取到空结果 | 改为 `AppProperties` 中的正式配置项（`dssad.regulatory.area-code`） |
@@ -2195,6 +2195,7 @@ server {
 | v1.0.1 | 2026-09-23 | 依据《性能优化与压测报告》F-01 的实测结论修订 P-03：原描述「入站报文无频率限流」不准确——实测（同 VIN 连打 130 次全部成功）+ 静态核查（`tryAcquireHttp`/`tryAcquireMqttPublish` 零调用点）表明**三条限流均未接入请求链路**；等级由「中」升为「高」，修复方案移入性能报告 5.5。 |
 | v1.0.2 | 2026-09-23 | **P-03 的 HTTP 侧修复落地**：6.4 维度表更新（HTTP 行标注已接线 `EnterpriseRateLimitFilter`；「MQTT 发布 ✅」修正为「⚠️ 能力已备、未接线」——`tryAcquireMqttPublish` 实际零调用，此前标 ✅ 与事实不符）；P-03 状态同步，遗留 MQTT 发布维度并说明难点。测试规模 200 → 207。 |
 | v1.0.3 | 2026-09-23 | **P-01 / P-02 修复落地**：新增 `DistributedTaskLock`（`common/schedule`，SETNX + token 比对释放；单机退化无锁直通、Redis 多实例互斥，刻意不引入 Redisson 的取舍见类 Javadoc），接入 4 个定时任务；新增 `VehicleOnlineSweeper`（30s + 分布式锁）接线 `markOfflineVehicles`，在线回落闭环；限流触发计数（`httpRejectedTotal` / `mqttPublishRejectedTotal` / `lastRejectedAt`，毫秒口径）与回落统计（`vehicleOnlineSweep`）暴露到监控端点。测试规模 207 → 220。 |
+| v1.0.4 | 2026-09-23 | **P-03 收尾：MQTT 下行发布限流接线**：在业务发布唯一出口 `MqttCommandService.publish()` 接入 `tryAcquireMqttPublish(vin)`（VIN 取自 Topic 第 3 段，云云 Topic 无 VIN 不参与单车辆限流）；**失败模式采用「转离线队列缓发」而非丢弃/抛异常**——不破坏 ACK 收敛（触发源一半是 MQTT 入站事故报告的问题就此消解），补传通道每秒受控倾倒自然摊平突发；审计状态新增 `RATE_LIMITED`。6.4 维度表「单车辆 MQTT 发布」由 ⚠️ 改 ✅。ACK 回复与入站维持不限流（原因见 6.4）。新增 `MqttCommandServiceTest` 7 例，测试规模 220 → 227。**至此三条限流维度全部接线完毕**。 |
 
 ---
 

@@ -1614,13 +1614,17 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
    防止"拒绝所有"这种假修好）、<code>enabled=false</code> 不限流、窗口滑过后恢复、取不到 VIN
    放行、multipart 跳过、<code>Retry-After</code> 头）。测试用 <code>StateStore#nowMillis()</code> 的
    时钟注入口固定时间，消除滑动窗口跨分钟边界导致的用例抖动。</li>
-<li>⚠️ <strong>入站 MQTT 报文接入</strong>（原 P-03）→ <strong>按设计文档 6.4 维持"不限流"</strong>：
-   入站的兜底是队列容量保护（D-02），这是设计文档明确记录的决策而非遗漏；
-   但 6.4 中「单车辆 MQTT 发布（下行）✅」一行<strong>与事实不符</strong>——<code>tryAcquireMqttPublish</code>
-   同样零调用，已修正为「能力已备、未接线」并登记待办（其难点：下行发布的触发源
-   一半是 MQTT 入站事故报告，简单抛异常会引发对端整条报文重投，需单独设计失败模式）。</li>
-<li>⚠️ <strong>监控端点补充"限流触发次数"指标</strong>：<strong>仍未做</strong>。当前只能靠日志与
-   <code>rate_limit_probe.py</code> 观察拦截行为，建议在监控端点增加 <code>rateLimitedCount</code> 计数器。</li>
+<li>✅ <strong>MQTT 发布（下行）限流接线</strong>（原 P-03 遗留，已落地）：在业务发布唯一出口
+   <code>MqttCommandService.publish()</code> 执行 <code>tryAcquireMqttPublish(vin)</code>（VIN 取自 Topic 第 3 段）。
+   <strong>失败模式采用「转离线队列缓发」而非丢弃/抛异常</strong>——此前担心的「触发源一半是 MQTT 入站
+   事故报告、抛异常引发对端重投整条报文」就此消解：被拒报文进离线队列，由每秒 tick 的补传
+   通道以受控速率（20 条/秒全局）倾倒，突发自然摊平；审计状态记 <code>RATE_LIMITED</code>。
+   ACK 回复<strong>刻意不限流</strong>（ACK 丢失会引发对端重投放大流量），入站按 6.4 维持不限流。
+   行为断言 <code>MqttCommandServiceTest</code> 7 例（含「未连接路径不消耗令牌」「云云 Topic 不限流」
+   「不同 VIN 互不影响」反向对照）。</li>
+<li>✅ <strong>监控端点补充"限流触发次数"指标</strong>：已在 <code>/api/v1/monitor/cache</code> 的 <code>rateLimit</code> 节点
+   暴露 <code>httpRejectedTotal</code> / <code>mqttPublishRejectedTotal</code> / <code>lastRejectedAt</code>（毫秒口径），
+   压测时可直接观测「限流在真实触发」而不只是配置存在。</li>
 </ol>
 <hr>
 <h2 id="6-写入链路纸面推演未实测">6 写入链路：纸面推演（未实测）<a class="headerlink" href="#6-写入链路纸面推演未实测" title="永久链接">#</a></h2>
@@ -2570,7 +2574,7 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
 <tbody>
 <tr>
 <td>《详细设计说明书》P-03「入站报文无频率限流」</td>
-<td><strong>该描述不准确</strong>：实际 HTTP 与 MQTT 发布限流也均未接入。P-03 已按 F-01 修订，并升级为 P0</td>
+<td><strong>该描述不准确</strong>：实际 HTTP 与 MQTT 发布限流也均未接入。P-03 已按 F-01 修订，并升级为 P0。✅ 现 HTTP 侧（<code>EnterpriseRateLimitFilter</code>）与 MQTT 发布侧（<code>MqttCommandService</code> 唯一出口，被拒转离线队列缓发）均已接线，入站维持不限流（设计决策）</td>
 </tr>
 <tr>
 <td>《详细设计说明书》P-01（多实例定时任务无锁）</td>
@@ -2606,6 +2610,11 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
 <td>v1.2</td>
 <td>2026-09-23</td>
 <td><strong>P-01/P-02 修复落地 + 限流可观测</strong>：<code>DistributedTaskLock</code> 接入 4 个定时任务（扩容路径 ① 的前置解除）；<code>VehicleOnlineSweeper</code> 接线在线回落；限流触发计数（<code>httpRejectedTotal</code> / <code>mqttPublishRejectedTotal</code> / <code>lastRejectedAt</code>）暴露到 <code>/api/v1/monitor/cache</code>，压测时可直接观测「限流在真实触发」而不只是配置存在。测试规模 207 → 220</td>
+</tr>
+<tr>
+<td>v1.3</td>
+<td>2026-09-23</td>
+<td><strong>P-03 收尾：MQTT 下行发布限流接线</strong>：<code>tryAcquireMqttPublish</code> 接入 <code>MqttCommandService.publish()</code> 唯一出口，<strong>失败模式为「转离线队列缓发」</strong>（非丢弃/抛异常——不破坏 ACK 收敛，触发源一半是 MQTT 入站事故报告的难点就此消解；补传通道受控速率倾倒摊平突发）。5.5 配套动作三条全部 ✅。新增 <code>MqttCommandServiceTest</code> 7 例，测试规模 220 → 227。<strong>三条限流维度全部接线完毕</strong></td>
 </tr>
 </tbody>
 </table></div>

@@ -289,7 +289,7 @@ bash scripts/check-env.sh --gen-secret 24
 | `dssad.cache.l1-max-size` | `10000`（local）/ `50000`（prod）| Caffeine 容量 |
 | `dssad.cache.l1-default-ttl-seconds` | `10`（local）/ `30`（prod）| L1 TTL |
 | `dssad.cache.l2-default-ttl-seconds` | `10`（local）/ `60`（prod）| L2 TTL（多实例跨实例一致性靠它）|
-| `dssad.rate-limit.enabled` / `http-per-minute` / `mqtt-per-second` | `true` / `100` / `10` | 限流参数。✅ HTTP 维度已接线（`EnterpriseRateLimitFilter`，企业侧按车辆限流，v1.3）；⚠️ MQTT 发布维度仍未接线（P-03 遗留）；管理端 `/api/v1/**` 按设计不限流 |
+| `dssad.rate-limit.enabled` / `http-per-minute` / `mqtt-per-second` | `true` / `100` / `10` | 限流参数。✅ HTTP 维度已接线（`EnterpriseRateLimitFilter`，企业侧按车辆限流，v1.3）；✅ MQTT 发布维度已接线（`MqttCommandService` 唯一出口，被拒转离线队列缓发，v1.5）；管理端 `/api/v1/**` 按设计不限流。触发计数在 `/monitor/cache` 可观测 |
 | `dssad.audit.mode` / `sample-rate` / `retention-days` | `sampled` / `0.05` / `180` | 报文留痕策略 |
 | `dssad.retention.track-point-days` | `90` | 轨迹保留天数（每天 03:30 清理）|
 | `dssad.retention.state-snapshot-days` | `180` | 状态流水保留天数 |
@@ -1185,3 +1185,4 @@ SELECT COUNT(*) FROM t_vehicle_track_point WHERE ts < UNIX_TIMESTAMP(DATE_SUB(NO
 | v1.2 | 2026-09-23 | 修复 `O-03`：`/actuator/**` 加装应用层**来源 IP 白名单**（`ActuatorIpWhitelistFilter` + `IpCidrMatcher`，fail-closed，判定基于 TCP 对端地址、不采信 XFF），接口权限表 / Nginx 收敛表 / 安全清单三处口径同步为「双层收敛」。新增 `scripts/backup.sh`（修复 `O-05`：一致性备份 + 三重校验 + 轮转 + `--restore-check`）。新增测试 28 例（`ActuatorAccessControlTest`），全套 **200 用例 / 0 失败**、行覆盖 73.39%。 |
 | v1.3 | 2026-09-23 | **修复 `F-01`（HTTP 侧）**：限流真正接入企业侧请求链路——新增 `EnterpriseRateLimitFilter`（order 紧跟签名过滤器，VIN 取自请求体缓存；拒绝响应 HTTP 200 + `4001` + `Retry-After: 60`，按接口文档 2.7.1 契约），配置表 / Nginx 收敛表 / 缺陷交叉引用三处口径同步。新增测试 7 例（`EnterpriseRateLimitFilterTest` 行为断言，含反向对照），全套 **207 用例 / 0 失败**。`perf/rate_limit_probe.py` 升级为发布门禁（默认企业侧已接线路径，签名 POST，绕过本机代理）。MQTT 发布维度维持未接线并如实登记（P-03 遗留）。 |
 | v1.4 | 2026-09-23 | **修复 `P-01`/`P-02`**：新增 `DistributedTaskLock`（SETNX + token 比对释放，单机退化为无锁直通、Redis 多实例互斥），接入地图拉取/留痕清理/遥测清理/在线回落 4 个定时任务——11.4 / 11.6 的「多实例前必须先修」前置解除；新增 `VehicleOnlineSweeper`（30s 扫描 + 分布式锁）接线在线状态回落，「6 例同族缺陷」全部闭环。限流触发计数与回落统计暴露到监控端点（`/monitor/cache`、`/monitor/mqtt`）。新增测试 13 例（`DistributedTaskLockTest` 5 + `VehicleOnlineSweeperTest` 3 + `SlidingWindowRateLimiterTest` 2 + `MqttMonitorControllerTest` 3），全套 **220 用例 / 0 失败**、覆盖率门禁通过。 |
+| v1.5 | 2026-09-23 | **P-03 收尾：MQTT 下行发布限流接线**：`tryAcquireMqttPublish` 接入业务发布唯一出口 `MqttCommandService.publish()`（VIN 取自 Topic 第 3 段，云云 Topic 无 VIN 不限流）；被拒报文**转离线队列缓发**而非丢弃——补传通道以 20 条/秒全局受控速率倾倒，突发摊平，且不破坏 ACK 收敛（触发源一半是 MQTT 入站事故报告的难点就此消解）；审计状态新增 `RATE_LIMITED`。ACK 回复与入站维持不限流（ACK 丢失会引发对端重投放大流量 / 队列容量兜底）。新增 `MqttCommandServiceTest` 7 例，全套 **227 用例 / 0 失败**。**至此三条限流维度全部接线完毕**。 |
