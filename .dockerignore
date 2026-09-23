@@ -1,0 +1,51 @@
+# ============================================================================
+#  构建上下文排除清单
+#
+#  镜像层是**永久留存**的：密钥一旦进过某一层，后面即使删掉文件也能被挖出来。
+#  所以排除清单要覆盖一切凭据与本地数据，而不只是「大文件」。
+# ============================================================================
+
+# 版本控制与工具目录
+.git
+.gitignore
+.gitattributes
+.github
+.idea
+.vscode
+.workbuddy
+
+# 构建产物（镜像内会重新构建）
+cloud-platform-server/target
+**/target
+cloud-platform-web/node_modules
+cloud-platform-web/dist
+**/*.jar
+
+# 本地运行数据（H2 文件库 / 媒体 / 运行目录与日志）
+cloud-platform-server/data
+data
+.run
+logs
+*.log
+
+# 密钥与凭据
+.env
+.env.*
+*.p12
+*.jks
+*.keystore
+*.pem
+*.key
+*.crt
+.jwt_secret
+deploy/nginx/certs
+
+# 文档与参考材料（不参与镜像构建）
+docs
+*.pdf
+*.docx
+*.doc
+*.xlsx
+*.png
+*.jpg
+*.jpeg

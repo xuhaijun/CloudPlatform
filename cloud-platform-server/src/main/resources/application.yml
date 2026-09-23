@@ -1,0 +1,246 @@
+# ============================================================================
+# 车路通 DSSAD 产品云平台 —— 后端服务公共配置
+#
+# 配置分层：
+#   application.yml        本文件，所有环境共享（业务参数默认值、日志格式、Jackson、Actuator）
+#   application-local.yml  本地开发：H2 文件库 + MQTT 关闭，零外部依赖即可启动
+#   application-prod.yml   生产：MySQL + Redis + 真实 MQTT Broker，ddl-auto=validate
+#
+# 启动：
+#   本地   mvn spring-boot:run            （默认激活 local）
+#   生产   java -jar dssad-cloud-platform.jar --spring.profiles.active=prod
+#
+# 安全约定：所有密钥/口令类配置一律不写默认值，通过环境变量注入（见各 profile 中的 ${XXX}）。
+# ============================================================================
+server:
+  port: 8080
+  # 生产由 Nginx 反向代理，需读取 X-Forwarded-* 还原真实客户端 IP（限流与审计按 IP 统计）
+  forward-headers-strategy: framework
+  # 优雅停机：停止接收新请求，等**在途**请求跑完再关上下文。
+  # 默认值 immediate 会直接关上下文 —— 正在上传的事故视频（文档约定单文件 ≤200MB）
+  # 会被拦腰切断，客户端拿到连接重置、服务端留下半个文件，且日志里看不出原因。
+  # 超时 30s 必须小于 systemd 的 TimeoutStopSec（60s），否则 systemd 先 SIGKILL，
+  # 「优雅」形同虚设；@PreDestroy 的 MQTT 断连与在途批量写刷盘在任何模式下都会执行。
+  shutdown: graceful
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+    # 文件上传：文档 9.2 约定单文件 ≤ 200MB
+    max-swallow-size: 210MB
+  compression:
+    enabled: true
+    mime-types: application/json,text/plain,text/css,application/javascript
+    min-response-size: 2048
+
+spring:
+  application:
+    name: dssad-cloud-platform
+  # 与 server.shutdown=graceful 配对：30 秒内等在途请求收尾，超时则强制关闭。
+  # 取值依据：媒体上传（200MB）在慢链路上可能持续数十秒，30s 是「不无限等」与
+  # 「不切断正常上传」的折中；systemd TimeoutStopSec=60 给了它 2 倍余量。
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  profiles:
+    # 默认本地模式，保证「克隆即跑」
+    default: local
+  jackson:
+    # 时间统一输出为 13 位毫秒时间戳（文档 1.4：所有 timestamp 均为毫秒）
+    serialization:
+      write-dates-as-timestamps: true
+      fail-on-empty-beans: false
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+    time-zone: Asia/Shanghai
+  mvc:
+    problemdetails:
+      enabled: false
+  # 文件上传上限与 Tomcat 保持一致
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 210MB
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        # 批量写入：遥测与轨迹按批落库，没有批量参数时 JDBC 会退化成逐条往返
+        jdbc:
+          batch_size: 200
+          batch_versioned_data: true
+          time_zone: Asia/Shanghai
+        order_inserts: true
+        order_updates: true
+        query:
+          in_clause_parameter_padding: true
+          fail_on_pagination_over_collection_fetch: true
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+
+# ============================================================================
+# 业务配置（与 AppProperties 一一对应）
+# 详细字段含义见 com.genvict.dssad.cloud.config.AppProperties 各类 Javadoc
+# ============================================================================
+dssad:
+  # 准入平台（招商智行）分配的企业 ID，云云 Topic 的身份标识
+  enterprise-id: DSSAD-ENT-0001
+  enterprise-name: 车路通DSSAD云平台
+  mqtt:
+    # 本地默认关闭：没有 Broker 也能启动并跑通全部 REST 接口与单测
+    enabled: false
+    broker-url: tcp://127.0.0.1:1883
+    client-id-prefix: e_
+    keep-alive-seconds: 60
+    # 文档 5.1.1 / 6.1.1 明确要求 false（持久会话，断线期间消息由 Broker 保留）
+    clean-session: false
+    # 通道 A（车端直连监管平台）时关闭；通道 B（企业自建网关）时开启
+    subscribe-car-uplink: true
+    reconnect:
+      initial-backoff-millis: 2000
+      max-backoff-millis: 60000
+      multiplier: 2.0
+    retry:
+      # 文档 5.1.4.1：对端未确认（res != 1）→ 5s / 最多 3 次
+      confirm-interval-millis: 5000
+      confirm-max-attempts: 3
+      # 文档 8.1：对端回复异常（res = 2/3）→ 3s / 最多 5 次
+      invalid-interval-millis: 3000
+      invalid-max-attempts: 5
+    offline-cache-size: 10000
+    consumer-threads: 4
+    # 消费线程用虚拟线程承载（Java 21，见 MqttInboundWorker 类注释）。
+    # 关闭可退回平台线程，用于排查 virtual thread pinning 时做 A/B 对比。
+    virtual-threads: true
+  regulatory:
+    base-url: https://reg-platform.example.com
+    mqtt-access-path: /passport/api/v1/auth/access-enterprise-mqtt
+    token-path: /passport/api/v1/auth/access-token
+    mapehn-path: /manager/api/v1/event/mapehn
+    # 文档 5.2.2.1.1：secret = SHA256(clientId + "CMAT")
+    secret-salt: CMAT
+    timeout-millis: 30000
+    retry-delays-millis: 1000,2000,4000
+  storage:
+    type: local
+    local-root: ./data/media
+    public-base-url: http://127.0.0.1:8080/media
+    # 文档 9.2：单文件 ≤ 200MB
+    max-upload-bytes: 209715200
+  srs:
+    http-base-url: http://127.0.0.1:8080
+    app: live
+  api:
+    max-page-size: 200
+    # 轨迹抽稀容差（米）：1Hz 轨迹 1 小时 = 3600 点，抽稀后通常 < 500 点
+    track-simplify-tolerance: 8.0
+    history-video-max-span-hours: 168
+  rate-limit:
+    enabled: true
+    # 文档 9.1：单车辆 HTTP 100 次/分钟
+    http-per-minute: 100
+    # 文档 9.1：单车辆 MQTT 10 条/秒
+    mqtt-per-second: 10
+  audit:
+    # full 全量 / sampled 采样 / event-only 仅事件类。
+    # 1000 台车 1Hz 全量留痕 ≈ 8640 万条/天，生产建议 sampled 或 event-only
+    mode: sampled
+    sample-rate: 0.05
+    retention-days: 180
+  # 遥测流水保留策略（每天 03:30 分批清理，见 TelemetryRetentionService）。
+  # 与 audit.retention-days 分开配置：留痕期的依据是「监管取证要求」，遥测流水期的依据是
+  # 「存储预算」—— 1000 台车 1Hz 轨迹 ≈ 8640 万行/天、约 14GB/天，必须按磁盘容量反推保留天数。
+  # 0 表示不清理（仅适用于刚接入、数据量极小的场景）。
+  retention:
+    track-point-days: 90
+    state-snapshot-days: 180
+    # 单批删除行数：调大加快清理但延长持锁时间，5000 行/批是「主从延迟」与「清理耗时」的折中
+    batch-size: 5000
+  redis:
+    enabled: false
+  # 报文注入模拟器（/api/v1/simulator/**）：仅本地联调启用。
+  # 它能凭空造出事故与故障记录，生产必须保持 false。
+  simulator:
+    enabled: false
+  remote-driving:
+    cockpits:
+      - cockpit-id: YK0001
+        driver: 张工
+        identity-number: "5101**********1234"
+        driver-license-number: "5101**********56"
+        mobile: "138****0001"
+      - cockpit-id: YK0002
+        driver: 李工
+        identity-number: "5101**********5678"
+        driver-license-number: "5101**********90"
+        mobile: "138****0002"
+  # ==========================================================================
+  # Actuator 端点的来源 IP 白名单（O-03）
+  #
+  # 为什么必须有：/actuator/** 不在 AdminTokenInterceptor 的保护范围内
+  # （那个拦截器只注册在 /api/v1/** 上），所以只要端口可达就等于**无鉴权暴露**。
+  # /actuator/metrics、/configprops、/heapdump、/threaddump 足以拼出一份系统说明书。
+  #
+  # fail-closed 语义（三条都要一起成立才算 fail-closed）：
+  #   1) 不配置 → 用这里的默认值，而不是「不限制」；
+  #   2) 配成空列表 → 拒绝所有来源（含回环），等于彻底关闭 HTTP 访问；
+  #   3) 配错（非法 CIDR）→ 启动直接失败，绝不静默降级为放行。
+  #
+  # 判定用的是 **TCP 对端地址**，不采信 X-Forwarded-For ——
+  # 因为 server.forward-headers-strategy=framework 会把 XFF 还原进 getRemoteAddr()，
+  # 直接读该方法的话，一个伪造的 "X-Forwarded-For: 127.0.0.1" 就能绕过。
+  #
+  # 部署形态对应的常用值：
+  #   本机 / systemd（Nginx 与 app 同机）     127.0.0.1/32,::1/128            ← 默认值即可
+  #   docker compose（Nginx 在 Docker 网络内） 127.0.0.1/32,::1/128,172.16.0.0/12
+  #   K8s（kubelet 从节点探活）                127.0.0.1/32,::1/128,10.0.0.0/8
+  #   完全不需要 Actuator 的 HTTP 访问          （留空）
+  # ==========================================================================
+  security:
+    actuator:
+      allowed-cidrs: "127.0.0.1/32,::1/128"
+
+# ============================================================================
+# 可观测性：Prometheus 抓取 + 健康检查
+# ============================================================================
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus,loggers
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true
+      # 注意：MQTT 通道**刻意不**做成 health group。
+      # 原因（实测）：/actuator/health 聚合端点始终包含所有已注册的 HealthIndicator，
+      # 健康组的 include 无法把它从聚合里摘出去 —— 一旦 Broker 断开，聚合端点也会 503，
+      # 用 /actuator/health 做存活判定的编排就会摘流/重启应用，而重启对 Broker 故障毫无用处。
+      # 通道信号改由业务探针端点提供：GET /api/v1/monitor/mqtt-health（DOWN → HTTP 503）。
+      # 它已被 Nginx 的 /api/ 规则代理，无需为此放开 /actuator/。
+      # 语义分工：/api/v1/monitor/health-check = 「服务活着」，两者一起用才能发现「全绿但收不到数据」。
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: 车路通DSSAD产品云平台
+    protocol-doc: 平台数据对接接口文档 v1.0.0
+    contact: DSSAD 平台研发组
+
+logging:
+  level:
+    root: INFO
+    com.genvict.dssad.cloud: INFO
+    # Paho 在断线重连时会打大量 DEBUG，默认压到 WARN
+    org.eclipse.paho: WARN
+  pattern:
+    # 单行结构化日志：便于 Filebeat/Loki 采集，含 traceId 占位便于后续接链路追踪
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"

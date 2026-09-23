@@ -1,0 +1,207 @@
+/* ============================================================================
+ * DSSAD 云平台控制台 —— 全局样式
+ *
+ * 只做三件事，其余交给 Element Plus 的深色变量：
+ *   1. 基础重置 + 滚动条（深色底上的浅色滚动条很刺眼）；
+ *   2. 覆写少量 Element Plus 深色变量（默认底色偏冷，与「工业监控」气质不符）；
+ *   3. 提供页面级布局原子类（page / card / stat-grid），避免每个页面重复写布局 CSS。
+ * ========================================================================== */
+
+:root {
+  /* 深色控制台自定义变量 */
+  --dssad-bg: #0d1117;
+  --dssad-panel: #151b23;
+  --dssad-panel-2: #1b2430;
+  --dssad-border: #263140;
+  --dssad-text: #d7e0ea;
+  --dssad-text-dim: #8b9bb0;
+  --dssad-accent: #2f81f7;
+  --dssad-ok: #3fb950;
+  --dssad-warn: #d29922;
+  --dssad-danger: #f85149;
+
+  /* 覆写 Element Plus 深色变量，让组件与自定义面板同色系 */
+  --el-bg-color: var(--dssad-panel);
+  --el-bg-color-page: var(--dssad-bg);
+  --el-bg-color-overlay: var(--dssad-panel-2);
+  --el-border-color: var(--dssad-border);
+  --el-border-color-light: var(--dssad-border);
+  --el-border-color-lighter: var(--dssad-border);
+  --el-text-color-primary: var(--dssad-text);
+  --el-text-color-regular: var(--dssad-text);
+  --el-text-color-secondary: var(--dssad-text-dim);
+  --el-fill-color-blank: var(--dssad-panel);
+  --el-color-primary: var(--dssad-accent);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--dssad-bg);
+  color: var(--dssad-text);
+  font-family: 'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- 滚动条 ---- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2d3a4b;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3d4e63;
+}
+
+/* ---- 页面级原子类 ---- */
+.page {
+  padding: 18px 20px 28px;
+  min-height: 100%;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.page-header h2 {
+  margin: 0 0 4px;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.page-header .subtitle {
+  margin: 0;
+  color: var(--dssad-text-dim);
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.panel {
+  background: var(--dssad-panel);
+  border: 1px solid var(--dssad-border);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+
+.panel + .panel {
+  margin-top: 16px;
+}
+
+.panel-title {
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dssad-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-title::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--dssad-accent);
+}
+
+/* 统计卡网格：宽屏 6 列、中屏 3 列、窄屏 2 列 */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  gap: 12px;
+}
+
+/* 双列图表布局 */
+.chart-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.muted {
+  color: var(--dssad-text-dim);
+}
+
+.mono {
+  font-family: 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+  font-size: 12.5px;
+}
+
+.text-ok {
+  color: var(--dssad-ok);
+}
+
+.text-warn {
+  color: var(--dssad-warn);
+}
+
+.text-danger {
+  color: var(--dssad-danger);
+}
+
+/* 表格：深色底上默认的行高偏大，收一收以便一屏看到更多行 */
+.el-table {
+  --el-table-border-color: var(--dssad-border);
+  --el-table-header-bg-color: var(--dssad-panel-2);
+  --el-table-tr-bg-color: var(--dssad-panel);
+  --el-table-row-hover-bg-color: #1f2a38;
+}
+
+.el-table th.el-table__cell {
+  font-weight: 600;
+}
+
+.el-card {
+  --el-card-bg-color: var(--dssad-panel);
+}
+
+.el-descriptions {
+  --el-descriptions-item-bordered-label-background: var(--dssad-panel-2);
+}
+
+/* 轮询刷新时的轻微呼吸效果，让「数据是活的」这件事可感知 */
+@keyframes dssad-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dssad-ok);
+  animation: dssad-pulse 2s ease-in-out infinite;
+}

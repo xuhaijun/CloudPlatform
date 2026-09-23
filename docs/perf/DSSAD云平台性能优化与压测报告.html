@@ -1,0 +1,2663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>车路通 DSSAD 产品云平台 — 性能优化与压测报告</title>
+<meta name="generator" content="scripts/md2html.py">
+<style>
+
+:root{
+  --bg:#0d1117;
+  --bg-side:#090c11;
+  --bg-elev:#161b22;
+  --bg-code:#161b22;
+  --border:#21262d;
+  --border-soft:#1a1f27;
+  --text:#c9d1d9;
+  --text-strong:#e6edf3;
+  --text-dim:#8b949e;
+  --accent:#58a6ff;
+  --accent-soft:rgba(88,166,255,.12);
+  --green:#3fb950;
+  --orange:#d29922;
+  --red:#f85149;
+  --purple:#bc8cff;
+  --sidebar-w:308px;
+  --radius:8px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+              "Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15.5px;line-height:1.78;
+  -webkit-font-smoothing:antialiased;
+}
+code,pre,kbd,.mono{
+  font-family:"JetBrains Mono","Cascadia Code",Consolas,"Courier New",monospace;
+  font-variant-ligatures:none;
+}
+
+/* ---------- 布局：左固定 TOC / 右正文 ---------- */
+.layout{display:flex;align-items:flex-start;min-height:100vh}
+
+.sidebar{
+  width:var(--sidebar-w);flex:0 0 var(--sidebar-w);
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  background:var(--bg-side);border-right:1px solid var(--border);
+  padding:22px 0 60px;
+}
+.sidebar-brand{
+  padding:0 20px 16px;margin-bottom:14px;border-bottom:1px solid var(--border-soft);
+}
+.sidebar-brand .t{font-size:14px;font-weight:600;color:var(--text-strong);letter-spacing:.2px}
+.sidebar-brand .s{font-size:12px;color:var(--text-dim);margin-top:4px}
+
+.toc{padding:0 10px}
+.toc ul{list-style:none;margin:0;padding:0}
+.toc > ul > li{margin:2px 0}
+.toc a{
+  display:block;padding:6px 10px;border-radius:6px;
+  color:var(--text-dim);text-decoration:none;font-size:13.5px;
+  border-left:2px solid transparent;transition:all .15s ease;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.toc > ul > li > a{color:var(--text);font-weight:500}
+.toc a:hover{background:var(--bg-elev);color:var(--text-strong)}
+.toc a.active{
+  color:var(--accent);background:var(--accent-soft);
+  border-left-color:var(--accent);font-weight:600;
+}
+.toc ul ul{margin-left:12px}
+.toc ul ul a{font-size:12.8px;padding:4px 10px}
+
+/* ---------- 正文 ---------- */
+.content{
+  flex:1 1 auto;min-width:0;max-width:1000px;
+  padding:44px 56px 120px;
+}
+.content > *:first-child{margin-top:0}
+
+/* 页头 */
+.doc-header{margin-bottom:34px;padding-bottom:22px;border-bottom:1px solid var(--border)}
+h1{
+  font-size:30px;line-height:1.35;margin:0 0 16px;color:var(--text-strong);
+  font-weight:700;letter-spacing:-.3px;
+}
+.doc-meta{font-size:12.5px;color:var(--text-dim);display:flex;gap:14px;flex-wrap:wrap}
+.doc-meta span{display:inline-flex;align-items:center;gap:5px}
+.doc-meta code{font-size:12px;color:var(--text-dim);background:transparent;padding:0}
+
+/* 「定位说明」摘要卡（md 中紧跟 h1 的引用块） */
+.doc-lead{
+  background:linear-gradient(180deg,rgba(88,166,255,.07),rgba(88,166,255,.02));
+  border:1px solid rgba(88,166,255,.22);border-left:3px solid var(--accent);
+  border-radius:var(--radius);padding:14px 18px;margin:0 0 30px;
+  font-size:14px;color:var(--text-dim);line-height:1.8;
+}
+.doc-lead p{margin:0 0 8px}
+.doc-lead p:last-child{margin-bottom:0}
+.doc-lead strong{color:var(--text-strong)}
+.doc-lead code{font-size:12.5px;color:var(--accent);background:rgba(88,166,255,.1);padding:1px 5px;border-radius:4px}
+
+/* 标题层级 */
+h2{
+  font-size:23px;font-weight:650;color:var(--text-strong);
+  margin:56px 0 18px;padding:0 0 10px 0;
+  border-bottom:1px solid var(--border);position:relative;
+}
+h2::before{
+  content:"";position:absolute;left:-56px;top:6px;width:3px;height:20px;
+  background:var(--accent);border-radius:2px;
+}
+h3{
+  font-size:18px;font-weight:600;color:var(--accent);
+  margin:34px 0 12px;padding-left:0;
+}
+h4{font-size:15.5px;font-weight:600;color:var(--text-strong);margin:24px 0 10px}
+h5,h6{font-size:14.5px;font-weight:600;color:var(--text-dim);margin:20px 0 8px}
+
+/* 标题锚点链接（hover 显现） */
+.headerlink{
+  color:var(--text-dim);text-decoration:none;opacity:0;
+  margin-left:8px;font-size:.75em;transition:opacity .15s ease;
+}
+h2:hover .headerlink,h3:hover .headerlink,h4:hover .headerlink{opacity:.7}
+.headerlink:hover{opacity:1;color:var(--accent)}
+
+p{margin:0 0 15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+
+strong{color:var(--text-strong);font-weight:650}
+em{color:var(--text-strong)}
+hr{border:0;border-top:1px solid var(--border);margin:38px 0}
+
+ul,ol{margin:0 0 15px;padding-left:26px}
+li{margin:5px 0}
+li > ul,li > ol{margin:5px 0}
+ul li::marker{color:var(--text-dim)}
+ol li::marker{color:var(--accent);font-weight:600}
+
+/* 引用块（除 .doc-lead 外的） */
+blockquote{
+  margin:0 0 16px;padding:12px 18px;
+  background:var(--bg-elev);border-left:3px solid var(--border);
+  border-radius:0 var(--radius) var(--radius) 0;color:var(--text-dim);
+}
+blockquote p:last-child{margin-bottom:0}
+
+/* 行内代码 */
+code{
+  font-size:13px;background:rgba(110,118,129,.18);color:#79c0ff;
+  padding:2px 6px;border-radius:5px;white-space:nowrap;
+}
+pre code{background:none;padding:0;color:inherit;white-space:pre;font-size:13.2px}
+pre{
+  margin:0;padding:16px 18px;overflow-x:auto;
+  background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);
+  line-height:1.62;
+}
+
+/* 代码块容器 + 复制按钮 */
+.highlight{
+  position:relative;margin:0 0 18px;
+  background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;
+}
+.highlight pre{border:0;border-radius:0;background:transparent}
+.copy-btn{
+  position:absolute;top:8px;right:8px;z-index:2;
+  background:rgba(110,118,129,.22);color:var(--text-dim);
+  border:1px solid var(--border);border-radius:6px;
+  padding:3px 9px;font-size:11.5px;cursor:pointer;
+  font-family:inherit;opacity:0;transition:opacity .15s ease,background .15s ease;
+}
+.highlight:hover .copy-btn{opacity:1}
+.copy-btn:hover{background:rgba(88,166,255,.22);color:var(--accent);border-color:rgba(88,166,255,.4)}
+.copy-btn.done{color:var(--green);border-color:rgba(63,185,80,.45)}
+
+/* 任务列表（- [ ] / - [x]）*/
+li.task{list-style:none;margin-left:-22px;display:flex;align-items:flex-start;gap:9px}
+li.task > p{display:contents}
+li.task .cb{
+  flex:0 0 auto;width:14px;height:14px;margin-top:6px;
+  border:1.5px solid var(--text-dim);border-radius:3px;
+}
+li.task.done .cb{background:var(--green);border-color:var(--green)}
+li.task.done{color:var(--text-dim)}
+
+/* 表格 */
+.table-wrap{overflow-x:auto;margin:0 0 18px}
+table{
+  border-collapse:collapse;width:100%;font-size:14px;
+  border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;
+}
+thead th{
+  background:var(--bg-elev);color:var(--text-strong);font-weight:600;
+  text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+tbody td{padding:9px 14px;border-bottom:1px solid var(--border-soft);vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:rgba(255,255,255,.014)}
+tbody tr:hover{background:rgba(88,166,255,.05)}
+td code,th code{font-size:12.5px}
+
+/* 回到顶部 */
+#to-top{
+  position:fixed;right:26px;bottom:26px;z-index:10;
+  width:40px;height:40px;border-radius:50%;
+  background:var(--bg-elev);color:var(--text-dim);
+  border:1px solid var(--border);cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:all .2s ease;
+}
+#to-top.show{opacity:1;pointer-events:auto}
+#to-top:hover{color:var(--accent);border-color:var(--accent);transform:translateY(-2px)}
+
+/* 窄屏：侧边栏收起 */
+#menu-btn{
+  display:none;position:fixed;top:14px;left:14px;z-index:20;
+  width:38px;height:38px;border-radius:8px;
+  background:var(--bg-elev);border:1px solid var(--border);
+  color:var(--text);cursor:pointer;font-size:17px;
+}
+@media (max-width:960px){
+  #menu-btn{display:block}
+  .sidebar{
+    position:fixed;left:0;top:0;z-index:15;height:100vh;
+    transform:translateX(-100%);transition:transform .22s ease;
+    box-shadow:0 0 40px rgba(0,0,0,.5);
+  }
+  .sidebar.open{transform:translateX(0)}
+  .content{padding:70px 22px 100px}
+  h2::before{display:none}
+}
+@media print{
+  .sidebar,#to-top,#menu-btn,.copy-btn{display:none}
+  body{background:#fff;color:#111}
+  .content{max-width:none;padding:0}
+}
+
+/* ---------- pygments 语法高亮（github-dark） ---------- */
+pre { line-height: 125%; }
+td.linenos .normal { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+.highlight .hll { background-color: #6e7681 }
+.highlight { background: transparent; }
+.highlight .c { color: #8B949E; font-style: italic } /* Comment */
+.highlight .err { color: #F85149 } /* Error */
+.highlight .esc { color: #E6EDF3 } /* Escape */
+.highlight .g { color: #E6EDF3 } /* Generic */
+.highlight .k { color: #FF7B72 } /* Keyword */
+.highlight .l { color: #A5D6FF } /* Literal */
+.highlight .n { color: #E6EDF3 } /* Name */
+.highlight .o { color: #FF7B72; font-weight: bold } /* Operator */
+.highlight .x { color: #E6EDF3 } /* Other */
+.highlight .p { color: #E6EDF3 } /* Punctuation */
+.highlight .ch { color: #8B949E; font-style: italic } /* Comment.Hashbang */
+.highlight .cm { color: #8B949E; font-style: italic } /* Comment.Multiline */
+.highlight .cp { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Preproc */
+.highlight .cpf { color: #8B949E; font-style: italic } /* Comment.PreprocFile */
+.highlight .c1 { color: #8B949E; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Special */
+.highlight .gd { color: #FFA198; background-color: #490202 } /* Generic.Deleted */
+.highlight .ge { color: #E6EDF3; font-style: italic } /* Generic.Emph */
+.highlight .ges { color: #E6EDF3; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.highlight .gr { color: #FFA198 } /* Generic.Error */
+.highlight .gh { color: #79C0FF; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #56D364; background-color: #0F5323 } /* Generic.Inserted */
+.highlight .go { color: #8B949E } /* Generic.Output */
+.highlight .gp { color: #8B949E } /* Generic.Prompt */
+.highlight .gs { color: #E6EDF3; font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #79C0FF } /* Generic.Subheading */
+.highlight .gt { color: #FF7B72 } /* Generic.Traceback */
+.highlight .g-Underline { color: #E6EDF3; text-decoration: underline } /* Generic.Underline */
+.highlight .kc { color: #79C0FF } /* Keyword.Constant */
+.highlight .kd { color: #FF7B72 } /* Keyword.Declaration */
+.highlight .kn { color: #FF7B72 } /* Keyword.Namespace */
+.highlight .kp { color: #79C0FF } /* Keyword.Pseudo */
+.highlight .kr { color: #FF7B72 } /* Keyword.Reserved */
+.highlight .kt { color: #FF7B72 } /* Keyword.Type */
+.highlight .ld { color: #79C0FF } /* Literal.Date */
+.highlight .m { color: #A5D6FF } /* Literal.Number */
+.highlight .s { color: #A5D6FF } /* Literal.String */
+.highlight .na { color: #E6EDF3 } /* Name.Attribute */
+.highlight .nb { color: #E6EDF3 } /* Name.Builtin */
+.highlight .nc { color: #F0883E; font-weight: bold } /* Name.Class */
+.highlight .no { color: #79C0FF; font-weight: bold } /* Name.Constant */
+.highlight .nd { color: #D2A8FF; font-weight: bold } /* Name.Decorator */
+.highlight .ni { color: #FFA657 } /* Name.Entity */
+.highlight .ne { color: #F0883E; font-weight: bold } /* Name.Exception */
+.highlight .nf { color: #D2A8FF; font-weight: bold } /* Name.Function */
+.highlight .nl { color: #79C0FF; font-weight: bold } /* Name.Label */
+.highlight .nn { color: #FF7B72 } /* Name.Namespace */
+.highlight .nx { color: #E6EDF3 } /* Name.Other */
+.highlight .py { color: #79C0FF } /* Name.Property */
+.highlight .nt { color: #7EE787 } /* Name.Tag */
+.highlight .nv { color: #79C0FF } /* Name.Variable */
+.highlight .ow { color: #FF7B72; font-weight: bold } /* Operator.Word */
+.highlight .pm { color: #E6EDF3 } /* Punctuation.Marker */
+.highlight .w { color: #6E7681 } /* Text.Whitespace */
+.highlight .mb { color: #A5D6FF } /* Literal.Number.Bin */
+.highlight .mf { color: #A5D6FF } /* Literal.Number.Float */
+.highlight .mh { color: #A5D6FF } /* Literal.Number.Hex */
+.highlight .mi { color: #A5D6FF } /* Literal.Number.Integer */
+.highlight .mo { color: #A5D6FF } /* Literal.Number.Oct */
+.highlight .sa { color: #79C0FF } /* Literal.String.Affix */
+.highlight .sb { color: #A5D6FF } /* Literal.String.Backtick */
+.highlight .sc { color: #A5D6FF } /* Literal.String.Char */
+.highlight .dl { color: #79C0FF } /* Literal.String.Delimiter */
+.highlight .sd { color: #A5D6FF } /* Literal.String.Doc */
+.highlight .s2 { color: #A5D6FF } /* Literal.String.Double */
+.highlight .se { color: #79C0FF } /* Literal.String.Escape */
+.highlight .sh { color: #79C0FF } /* Literal.String.Heredoc */
+.highlight .si { color: #A5D6FF } /* Literal.String.Interpol */
+.highlight .sx { color: #A5D6FF } /* Literal.String.Other */
+.highlight .sr { color: #79C0FF } /* Literal.String.Regex */
+.highlight .s1 { color: #A5D6FF } /* Literal.String.Single */
+.highlight .ss { color: #A5D6FF } /* Literal.String.Symbol */
+.highlight .bp { color: #E6EDF3 } /* Name.Builtin.Pseudo */
+.highlight .fm { color: #D2A8FF; font-weight: bold } /* Name.Function.Magic */
+.highlight .vc { color: #79C0FF } /* Name.Variable.Class */
+.highlight .vg { color: #79C0FF } /* Name.Variable.Global */
+.highlight .vi { color: #79C0FF } /* Name.Variable.Instance */
+.highlight .vm { color: #79C0FF } /* Name.Variable.Magic */
+.highlight .il { color: #A5D6FF } /* Literal.Number.Integer.Long */
+.highlight .l-Scalar, .highlight .l-Scalar-Plain { color:#A5D6FF }
+.highlight .p-Indicator { color:#E6EDF3 }
+.highlight .highlight { background: transparent; }
+</style>
+</head>
+<body>
+<button id="menu-btn" type="button" aria-label="目录">&#9776;</button>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="t">车路通 DSSAD 产品云平台 — 性能优化与压测报告</div>
+      <div class="s">docs/perf/DSSAD云平台性能优化与压测报告.md</div>
+    </div>
+    <nav class="toc">
+<div class="toc">
+<ul>
+<li><a href="#0-文档说明">0 文档说明</a><ul>
+<li><a href="#01-本文回答什么">0.1 本文回答什么</a></li>
+<li><a href="#02-本文不回答什么">0.2 本文不回答什么</a></li>
+<li><a href="#03-测试环境">0.3 测试环境</a></li>
+<li><a href="#04-指标口径读数字前必看">0.4 指标口径（读数字前必看）</a></li>
+<li><a href="#05-术语">0.5 术语</a></li>
+</ul>
+</li>
+<li><a href="#1-性能设计总览">1 性能设计总览</a><ul>
+<li><a href="#11-先说清楚在优化什么形状的负载">1.1 先说清楚：在优化什么形状的负载</a></li>
+<li><a href="#12-八项优化手段与代码落点">1.2 八项优化手段与代码落点</a></li>
+<li><a href="#13-手段与压力的对应关系一图定性">1.3 手段与压力的对应关系（一图定性）</a></li>
+</ul>
+</li>
+<li><a href="#2-压测方案">2 压测方案</a><ul>
+<li><a href="#21-三个实验">2.1 三个实验</a></li>
+<li><a href="#22-负载参数及理由">2.2 负载参数及理由</a></li>
+<li><a href="#23-观测与判定口径">2.3 观测与判定口径</a></li>
+<li><a href="#24-复现命令">2.4 复现命令</a></li>
+</ul>
+</li>
+<li><a href="#3-实测结果一只读接口基线ds-1">3 实测结果一：只读接口基线（DS-1）</a><ul>
+<li><a href="#31-全量数据">3.1 全量数据</a></li>
+<li><a href="#32-吞吐为什么随轮次上升三个预热过程">3.2 吞吐为什么随轮次上升：三个预热过程</a></li>
+<li><a href="#33-分位数解读为什么-p50-和-p99-差一个数量级">3.3 分位数解读：为什么 P50 和 P99 差一个数量级</a></li>
+<li><a href="#34-结论ds-1">3.4 结论（DS-1）</a></li>
+</ul>
+</li>
+<li><a href="#4-实测结果二二级缓存收益ds-2-对照实验">4 实测结果二：二级缓存收益（DS-2 对照实验）</a><ul>
+<li><a href="#41-实验设计">4.1 实验设计</a></li>
+<li><a href="#42-冷启动轮对比缓存价值最清晰的一组">4.2 冷启动轮对比：缓存价值最清晰的一组</a></li>
+<li><a href="#43-预热后轮对比收益为什么被摊薄">4.3 预热后轮对比：收益为什么被摊薄</a></li>
+<li><a href="#44-缓存命中率实测">4.4 缓存命中率实测</a></li>
+<li><a href="#45-为什么实测的缓存收益是下界">4.5 为什么实测的缓存收益是下界</a></li>
+<li><a href="#46-结论ds-2">4.6 结论（DS-2）</a></li>
+</ul>
+</li>
+<li><a href="#5-实测结果三限流与保护能力ds-3">5 实测结果三：限流与保护能力（DS-3）</a><ul>
+<li><a href="#51-设计意图限流器怎么写的">5.1 设计意图：限流器怎么写的</a></li>
+<li><a href="#52-动态验证同一-vin-连打-130-次">5.2 动态验证：同一 VIN 连打 130 次</a></li>
+<li><a href="#53-静态核查零调用点">5.3 静态核查：零调用点</a></li>
+<li><a href="#54-影响评估缺陷-f-01">5.4 影响评估（缺陷 F-01）</a></li>
+<li><a href="#55-修复建议">5.5 修复建议</a></li>
+</ul>
+</li>
+<li><a href="#6-写入链路纸面推演未实测">6 写入链路：纸面推演（未实测）</a><ul>
+<li><a href="#61-缓冲-批量刷盘模型">6.1 缓冲-批量刷盘模型</a></li>
+<li><a href="#62-量化推算1000-台车-1hz">6.2 量化推算：1000 台车 1Hz</a></li>
+<li><a href="#63-参数取舍的三个边界">6.3 参数取舍的三个边界</a></li>
+<li><a href="#64-入站队列与丢弃策略">6.4 入站队列与丢弃策略</a></li>
+<li><a href="#65-本章明确未验证的部分">6.5 本章明确未验证的部分</a></li>
+</ul>
+</li>
+<li><a href="#7-其他优化项的核查结果">7 其他优化项的核查结果</a><ul>
+<li><a href="#71-虚拟线程为什么没做-ab-对比">7.1 虚拟线程：为什么没做 A/B 对比</a></li>
+<li><a href="#72-轨迹两段式降采样">7.2 轨迹两段式降采样</a></li>
+<li><a href="#73-报文留痕采样一行配置省-95">7.3 报文留痕采样：一行配置省 95%</a></li>
+<li><a href="#74-传输与并发配置核查">7.4 传输与并发配置核查</a></li>
+</ul>
+</li>
+<li><a href="#8-瓶颈分析与容量推算">8 瓶颈分析与容量推算</a><ul>
+<li><a href="#81-当前瓶颈排序">8.1 当前瓶颈排序</a></li>
+<li><a href="#82-与数据库容量估算的互证">8.2 与数据库容量估算的互证</a></li>
+<li><a href="#83-三种先崩场景推演">8.3 三种"先崩"场景推演</a></li>
+<li><a href="#84-扩容路径">8.4 扩容路径</a></li>
+</ul>
+</li>
+<li><a href="#9-优化建议按优先级">9 优化建议（按优先级）</a><ul>
+<li><a href="#91-p0-上线前必须解决">9.1 P0 — 上线前必须解决</a></li>
+<li><a href="#92-p1-上线前建议">9.2 P1 — 上线前建议</a></li>
+<li><a href="#93-p2-观察后再做">9.3 P2 — 观察后再做</a></li>
+</ul>
+</li>
+<li><a href="#10-压测工具的缺陷修复记录">10 压测工具的缺陷修复记录</a><ul>
+<li><a href="#101-f-t01鉴权头写错bearer-vs-x-token">10.1 F-T01：鉴权头写错（Bearer vs X-Token）</a></li>
+<li><a href="#102-f-t02token_header-常量未定义">10.2 F-T02：TOKEN_HEADER 常量未定义</a></li>
+<li><a href="#103-f-t03login-函数未实现">10.3 F-T03：login() 函数未实现</a></li>
+<li><a href="#104-f-t04收尾读数用错了令牌变量">10.4 F-T04：收尾读数用错了令牌变量</a></li>
+<li><a href="#105-f-t05并发参数在接口数较少时失效口径问题未修">10.5 F-T05：并发参数在接口数较少时失效（口径问题，未修）</a></li>
+<li><a href="#106-为什么这类缺陷比压测跑不起来危险">10.6 为什么这类缺陷比"压测跑不起来"危险</a></li>
+</ul>
+</li>
+<li><a href="#附录-a-原始产物清单">附录 A 原始产物清单</a></li>
+<li><a href="#附录-b-复现步骤">附录 B 复现步骤</a></li>
+<li><a href="#附录-c-缺陷编号汇总">附录 C 缺陷编号汇总</a><ul>
+<li><a href="#c1-本报告新发现">C.1 本报告新发现</a></li>
+<li><a href="#c2-与既有文档的关系">C.2 与既有文档的关系</a></li>
+</ul>
+</li>
+<li><a href="#附录-d-变更记录">附录 D 变更记录</a></li>
+</ul>
+</div>
+
+    </nav>
+  </aside>
+  <main class="content">
+    <header class="doc-header">
+      <h1>车路通 DSSAD 产品云平台 — 性能优化与压测报告</h1>
+      <div class="doc-meta">
+        <span>源文件 <code>docs/perf/DSSAD云平台性能优化与压测报告.md</code></span>
+        <span>由 scripts/md2html.py 生成</span>
+      </div>
+    </header>
+    <div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文档版本</td>
+<td>v1.0</td>
+</tr>
+<tr>
+<td>编制日期</td>
+<td>2026-09-23</td>
+</tr>
+<tr>
+<td>被测版本</td>
+<td><code>dssad-cloud-platform</code> 1.0.0-SNAPSHOT（<code>target/dssad-cloud-platform.jar</code>）</td>
+</tr>
+<tr>
+<td>测试对象</td>
+<td>平台管理 API（<code>/api/v1/**</code>）中的 6 个查询热点接口</td>
+</tr>
+<tr>
+<td>测试类型</td>
+<td>只读接口基线压测、缓存 A/B 对照压测、限流行为验证</td>
+</tr>
+<tr>
+<td>压测工具</td>
+<td><code>cloud-platform-server/perf/load_test.py</code>、<code>rate_limit_probe.py</code>（自研，零第三方依赖）</td>
+</tr>
+<tr>
+<td>运行时</td>
+<td>JDK 21.0.10 / Spring Boot 3.5.16 / H2（本地）</td>
+</tr>
+<tr>
+<td>数据规模</td>
+<td>1 台车 + 1 起事故（足以验证链路，不足以复现生产数据量——见 4.5）</td>
+</tr>
+<tr>
+<td>原始产物</td>
+<td><code>cloud-platform-server/perf/*.txt</code>（全文输出留档，本文所有数字均可追溯）</td>
+</tr>
+<tr>
+<td>关联文档</td>
+<td>《接口文档》《数据库设计说明书》《详细设计说明书》</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>本文的定位</strong>：只写<strong>实测到的事实</strong>。凡未实测的内容（写入链路吞吐、Redis 二级缓存、MySQL 真实数据量下的表现）一律显式标注为「未验证」并给出推演依据，不把推演写成结论。本文也如实记录了三处<strong>本可以污染全部数据</strong>的压测工具缺陷（第 10 章）。</p>
+</blockquote>
+<hr>
+<h2 id="0-文档说明">0 文档说明<a class="headerlink" href="#0-文档说明" title="永久链接">#</a></h2>
+<h3 id="01-本文回答什么">0.1 本文回答什么<a class="headerlink" href="#01-本文回答什么" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>问题</th>
+<th>对应章节</th>
+<th>结论强度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>只读接口在本机跑多快？分位数是多少？</td>
+<td>第 3 章</td>
+<td><strong>实测</strong></td>
+</tr>
+<tr>
+<td>二级缓存到底带来多少收益？</td>
+<td>第 4 章</td>
+<td><strong>实测（A/B 对照）</strong></td>
+</tr>
+<tr>
+<td>平台的限流保护真的生效吗？</td>
+<td>第 5 章</td>
+<td><strong>实测 + 静态核查</strong></td>
+</tr>
+<tr>
+<td>千车规模下写入链路撑得住吗？</td>
+<td>第 6 章</td>
+<td><strong>推演（未实测）</strong></td>
+</tr>
+<tr>
+<td>虚拟线程、抽稀、采样这些优化有没有用？</td>
+<td>第 7 章</td>
+<td><strong>核查（含未验证项）</strong></td>
+</tr>
+<tr>
+<td>第一个会崩的地方在哪？</td>
+<td>第 8 章</td>
+<td><strong>推演，与数据库容量估算互证</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="02-本文不回答什么">0.2 本文不回答什么<a class="headerlink" href="#02-本文不回答什么" title="永久链接">#</a></h3>
+<ul>
+<li><strong>不作为生产性能承诺</strong>。本机为单机 Windows 开发环境、H2 数据库、1 台车数据量，与「8 核服务器 + MySQL + 1000 台车」之间不存在可线性外推的关系。本文的价值在于<strong>暴露量级与相对关系</strong>（缓存收益、长尾形状、防护缺口），而不是给出生产 QPS。</li>
+<li><strong>不覆盖前端渲染性能</strong>。前端 Vue3 大屏的首屏与地图渲染耗时需另做浏览器侧测量（Performance API / Lighthouse）。</li>
+<li><strong>不覆盖 MQTT 真实吞吐</strong>。本地 <code>dssad.mqtt.enabled=false</code>，无 Broker，报文链路的处理耗时未实测（第 6.5 节列明）。</li>
+</ul>
+<h3 id="03-测试环境">0.3 测试环境<a class="headerlink" href="#03-测试环境" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作系统</td>
+<td>Windows 11 23H2（10.0.22631.6199）</td>
+</tr>
+<tr>
+<td>CPU / 内存</td>
+<td>开发机笔记本（单机同时运行被测服务与压测客户端）</td>
+</tr>
+<tr>
+<td>JDK</td>
+<td>21.0.10（<code>C:\Program Files\Java\jdk-21.0.10</code>）</td>
+</tr>
+<tr>
+<td>服务启动</td>
+<td><code>java -jar target/dssad-cloud-platform.jar --spring.profiles.active=local</code></td>
+</tr>
+<tr>
+<td>数据库</td>
+<td>数据集 DS-1：H2 文件库；DS-2：H2 内存库（<code>MODE=MySQL</code>）</td>
+</tr>
+<tr>
+<td>缓存</td>
+<td>DS-1 / DS-2-B：<code>TwoLevelCacheManager</code>（L1 Caffeine，L2 未启用）；DS-2-A：<code>NoOpCacheManager</code></td>
+</tr>
+<tr>
+<td>执行方式</td>
+<td>压测客户端与服务同机，走 <code>127.0.0.1</code>（已排除系统代理干扰）</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>同机压测的固有限制</strong>：压测客户端与服务争抢同一份 CPU 与内存，测得的延迟包含客户端的调度开销。因此本文的绝对值偏保守（偏低），但 A/B 对照的<strong>相对差异</strong>仍然成立——两组实验使用完全相同的客户端与参数。</p>
+</blockquote>
+<h3 id="04-指标口径读数字前必看">0.4 指标口径（读数字前必看）<a class="headerlink" href="#04-指标口径读数字前必看" title="永久链接">#</a></h3>
+<p><strong>口径 1：脚本输出的 QPS 是「单接口吞吐」，不是「系统总吞吐」。</strong></p>
+<p><code>load_test.py</code> 每个接口独立统计 <code>QPS = 该接口样本数 / 本轮墙钟</code>。6 个接口同时施加负载时，<strong>系统总吞吐 ≈ 输出值 × 6</strong>。例如第 6 轮的 <code>QPS 196.1</code> 对应约 <strong>1180 req/s</strong>。若不做此换算，会严重低估平台能力。</p>
+<p><strong>口径 2：<code>--concurrency 13</code> 的实际并发是 6，不是 13。</strong></p>
+<p>本轮采集所用脚本的任务模型是「每个接口 1 个 worker，串行发 N 次请求」。当接口数为 6 时，线程池中只有 6 个任务在跑，<code>max_workers=13</code> 的余量用不上。因此<strong>实际在途请求数 = min(接口数, 并发数) = 6</strong>。这一点在文档中如实标注（工具缺陷 F-T05），下一版脚本将按并发数拆分 worker。</p>
+<p><strong>口径 3：业务成败以业务码为准，不以 HTTP 状态码为准。</strong></p>
+<p>平台在 HTTP 200 的响应体内用业务码表达失败（如 <code>2001</code> 未授权、<code>3001</code> 车辆不存在）。鉴权失败路径<strong>比正常查询更快</strong>，只看 HTTP 状态码会把「全部被拒」误判成「性能极佳」。脚本已按 <code>code ∈ {0000}</code> 判定成功。</p>
+<p><strong>口径 4：看分位数，不看均值。</strong></p>
+<p>均值会被大量极快请求拉平，掩盖长尾。本报告同时给出 P50 / P95 / P99。其中 P50 反映"绝大多数请求走的路径"（缓存命中与未命中会明显分层），P95/P99 主要由 JVM GC 与操作系统调度抖动决定。</p>
+<h3 id="05-术语">0.5 术语<a class="headerlink" href="#05-术语" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>术语</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L1 / L2</td>
+<td>一级缓存（进程内 Caffeine）/ 二级缓存（Redis，跨实例共享）</td>
+</tr>
+<tr>
+<td>墙钟（wall）</td>
+<td>一整轮压测从开始到结束的真实耗时</td>
+</tr>
+<tr>
+<td>回源</td>
+<td>缓存未命中，请求穿透到数据库查询</td>
+</tr>
+<tr>
+<td>穿透</td>
+<td>同「回源」</td>
+</tr>
+<tr>
+<td>冷启动轮</td>
+<td>第 1 轮：JIT 未预热、连接池未建立、缓存为空</td>
+</tr>
+<tr>
+<td>预热后轮</td>
+<td>第 2 轮及之后</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="1-性能设计总览">1 性能设计总览<a class="headerlink" href="#1-性能设计总览" title="永久链接">#</a></h2>
+<h3 id="11-先说清楚在优化什么形状的负载">1.1 先说清楚：在优化什么形状的负载<a class="headerlink" href="#11-先说清楚在优化什么形状的负载" title="永久链接">#</a></h3>
+<p>性能优化必须先明确压力形状，否则容易把力气花在不存在的问题上。本平台的负载有<strong>两个截然不同的方向</strong>：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>方向</th>
+<th>压力形状</th>
+<th>量级</th>
+<th>设计约束</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>读（查询侧）</strong></td>
+<td>N 个前端 × 每 10 秒 × 4 个统计接口</td>
+<td>并发低（数十）、<strong>重复度极高</strong>（同一份统计被反复读）</td>
+<td>要求<strong>低延迟 + 高重复读的成本摊薄</strong></td>
+</tr>
+<tr>
+<td><strong>写（接入侧）</strong></td>
+<td>车端 1Hz 位置报 + 60s 状态报</td>
+<td>1000 台车 ≈ <strong>1000 条/秒</strong>、<strong>8640 万行/天</strong></td>
+<td>要求<strong>吞吐 + 不阻塞 MQTT 回调线程</strong></td>
+</tr>
+<tr>
+<td><strong>读（取证侧）</strong></td>
+<td>单次查询跨度可达 1 小时</td>
+<td>单车单小时 3600 点，大量历史数据</td>
+<td>要求<strong>降采样 + 传输体积控制</strong></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>关键判断：本平台的性能矛盾不在"读的 QPS 有多高"，而在"写的行数有多大"。</strong>
+读侧哪怕 100 个前端同时刷新，也只是每秒几百次重复查询——加一层缓存即可消解；
+写侧每天 8640 万行是<strong>物理量</strong>，只能用「批量写 + 保留期」这条路径解决，没有缓存可加。</p>
+</blockquote>
+<p>这个判断直接决定了下面两项工作量的分配：<strong>读侧靠 4 类手段（缓存/降采样/压缩/分页），写侧靠 3 类手段（缓冲批写/索引/保留期）</strong>。</p>
+<h3 id="12-八项优化手段与代码落点">1.2 八项优化手段与代码落点<a class="headerlink" href="#12-八项优化手段与代码落点" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>手段</th>
+<th>代码落点</th>
+<th>解决的压力</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>二级缓存</strong>（L1 Caffeine + L2 Redis）+ 按缓存名独立 TTL</td>
+<td><code>common/cache/TwoLevelCache</code>、<code>TwoLevelCacheManager</code>、<code>config/CacheConfig</code>、<code>CacheProperties</code></td>
+<td>读侧高重复查询</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>缓冲 + 定时批量落库</strong>（1s 刷盘、5000/批）</td>
+<td><code>service/TelemetryService</code></td>
+<td>写侧 1000 条/秒</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>JDBC 批量参数</strong>（<code>batch_size</code>、<code>rewriteBatchedStatements</code>）</td>
+<td><code>application.yml</code> / <code>application-prod.yml</code></td>
+<td>写侧单条 INSERT 往返</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>两段式轨迹降采样</strong>（SQL 时间桶粗筛 + Douglas-Peucker 抽稀）</td>
+<td><code>service/TrackQueryService</code>、<code>common/util/TrackSimplifier</code></td>
+<td>取证侧大跨度查询</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>入站队列 + 独立消费线程</strong>（虚拟线程）</td>
+<td><code>mqtt/core/InboundMessageQueue</code>、<code>MqttInboundWorker</code></td>
+<td>保护 MQTT 心跳、故障隔离</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>遥测保留期清理</strong>（每天 03:30 分批 DELETE）</td>
+<td><code>service/TelemetryRetentionService</code></td>
+<td>写侧无限增长</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>报文留痕采样</strong>（full / sampled / event-only）</td>
+<td><code>dssad.audit.mode</code>、<code>MqttAuditService</code></td>
+<td>审计表体积</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>HTTP 压缩 + 分页上限 + 线程池/连接池配置</strong></td>
+<td><code>application*.yml</code></td>
+<td>传输体积、并发上限</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="13-手段与压力的对应关系一图定性">1.3 手段与压力的对应关系（一图定性）<a class="headerlink" href="#13-手段与压力的对应关系一图定性" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>压力源</th>
+<th>主要手段</th>
+<th>次要手段</th>
+<th>本次是否实测</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>大屏 10 秒刷新风暴</td>
+<td>①二级缓存</td>
+<td>⑧HTTP 压缩</td>
+<td>✅ 第 4 章</td>
+</tr>
+<tr>
+<td>千车 1Hz 写入</td>
+<td>②缓冲批写</td>
+<td>③JDBC 批量、⑥保留期</td>
+<td>❌ 第 6 章推演</td>
+</tr>
+<tr>
+<td>大跨度轨迹查询</td>
+<td>④两段式降采样</td>
+<td>⑧分页上限</td>
+<td>❌ 第 7.2 节代码核查</td>
+</tr>
+<tr>
+<td>MQTT 回调阻塞</td>
+<td>⑤队列 + 独立消费线程</td>
+<td>—</td>
+<td>❌ 无 Broker</td>
+</tr>
+<tr>
+<td>车端异常高频上报</td>
+<td>限流（<strong>实测未生效</strong>）</td>
+<td>⑤队列容量兜底</td>
+<td>✅ 第 5 章（反面结论）</td>
+</tr>
+<tr>
+<td>磁盘无限增长</td>
+<td>⑥保留期</td>
+<td>⑦采样</td>
+<td>❌ 由《数据库设计说明书》覆盖</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="2-压测方案">2 压测方案<a class="headerlink" href="#2-压测方案" title="永久链接">#</a></h2>
+<h3 id="21-三个实验">2.1 三个实验<a class="headerlink" href="#21-三个实验" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>编号</th>
+<th>实验</th>
+<th>目的</th>
+<th>负载</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>DS-1</strong></td>
+<td>只读接口基线</td>
+<td>摸清现状：多快、多稳、长尾多长</td>
+<td>6 接口 × 120 请求 × 6 轮，并发 13（实际 6）</td>
+</tr>
+<tr>
+<td><strong>DS-2</strong></td>
+<td>缓存 A/B 对照</td>
+<td>量化缓存收益（唯一能证明缓存"有用"的方式）</td>
+<td>同负载，A 关缓存 / B 开缓存，各 4 轮 × 200 请求</td>
+</tr>
+<tr>
+<td><strong>DS-3</strong></td>
+<td>限流行为验证</td>
+<td>验证防护能力是否真的生效</td>
+<td>同一 VIN 连续 130 次请求（阈值 100 次/分钟）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>为什么缓存收益必须做 A/B 对照？</strong>
+只跑一遍「开了缓存很快」得不出结论——快可能是因为 JIT 预热、连接池预热、H2 内存库本身快。<strong>只有把「缓存」这一个变量单独打开/关闭，其余完全相同，差值才有归因意义。</strong> DS-2 的两组实例由同一个 jar、同一份配置启动，唯一的差别是启动参数：</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># A 组：关闭本平台缓存管理器 + 关闭 Spring 缓存（NoOp）</span>
+--dssad.cache.enabled<span class="o">=</span><span class="nb">false</span><span class="w"> </span>--spring.cache.type<span class="o">=</span>none
+<span class="c1"># B 组：本地默认（二级缓存管理器生效 → L1 Caffeine）</span>
+（不加参数）
+</code></pre></div>
+
+<h3 id="22-负载参数及理由">2.2 负载参数及理由<a class="headerlink" href="#22-负载参数及理由" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>参数</th>
+<th>取值</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>并发</td>
+<td>13（实际 6）</td>
+<td>约等于「十来个运营人员同时开着大屏与列表页」；受工具模型限制实际为 6（口径 2）</td>
+</tr>
+<tr>
+<td>每接口请求数</td>
+<td>120（DS-1）/ 200（DS-2）</td>
+<td>足以让 P99 落在真实样本上；200 时 P99 由第 2 个最慢的请求决定，波动可控</td>
+</tr>
+<tr>
+<td>轮数</td>
+<td>6 / 4</td>
+<td>第 1 轮冷启动，后续观察收敛；6 轮可见吞吐爬升全过程</td>
+</tr>
+<tr>
+<td>超时</td>
+<td>10s</td>
+<td>远大于观测值（&lt;100ms），避免超时干扰统计</td>
+</tr>
+<tr>
+<td>接口选择</td>
+<td>6 个查询热点</td>
+<td>与前端大屏、列表页一一对应；<strong>全部为 GET，对预发环境安全</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="23-观测与判定口径">2.3 观测与判定口径<a class="headerlink" href="#23-观测与判定口径" title="永久链接">#</a></h3>
+<ul>
+<li><strong>成功判定</strong>：<code>HTTP 2xx</code> <strong>且</strong> 业务码为 <code>0000</code>。</li>
+<li><strong>延迟统计</strong>：仅统计成功样本（失败样本的耗时不代表业务能力）。</li>
+<li><strong>分位数算法</strong>：最近秩法（<code>int(round(p/100 × n + 0.5)) - 1</code>），比线性插值保守，小样本下不会被单点平滑掉。</li>
+<li><strong>缓存指标</strong>：读 <code>/api/v1/monitor/cache</code>（平台把 L1/L2 命中数、穿透数、命中率暴露成接口，因为<strong>缓存失效是静默的</strong>：命中率掉到 0 时接口仍返回正确结果，只表现为数据库压力上升）。</li>
+</ul>
+<h3 id="24-复现命令">2.4 复现命令<a class="headerlink" href="#24-复现命令" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># 起服务（本地 profile，默认端口 8080）</span>
+java<span class="w"> </span>-jar<span class="w"> </span>target/dssad-cloud-platform.jar<span class="w"> </span>--spring.profiles.active<span class="o">=</span><span class="nb">local</span>
+
+<span class="c1"># 基线压测（脚本自动登录换令牌）</span>
+python<span class="w"> </span>perf/load_test.py<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:8080<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--concurrency<span class="w"> </span><span class="m">13</span><span class="w"> </span>--rounds<span class="w"> </span><span class="m">6</span><span class="w"> </span>--requests-per-endpoint<span class="w"> </span><span class="m">120</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--username<span class="w"> </span>admin<span class="w"> </span>--password<span class="w"> </span><span class="s1">'&lt;口令&gt;'</span>
+
+<span class="c1"># 限流探针（同一 VIN 连打 130 次）</span>
+python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:8080<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--vin<span class="w"> </span>&lt;真实VIN&gt;<span class="w"> </span>--count<span class="w"> </span><span class="m">130</span><span class="w"> </span>--username<span class="w"> </span>admin<span class="w"> </span>--password<span class="w"> </span><span class="s1">'&lt;口令&gt;'</span>
+</code></pre></div>
+
+<hr>
+<h2 id="3-实测结果一只读接口基线ds-1">3 实测结果一：只读接口基线（DS-1）<a class="headerlink" href="#3-实测结果一只读接口基线ds-1" title="永久链接">#</a></h2>
+<p><strong>环境</strong>：H2 文件库（1 台车 + 1 起事故）、缓存启用（L1）、6 接口 × 120 请求 × 6 轮。</p>
+<h3 id="31-全量数据">3.1 全量数据<a class="headerlink" href="#31-全量数据" title="永久链接">#</a></h3>
+<p><strong>第 1 轮（冷启动）— 墙钟 1.09s</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>接口</th>
+<th>样本</th>
+<th>失败</th>
+<th>单接口 QPS</th>
+<th>均值</th>
+<th>P50</th>
+<th>P95</th>
+<th>P99</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>总览大屏</td>
+<td>120</td>
+<td>0</td>
+<td>110.3</td>
+<td>3.9ms</td>
+<td>2.7ms</td>
+<td>5.7ms</td>
+<td>19.7ms</td>
+</tr>
+<tr>
+<td>事故趋势</td>
+<td>120</td>
+<td>0</td>
+<td>110.3</td>
+<td>3.4ms</td>
+<td>2.7ms</td>
+<td>4.3ms</td>
+<td>7.0ms</td>
+</tr>
+<tr>
+<td>故障分类分布</td>
+<td>120</td>
+<td>0</td>
+<td>110.3</td>
+<td>3.4ms</td>
+<td>2.7ms</td>
+<td>5.0ms</td>
+<td>12.8ms</td>
+</tr>
+<tr>
+<td>车辆列表</td>
+<td>120</td>
+<td>0</td>
+<td>110.3</td>
+<td>9.0ms</td>
+<td>5.5ms</td>
+<td>16.7ms</td>
+<td>23.9ms</td>
+</tr>
+<tr>
+<td>链路监控</td>
+<td>120</td>
+<td>0</td>
+<td>110.3</td>
+<td>3.4ms</td>
+<td>2.7ms</td>
+<td>5.7ms</td>
+<td>17.1ms</td>
+</tr>
+<tr>
+<td>缓存与限流</td>
+<td>120</td>
+<td>0</td>
+<td>110.3</td>
+<td>3.2ms</td>
+<td>2.7ms</td>
+<td>5.2ms</td>
+<td>17.1ms</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>第 6 轮（收敛）— 墙钟 0.61s</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>接口</th>
+<th>样本</th>
+<th>失败</th>
+<th>单接口 QPS</th>
+<th>均值</th>
+<th>P50</th>
+<th>P95</th>
+<th>P99</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>总览大屏</td>
+<td>120</td>
+<td>0</td>
+<td>196.1</td>
+<td>1.7ms</td>
+<td><strong>1.4ms</strong></td>
+<td>2.1ms</td>
+<td>17.2ms</td>
+</tr>
+<tr>
+<td>事故趋势</td>
+<td>120</td>
+<td>0</td>
+<td>196.1</td>
+<td>1.8ms</td>
+<td><strong>1.4ms</strong></td>
+<td>2.3ms</td>
+<td>14.5ms</td>
+</tr>
+<tr>
+<td>故障分类分布</td>
+<td>120</td>
+<td>0</td>
+<td>196.1</td>
+<td>1.8ms</td>
+<td><strong>1.4ms</strong></td>
+<td>2.2ms</td>
+<td>15.5ms</td>
+</tr>
+<tr>
+<td>车辆列表</td>
+<td>120</td>
+<td>0</td>
+<td>196.1</td>
+<td>5.1ms</td>
+<td><strong>2.0ms</strong></td>
+<td>16.3ms</td>
+<td>16.9ms</td>
+</tr>
+<tr>
+<td>链路监控</td>
+<td>120</td>
+<td>0</td>
+<td>196.1</td>
+<td>1.7ms</td>
+<td><strong>1.3ms</strong></td>
+<td>2.3ms</td>
+<td>17.2ms</td>
+</tr>
+<tr>
+<td>缓存与限流</td>
+<td>120</td>
+<td>0</td>
+<td>196.1</td>
+<td>1.9ms</td>
+<td><strong>1.4ms</strong></td>
+<td>2.7ms</td>
+<td>17.4ms</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>中间轮次的墙钟与吞吐</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>轮次</th>
+<th>墙钟</th>
+<th>单接口 QPS</th>
+<th>系统总吞吐（×6，推算）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>1.09s</td>
+<td>110.3</td>
+<td>≈ 660 req/s</td>
+</tr>
+<tr>
+<td>2</td>
+<td>1.01s</td>
+<td>118.7</td>
+<td>≈ 712 req/s</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1.12s</td>
+<td>107.0</td>
+<td>≈ 642 req/s</td>
+</tr>
+<tr>
+<td>4</td>
+<td>0.95s</td>
+<td>125.9</td>
+<td>≈ 755 req/s</td>
+</tr>
+<tr>
+<td>5</td>
+<td>0.62s</td>
+<td>193.8</td>
+<td>≈ 1163 req/s</td>
+</tr>
+<tr>
+<td>6</td>
+<td>0.61s</td>
+<td>196.1</td>
+<td>≈ 1180 req/s</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="32-吞吐为什么随轮次上升三个预热过程">3.2 吞吐为什么随轮次上升：三个预热过程<a class="headerlink" href="#32-吞吐为什么随轮次上升三个预热过程" title="永久链接">#</a></h3>
+<p>第 1 轮 → 第 6 轮，P50 从 2.7ms 降到 1.4ms（<strong>-48%</strong>），吞吐提升 <strong>+78%</strong>。这不是"越跑越快"的玄学，而是三个可以明确归因的预热：</p>
+<ol>
+<li><strong>JIT 预热</strong>（贡献最大）。前几百次调用以解释执行运行，热点方法被 C2 编译后才是真实性能。第 3 轮出现轻微回落（107.0）正是编译线程与业务线程争抢 CPU 的表现，第 5 轮完成后趋于稳定。</li>
+<li><strong>连接池与数据库预热</strong>。HikariCP 从 <code>minimum-idle</code> 扩张到实际需要的大小，H2 的页缓存被填充。</li>
+<li><strong>缓存预热</strong>。第 1 轮每个缓存名发生 1 次穿透（回源），之后全部命中（见 4.4）。</li>
+</ol>
+<blockquote>
+<p><strong>工程含义</strong>：生产环境的容器如果没有预热（或流量入口一上来就全量），<strong>首批用户会遇到比稳态高约 1 倍的延迟</strong>。建议发布后先由探针打一轮热点接口再放开流量，或启用 K8s <code>startupProbe</code> + 预热脚本。</p>
+</blockquote>
+<h3 id="33-分位数解读为什么-p50-和-p99-差一个数量级">3.3 分位数解读：为什么 P50 和 P99 差一个数量级<a class="headerlink" href="#33-分位数解读为什么-p50-和-p99-差一个数量级" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>现象</th>
+<th>观测</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P50 稳定在 1.3~1.4ms</td>
+<td>全部 6 接口</td>
+<td>缓存命中路径：<code>Caffeine.getIfPresent</code> + 序列化，纯内存操作</td>
+</tr>
+<tr>
+<td>P99 稳定在 14~28ms</td>
+<td>全部 6 接口，且与轮次无明显相关</td>
+<td><strong>不在业务代码里</strong>：JVM young GC 停顿、Windows 线程调度、同机压测客户端抢占 CPU。每轮 720 个样本，P99 只由约 7 个样本决定，极易被单次 GC 拉高</td>
+</tr>
+<tr>
+<td>车辆列表 P50 显著高于其他接口</td>
+<td>2.0ms vs 1.4ms；P95 达 16.3ms</td>
+<td>它是<strong>唯一不走缓存</strong>的接口：<code>JpaSpecificationExecutor</code> 动态条件 + 分页 + 一次 <code>count</code> 查询，至少 2 次数据库往返</td>
+</tr>
+<tr>
+<td>每轮 P95 波动可达 ±40%</td>
+<td>如总览大屏 P95：5.7 → 6.7 → 6.3 → 20.7 → 3.9 → 2.1ms</td>
+<td>同上，长尾由环境噪声主导。<strong>因此本报告的任何结论都不建立在单独一轮的 P95 之上</strong>——第 4 轮的 P95 飙高（20.7ms）与第 5 轮的回落（3.9ms）不是性能变化，而是噪声</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>可复现的观测模式</strong>：第 4 轮所有接口的 P95 同时跳到 20~24ms，说明这是一次全系统级的停顿（GC 或系统调度），而不是某个接口的问题。<strong>跨接口同时跳变 = 环境噪声；单接口孤立跳变 = 该接口的问题。</strong> 这是判断"性能回归 vs 环境抖动"最快的方法。</p>
+</blockquote>
+<h3 id="34-结论ds-1">3.4 结论（DS-1）<a class="headerlink" href="#34-结论ds-1" title="永久链接">#</a></h3>
+<ul>
+<li>6 个查询热点接口在稳态下 <strong>P50 1.3~2.0ms、P95 2.1~16.3ms</strong>，无失败样本，无错误码。</li>
+<li>系统总吞吐 ≈ <strong>1180 req/s</strong>（稳态），远超大屏刷新的实际需要（100 个前端 × 每 10 秒 × 4 接口 = <strong>40 req/s</strong>），<strong>读侧余量约 30 倍</strong>。</li>
+<li>唯一较慢的接口是「车辆列表」（不走缓存），但其 P50 2.0ms 仍在可接受范围。</li>
+<li>长尾（P99）由 JVM/OS 环境噪声主导，不是平台代码的瓶颈。</li>
+</ul>
+<hr>
+<h2 id="4-实测结果二二级缓存收益ds-2-对照实验">4 实测结果二：二级缓存收益（DS-2 对照实验）<a class="headerlink" href="#4-实测结果二二级缓存收益ds-2-对照实验" title="永久链接">#</a></h2>
+<h3 id="41-实验设计">4.1 实验设计<a class="headerlink" href="#41-实验设计" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项</th>
+<th>A 组（对照）</th>
+<th>B 组（实验）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>启动参数</td>
+<td><code>--dssad.cache.enabled=false --spring.cache.type=none</code></td>
+<td>无（本地默认）</td>
+</tr>
+<tr>
+<td>缓存管理器</td>
+<td><code>NoOpCacheManager</code>（每次请求都回源）</td>
+<td><code>TwoLevelCacheManager</code>（L1 Caffeine）</td>
+</tr>
+<tr>
+<td>监控端点报告</td>
+<td><code>模式 = NoOpCacheManager</code></td>
+<td><code>模式 = L1(Caffeine)</code></td>
+</tr>
+<tr>
+<td>数据库</td>
+<td>H2 <strong>内存库</strong> <code>perfA</code></td>
+<td>H2 <strong>内存库</strong> <code>perfB</code></td>
+</tr>
+<tr>
+<td>数据量</td>
+<td>1 台车 + 1 起事故（注入同量场景）</td>
+<td>1 台车 + 1 起事故（同 VIN、同场景）</td>
+</tr>
+<tr>
+<td>负载</td>
+<td>6 接口 × 200 请求 × 4 轮</td>
+<td>完全相同</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>为什么用内存库而不是同一个文件库？</strong> 第一次尝试让两个实例共享 H2 文件库（<code>AUTO_SERVER=TRUE</code>），结果先启动的实例占住文件后<strong>第二个实例的 DataSource 初始化失败</strong>（<code>Unable to determine Dialect without JDBC metadata</code>），对照实验直接作废。改用各自独立的内存库后两个实例均正常启动——这也侧面说明：<strong>同一个 H2 文件库不要被多个 JVM 同时打开，即使 <code>AUTO_SERVER=TRUE</code> 也不可靠。</strong></p>
+<h3 id="42-冷启动轮对比缓存价值最清晰的一组">4.2 冷启动轮对比：缓存价值最清晰的一组<a class="headerlink" href="#42-冷启动轮对比缓存价值最清晰的一组" title="永久链接">#</a></h3>
+<p>第 1 轮两组都毫无预热（JIT 冷、连接池冷、缓存空），是归因最干净的一组：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>A 组（无缓存）</th>
+<th>B 组（有缓存）</th>
+<th>变化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>整轮墙钟</strong></td>
+<td>4.00s</td>
+<td><strong>2.07s</strong></td>
+<td><strong>-48%</strong></td>
+</tr>
+<tr>
+<td>单接口 QPS</td>
+<td>50.0</td>
+<td><strong>96.8</strong></td>
+<td><strong>+94%</strong></td>
+</tr>
+<tr>
+<td>总览大屏 P50</td>
+<td>20.1ms</td>
+<td><strong>3.1ms</strong></td>
+<td><strong>-85%（6.5 倍）</strong></td>
+</tr>
+<tr>
+<td>事故趋势 P50</td>
+<td>15.9ms</td>
+<td><strong>3.1ms</strong></td>
+<td><strong>-81%（5.1 倍）</strong></td>
+</tr>
+<tr>
+<td>故障分类分布 P50</td>
+<td>3.9ms</td>
+<td><strong>3.1ms</strong></td>
+<td>-21%</td>
+</tr>
+<tr>
+<td>车辆列表 P50</td>
+<td>5.0ms</td>
+<td>6.7ms</td>
+<td>+34%（<strong>该接口不走缓存</strong>，差异来自 B 组负载更密）</td>
+</tr>
+<tr>
+<td>链路监控 P50</td>
+<td>2.8ms</td>
+<td>3.2ms</td>
+<td>+14%（该接口直读内存计数器，本来就不查库）</td>
+</tr>
+<tr>
+<td>缓存与限流 P50</td>
+<td>2.8ms</td>
+<td>3.1ms</td>
+<td>+11%（同上）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>逐条解读</strong>：</p>
+<ul>
+<li><strong>总览大屏与事故趋势是缓存的最大受益者</strong>。这两个接口一个要横跨 12 个仓储做十几次 COUNT，另一个是「逐日窗口计数」（days=7 时 14 次 COUNT），在无缓存时首轮直接 20.1ms / 15.9ms；缓存命中后降到 3.1ms。这正是设计意图（<code>DashboardService</code> 类注释里写明"全平台查询密度最高的入口"）。</li>
+<li><strong>车辆列表与链路监控不受影响，这是预期的</strong>。前者不走 <code>@Cacheable</code>，后者直接读 <code>InboundMessageQueue.size()</code> 等内存计数器。它们的 P50 在 B 组略高，是因为 B 组整轮墙钟更短、瞬时压力更集中——<strong>这是一个有用的反证：如果这两个接口也在 B 组大幅变快，说明测量的不是缓存效应，而是别的干扰因素。</strong></li>
+<li><strong>故障分类分布收益最小（-21%）</strong>。它只查 <code>t_fault_item</code> 一张小表，数据量极小，缓存省下的时间有限。<strong>缓存收益与"回源成本"成正比，与"数据量"成正比</strong>——这条在 4.5 节会反向用于说明为什么实测值偏低。</li>
+</ul>
+<h3 id="43-预热后轮对比收益为什么被摊薄">4.3 预热后轮对比：收益为什么被摊薄<a class="headerlink" href="#43-预热后轮对比收益为什么被摊薄" title="永久链接">#</a></h3>
+<p>第 4 轮（A 组也已充分预热）：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>A 组（无缓存）</th>
+<th>B 组（有缓存）</th>
+<th>变化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>整轮墙钟</td>
+<td>1.82s</td>
+<td>1.67s</td>
+<td>-8%</td>
+</tr>
+<tr>
+<td>单接口 QPS</td>
+<td>110.0</td>
+<td>119.6</td>
+<td>+9%</td>
+</tr>
+<tr>
+<td>总览大屏 P50</td>
+<td>3.9ms</td>
+<td><strong>1.7ms</strong></td>
+<td>-56%</td>
+</tr>
+<tr>
+<td>事故趋势 P50</td>
+<td>2.2ms</td>
+<td>2.3ms</td>
+<td>≈0</td>
+</tr>
+<tr>
+<td>故障分类分布 P50</td>
+<td>1.8ms</td>
+<td>1.6ms</td>
+<td>-11%</td>
+</tr>
+<tr>
+<td>车辆列表 P50</td>
+<td>2.0ms</td>
+<td>2.6ms</td>
+<td>+30%</td>
+</tr>
+</tbody>
+</table></div>
+<p>A 组第 4 轮的总览大屏 P50 从首轮 20.1ms 掉到 3.9ms——<strong>这不是缓存带来的，是 JIT 与 H2 内存库预热带来的</strong>。当数据库查询本身只要 1~2ms 时，缓存能省下的绝对时间自然变小。</p>
+<blockquote>
+<p><strong>这就是为什么"缓存收益"这个数字必须标注前提</strong>：在 H2 内存库 + 1 行数据的极端条件下，回源成本几乎为零，缓存收益被压缩到下界。<strong>第 4 轮的数据不代表缓存在生产无用，只代表"本机小数据量下无用"。</strong></p>
+</blockquote>
+<h3 id="44-缓存命中率实测">4.4 缓存命中率实测<a class="headerlink" href="#44-缓存命中率实测" title="永久链接">#</a></h3>
+<p>DS-1 压测结束时读 <code>/api/v1/monitor/cache</code>：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>缓存名</th>
+<th>形态</th>
+<th>L1 命中</th>
+<th>L2 命中</th>
+<th>穿透</th>
+<th>命中率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dashboardOverview</code></td>
+<td>仅 L1</td>
+<td>719</td>
+<td>0</td>
+<td>1</td>
+<td><strong>99.86%</strong></td>
+</tr>
+<tr>
+<td><code>dashboardTrend</code></td>
+<td>仅 L1</td>
+<td>719</td>
+<td>0</td>
+<td>1</td>
+<td><strong>99.86%</strong></td>
+</tr>
+<tr>
+<td><code>dashboardFaultCategory</code></td>
+<td>仅 L1</td>
+<td>719</td>
+<td>0</td>
+<td>1</td>
+<td><strong>99.86%</strong></td>
+</tr>
+<tr>
+<td><code>dashboardFaultVehicles</code></td>
+<td>仅 L1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0%（本轮未调用）</td>
+</tr>
+<tr>
+<td><strong>合计</strong></td>
+<td></td>
+<td><strong>2157</strong></td>
+<td>0</td>
+<td><strong>3</strong></td>
+<td><strong>99.86%</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>99.86% = 719 命中 / 1 穿透</strong>，怎么读：</p>
+<ul>
+<li>720 次请求 = 6 轮 × 120 次。<strong>6 轮里只有 3 次穿透</strong>，意味着每个缓存名在 6 轮中只回源了 1 次 —— 即<strong>第 1 轮的第 1 次请求</strong>。</li>
+<li>原因：本地 profile 的 <code>dssad.cache.l1-default-ttl-seconds: 10</code>，而每轮墙钟仅 0.6~1.1 秒。<strong>6 轮总计不到 7 秒，全部落在同一个 TTL 窗口内</strong>，因此缓存一次都没过期。</li>
+<li><code>dashboardFaultVehicles</code> 命中为 0 是正常的：压测的 6 个接口里没有调用它的那个（<code>/api/v1/dashboard/fault-vehicles</code>），它被声明并预创建，但没被访问。</li>
+</ul>
+<blockquote>
+<p><strong>口径提醒</strong>：这个 99.86% 是<strong>「TTL 窗口内的高频重复读」</strong>场景下的命中率，不代表生产。生产大屏每 10 秒刷新、TTL 配置 5~60 秒（见 <code>DashboardService</code> 注释），命中率的量级会落在<strong>70%~95%</strong>区间。把 99.86% 当作生产预期会高估收益。</p>
+</blockquote>
+<h3 id="45-为什么实测的缓存收益是下界">4.5 为什么实测的缓存收益是<strong>下界</strong><a class="headerlink" href="#45-为什么实测的缓存收益是下界" title="永久链接">#</a></h3>
+<p>三条低估因素，逐条对应：</p>
+<ol>
+<li><strong>数据库太快</strong>。H2 内存库 + 1 行数据，一次 COUNT 的成本远低于生产 MySQL（千万行表的二级索引扫描 + 磁盘 IO）。缓存的价值等于"省下的回源成本"，回源越贵，缓存越值钱。</li>
+<li><strong>数据量太小</strong>。<code>t_vehicle_track_point</code> 在生产是 8640 万行/天（见《数据库设计说明书》5.2）。大屏的轨迹类统计在数据量大时会从"索引扫描"退化为"索引扫描 + 回表"，缓存收益按数量级放大。</li>
+<li><strong>无并发放大</strong>。本实验实际并发只有 6，缓存"挡住重复读"的价值在并发高时才会显现——N 个前端同时刷新时，无缓存意味着 N 次并发的重复 COUNT 挤占同一个连接池（生产 <code>maximum-pool-size: 20</code>）。</li>
+</ol>
+<p><strong>结论</strong>：<strong>-85% / -81% 应当被理解为"缓存收益的下限"</strong>。生产环境（MySQL + 真实数据量 + 多前端并发）的收益只会更大，且更重要的收益不是延迟，而是<strong>把数据库从"被大屏刷新打满"中解放出来</strong>。</p>
+<h3 id="46-结论ds-2">4.6 结论（DS-2）<a class="headerlink" href="#46-结论ds-2" title="永久链接">#</a></h3>
+<ul>
+<li>二级缓存<strong>确实生效</strong>（命中率 99.86%、<code>模式 = L1(Caffeine)</code> 可查、A/B 差异显著），不是"配了但没生效"的静默失败。</li>
+<li>冷启动场景下：整轮吞吐 <strong>+94%</strong>、关键接口 P50 <strong>-81% ~ -85%</strong>。</li>
+<li>收益集中在<strong>回源成本高的统计类接口</strong>；对不走缓存的接口（车辆列表）无影响——这是符合预期的正确行为。</li>
+<li><strong>L2（Redis）在本轮完全未验证</strong>（本地 <code>dssad.redis.enabled=false</code>，监控端点报告 <code>仅L1</code>、<code>L2 命中 0</code>）。生产是多实例部署、L2 承担跨实例一致性，<strong>上线前必须在启用 Redis 的环境重跑一次 DS-2</strong>，重点观察 <code>l2Hits</code> 是否随实例数增长而上升。</li>
+</ul>
+<hr>
+<h2 id="5-实测结果三限流与保护能力ds-3">5 实测结果三：限流与保护能力（DS-3）<a class="headerlink" href="#5-实测结果三限流与保护能力ds-3" title="永久链接">#</a></h2>
+<p>这是本轮压测<strong>最重要的发现</strong>，且是一个<strong>反面结论</strong>。</p>
+<h3 id="51-设计意图限流器怎么写的">5.1 设计意图：限流器怎么写的<a class="headerlink" href="#51-设计意图限流器怎么写的" title="永久链接">#</a></h3>
+<p><code>ratelimit/RateLimiter</code> 实现的是<strong>滑动窗口计数</strong>（sliding window counter），对应上游文档 9.1 的两条指标：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>配置项</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单车辆 HTTP 接口</td>
+<td><code>dssad.rate-limit.http-per-minute</code></td>
+<td>100 次/分钟</td>
+</tr>
+<tr>
+<td>单车辆 MQTT 发布</td>
+<td><code>dssad.rate-limit.mqtt-per-second</code></td>
+<td>10 条/秒</td>
+</tr>
+</tbody>
+</table></div>
+<p>算法要点（代码里已实现且<strong>有单测</strong>）：</p>
+<ul>
+<li>双窗口加权：<code>estimated = previousCount × (1 − elapsedRatio) + currentCount</code>，把上一窗口的计数按本窗口已流逝比例线性衰减，抑制固定窗口在边界处的 2 倍突刺。</li>
+<li>只占 2 个 Redis/Caffeine 键，判定常数级往返。</li>
+<li>被拒绝的请求<strong>不计入计数</strong>，避免"持续探测导致永久封死"。</li>
+<li>存储异常时<strong>放行</strong>（保护性旁路优先于准确性）。</li>
+</ul>
+<p>监控端点也把状态暴露得很完整：</p>
+<div class="highlight"><pre><span></span><code><span class="nt">"rateLimit"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"enabled"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"httpPerMinute"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="nt">"mqttPerSecond"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span>
+<span class="w">               </span><span class="nt">"algorithm"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sliding-window-counter"</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+
+<p><strong>读到这一步，一切看起来都是对的。</strong></p>
+<h3 id="52-动态验证同一-vin-连打-130-次">5.2 动态验证：同一 VIN 连打 130 次<a class="headerlink" href="#52-动态验证同一-vin-连打-130-次" title="永久链接">#</a></h3>
+<p>用真实存在的车辆（先经 <code>/api/v1/simulator/scenario/accident</code> 注入场景创建 <code>LSVAAPERF00000001</code>，并确认 <code>/api/v1/vehicles/{vin}</code> 返回 <code>0000</code>），对<strong>同一个 VIN</strong> 连续请求 130 次，跨越配置阈值 100：</p>
+<div class="highlight"><pre><span></span><code>============================================================
+限流探针  target=http://127.0.0.1:18080/api/v1/vehicles/LSVAAPERF00000001  次数=130  鉴权=已登录
+============================================================
+
+成功 130 次，被拒（4001）0 次，鉴权失败 0 次，其他失败 0 次
+
+[判定]
+  ⚠️ 未观察到任何限流：同一 VIN 连续 130 次请求，无一次返回 4001。
+     全部 130 次均为业务码 0000，即 130 次请求都完整走完了业务处理。
+     限流判定本应**先于**业务处理执行，故结论明确：
+     请求链路上不存在调用 RateLimiter.tryAcquireHttp() 的 Filter/Interceptor，
+     `dssad.rate-limit.*` 目前只是一份「可被监控端点读出来的配置」。
+</code></pre></div>
+
+<p><strong>130 次请求，100% 成功，0 次被拒。</strong> 而配置写的是 100 次/分钟。</p>
+<h3 id="53-静态核查零调用点">5.3 静态核查：零调用点<a class="headerlink" href="#53-静态核查零调用点" title="永久链接">#</a></h3>
+<p>动态结果已足够，但仍需静态证据定位根因。全项目检索：</p>
+<div class="highlight"><pre><span></span><code>grep<span class="w"> </span>-rn<span class="w"> </span><span class="s2">"tryAcquireHttp\|tryAcquireMqttPublish\|rateLimiter\."</span><span class="w"> </span>src/main/java
+</code></pre></div>
+
+<p>结果 —— 除了监控端点读配置，<strong>再无任何调用</strong>：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>文件</th>
+<th>行</th>
+<th>内容</th>
+<th>性质</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>web/MqttMonitorController.java</code></td>
+<td>159</td>
+<td><code>rateLimiter.config().enabled()</code></td>
+<td>只为展示</td>
+</tr>
+<tr>
+<td><code>web/MqttMonitorController.java</code></td>
+<td>160</td>
+<td><code>rateLimiter.config().httpPerMinute()</code></td>
+<td>只为展示</td>
+</tr>
+<tr>
+<td><code>web/MqttMonitorController.java</code></td>
+<td>161</td>
+<td><code>rateLimiter.config().mqttPerSecond()</code></td>
+<td>只为展示</td>
+</tr>
+</tbody>
+</table></div>
+<p>进一步确认：</p>
+<ul>
+<li><code>grep -rln "RateLimiter" src/main/java</code> → 只有 <code>RedisStateStore</code>（注释提及）、<code>RateLimiter</code> 自身、<code>MqttMonitorController</code>。</li>
+<li>全项目的 Filter/Interceptor 只有两个：<code>AdminTokenInterceptor</code>（查令牌）、<code>EnterpriseSignatureFilter</code>（验签名）——<strong>都不含限流逻辑</strong>。</li>
+<li><code>ErrorCode.RATE_LIMITED("4001", …)</code> 定义存在，但<strong>从未被抛出过</strong>。</li>
+<li>唯一使用限流器的地方是测试：<code>SlidingWindowRateLimiterTest</code>、<code>SecurityAndRateLimitTest</code>。</li>
+</ul>
+<h3 id="54-影响评估缺陷-f-01">5.4 影响评估（缺陷 F-01）<a class="headerlink" href="#54-影响评估缺陷-f-01" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>编号</strong></td>
+<td><strong>F-01</strong></td>
+</tr>
+<tr>
+<td><strong>等级</strong></td>
+<td><strong>高（P0）</strong></td>
+</tr>
+<tr>
+<td><strong>问题</strong></td>
+<td>限流器已实现、已配置、已单测，但<strong>未接入任何请求链路</strong>，实际完全不生效</td>
+</tr>
+<tr>
+<td><strong>影响</strong></td>
+<td>① 上游文档 9.1 承诺的「单车辆 HTTP 100 次/分钟」与「单车辆 MQTT 10 条/秒」<strong>没有任何一层在拦截</strong>；② 一台异常车端（故障循环重连、程序 bug 导致高频上报）可以无上限地占用消费线程与数据库写入能力；③ 监控端点<code>/api/v1/monitor/cache</code> 会如实报告 <code>enabled: true</code>，<strong>运维看到的是"已开启"，实际是"没接线"</strong> —— 这是最危险的组合</td>
+</tr>
+<tr>
+<td><strong>为什么难发现</strong></td>
+<td>三层"看起来都在"：配置项在 YAML 里、实现在单独的包里有 145 行带完整 Javadoc 的代码、单测能过。<strong>只有追问"谁调用了它"才会暴露</strong>。这正是《详细设计说明书》P-01/P-02 同类问题的第三例（前两例：多实例定时任务无分布式锁、<code>markOfflineVehicles</code> 无调用方）</td>
+</tr>
+<tr>
+<td><strong>与既有记录的差异</strong></td>
+<td>《详细设计说明书》P-03 记录的是「入站报文无频率限流」，暗示 HTTP/MQTT 发布限流是生效的。<strong>该描述不准确</strong>：实际三者都未接入。P-03 已按本条修订</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>佐证：这不是"限流阈值太高所以没触发"。</strong> 130 次请求 / 约 2 秒内完成，若限流生效，第 101 次必须返回 <code>4001</code>。且限流判定本应在业务处理<strong>之前</strong>（否则攻击者只要构造"处理很慢"的请求就能绕过），因此"车辆存在、业务成功"不构成绕过理由。</p>
+<h3 id="55-修复建议">5.5 修复建议<a class="headerlink" href="#55-修复建议" title="永久链接">#</a></h3>
+<p>最小改动、最小侵入的方案是在 <code>WebConfig</code> 已注册的拦截器链上加一个限流拦截器：</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// security/RateLimitInterceptor.java（新增）</span>
+<span class="nd">@Component</span>
+<span class="nd">@RequiredArgsConstructor</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">RateLimitInterceptor</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">HandlerInterceptor</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="cm">/** 限流主体提取：优先取路径变量的 vin，其次取 X-Vin 头。 */</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">Pattern</span><span class="w"> </span><span class="n">VIN_IN_PATH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Pattern</span><span class="p">.</span><span class="na">compile</span><span class="p">(</span><span class="s">"/api/v1/vehicles/([A-Za-z0-9]{6,20})"</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">RateLimiter</span><span class="w"> </span><span class="n">rateLimiter</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="nf">preHandle</span><span class="p">(</span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="n">handler</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">vin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">extractVin</span><span class="p">(</span><span class="n">request</span><span class="p">);</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">vin</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span><span class="w">   </span><span class="c1">// 非车辆维度的接口不参与车端限流</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">rateLimiter</span><span class="p">.</span><span class="na">tryAcquireHttp</span><span class="p">(</span><span class="n">vin</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">BizException</span><span class="p">(</span><span class="n">ErrorCode</span><span class="p">.</span><span class="na">RATE_LIMITED</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">extractVin</span><span class="p">(</span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Matcher</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">VIN_IN_PATH</span><span class="p">.</span><span class="na">matcher</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="na">getRequestURI</span><span class="p">());</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="na">find</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">m</span><span class="p">.</span><span class="na">group</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getHeader</span><span class="p">(</span><span class="s">"X-Vin"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>并在 <code>WebConfig</code> 注册（保持与令牌拦截器同一批路径，排除登录/健康检查）：</p>
+<div class="highlight"><pre><span></span><code><span class="n">registry</span><span class="p">.</span><span class="na">addInterceptor</span><span class="p">(</span><span class="n">rateLimitInterceptor</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addPathPatterns</span><span class="p">(</span><span class="s">"/api/v1/**"</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">excludePathPatterns</span><span class="p">(</span><span class="s">"/api/v1/auth/login"</span><span class="p">,</span><span class="w"> </span><span class="s">"/api/v1/monitor/health-check"</span><span class="p">,</span>
+<span class="w">                             </span><span class="s">"/api/v1/simulator/**"</span><span class="p">,</span><span class="w"> </span><span class="s">"/error"</span><span class="p">);</span>
+</code></pre></div>
+
+<p><strong>三个必须一并完成的配套动作</strong>（否则修了还是白修）：</p>
+<ol>
+<li><strong>补一条"限流真的生效"的集成测试</strong>：MockMvc 连打 130 次同 VIN，断言第 101 次返回 <code>4001</code>。这是唯一能防止"接了一半又被改回去"的手段 —— 现有单测只测 <code>RateLimiter</code> 类本身，测不出"没人调用"。</li>
+<li><strong>入站 MQTT 报文同样接入</strong>（原 P-03）：在 <code>MqttMessageRouter</code> 中按发送方 VIN 限流，超限计数并丢弃，避免异常车端拖慢其他车辆。</li>
+<li><strong>监控端点补充"限流触发次数"指标</strong>：现在只有配置，没有"拦了多少次"。没有这个计数器，就只有在用户投诉时才知道限流在拦人（或没拦人）。</li>
+</ol>
+<hr>
+<h2 id="6-写入链路纸面推演未实测">6 写入链路：纸面推演（未实测）<a class="headerlink" href="#6-写入链路纸面推演未实测" title="永久链接">#</a></h2>
+<blockquote>
+<p><strong>本章全部为推演，没有实测数据。</strong> 本地无 MQTT Broker（<code>dssad.mqtt.enabled=false</code>），无法产生真实入站报文。推演的依据是代码参数与《数据库设计说明书》的容量测算，<strong>上线前必须用 1 台真实车端跑 24 小时实测验证</strong>。</p>
+</blockquote>
+<h3 id="61-缓冲-批量刷盘模型">6.1 缓冲-批量刷盘模型<a class="headerlink" href="#61-缓冲-批量刷盘模型" title="永久链接">#</a></h3>
+<p><code>TelemetryService</code> 的核心设计是「<strong>内存缓冲 + 定时批量落库</strong>」：</p>
+<div class="highlight"><pre><span></span><code>Paho 回调线程 ──入队（微秒级）──&gt; ConcurrentLinkedQueue ──每秒 drain──&gt; saveAll(≤5000/批) ──&gt; MySQL
+                                        │
+                            （缓冲上限 100,000，超限丢弃并计数）
+</code></pre></div>
+
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>参数</th>
+<th>值</th>
+<th>代码位置</th>
+<th>取舍</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>缓冲上限</td>
+<td>100,000</td>
+<td><code>TelemetryService.MAX_BUFFER_SIZE</code></td>
+<td>约 100 秒的 1000 车 1Hz 流量；宁可丢采样点也不能 OOM</td>
+</tr>
+<tr>
+<td>单批上限</td>
+<td>5,000</td>
+<td><code>FLUSH_BATCH_SIZE</code></td>
+<td>避免单次事务过大、undo log 膨胀</td>
+</tr>
+<tr>
+<td>刷盘周期</td>
+<td>1s</td>
+<td><code>@Scheduled(fixedDelay = 1_000)</code></td>
+<td>「入库延迟」与「批大小」的折中</td>
+</tr>
+<tr>
+<td>JDBC 批大小</td>
+<td>200（本地）/ 500（生产）</td>
+<td><code>application*.yml</code></td>
+<td>配合 <code>rewriteBatchedStatements=true</code> 合并为多值 INSERT</td>
+</tr>
+<tr>
+<td>优雅停机</td>
+<td><code>@PreDestroy</code> 刷盘</td>
+<td><code>flushOnShutdown()</code></td>
+<td>停机不丢最后一批</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="62-量化推算1000-台车-1hz">6.2 量化推算：1000 台车 1Hz<a class="headerlink" href="#62-量化推算1000-台车-1hz" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项</th>
+<th>推算</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>入站报文速率</td>
+<td><strong>1000 条/秒</strong></td>
+<td>1000 台 × 1 次/秒（另有 60s 一次的状态报，量级为 1/60，可忽略）</td>
+</tr>
+<tr>
+<td>每秒刷盘次数</td>
+<td><strong>1 次</strong></td>
+<td>定时任务</td>
+</tr>
+<tr>
+<td>每次批大小</td>
+<td><strong>1000 行</strong>（轨迹表）</td>
+<td>落在 <code>FLUSH_BATCH_SIZE</code> 5000 之内，单事务</td>
+</tr>
+<tr>
+<td>合并后 SQL 语句数</td>
+<td>约 <strong>2~5 条</strong> INSERT</td>
+<td>1000 行 ÷ JDBC batch_size 500（生产）= 2 批；<code>rewriteBatchedStatements</code> 将其合并</td>
+</tr>
+<tr>
+<td>每秒数据库往返次数</td>
+<td><strong>约 2~5 次</strong></td>
+<td>对比「每条报文一次 INSERT」的 1000 次往返，<strong>降低约 200~500 倍</strong></td>
+</tr>
+<tr>
+<td>日增行数</td>
+<td>8640 万行（轨迹）+ 144 万行（状态）</td>
+<td>与《数据库设计说明书》5.2 一致</td>
+</tr>
+<tr>
+<td>日增体积</td>
+<td>约 <strong>14.3 GB</strong>（轨迹，178 B/行）+ 0.33 GB（状态）</td>
+<td>同上</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键结论：批量写入把「每秒 1000 次事务提交」压成「每秒 1 次事务、2~5 次往返」，这是千车规模能跑起来的前提。</strong> 单条 INSERT 方案在 MySQL 上每秒 1000 次提交会直接撞在 fsync 与网络往返上，且没有优化空间。</p>
+<h3 id="63-参数取舍的三个边界">6.3 参数取舍的三个边界<a class="headerlink" href="#63-参数取舍的三个边界" title="永久链接">#</a></h3>
+<ol>
+<li><strong>刷盘周期 1s 的风险</strong>：进程崩溃（非优雅停机）最多丢 1 秒数据（≤1000 行）。对轨迹取证场景可接受（车端本地有存、可重发）。若要零丢失，需改为「消息级确认 + WAL」，代价是每条报文一次 fsync。</li>
+<li><strong>缓冲上限 100,000 的风险</strong>：数据库持续慢于 1000 行/秒时，缓冲约 100 秒后开始丢弃，日志每累积 10000 条报一次 ERROR。<strong>这是"静默降级"的设计</strong>——平台不会因为写不进去而挂掉，但会丢数据。监控端点 <code>/api/v1/monitor/mqtt</code> 暴露了 <code>telemetryBuffered</code> 与 <code>telemetryDropped</code>，<strong>必须对这两个指标配告警</strong>（<code>telemetryBuffered</code> 持续 &gt; 10000 或 <code>telemetryDropped</code> 增长即告警）。</li>
+<li><strong>索引代价</strong>：<code>t_vehicle_track_point</code> 上的二级索引（92 B/行，见数据库文档 5.1）会使写入成本增加约一倍。这是<strong>为了查询必然付出的代价</strong>（无索引的轨迹查询等于全表扫描），但意味着写入侧的性能预算要按"索引放大后"估算。</li>
+</ol>
+<h3 id="64-入站队列与丢弃策略">6.4 入站队列与丢弃策略<a class="headerlink" href="#64-入站队列与丢弃策略" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>组件</th>
+<th>容量</th>
+<th>满时行为</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>InboundMessageQueue</code></td>
+<td>20,000（约 10 倍峰值冗余）</td>
+<td><strong>丢弃最旧的一条</strong>并计数</td>
+<td>积压说明消费能力不足，保留最新数据比保留全部历史更有价值（历史可从车端重发补齐）</td>
+</tr>
+<tr>
+<td><code>OfflineMessageQueue</code></td>
+<td>10,000（<code>offline-cache-size</code>）</td>
+<td>按优先级淘汰<strong>最低优先级</strong>消息（<code>droppedLowPriority</code> / <code>droppedByPressure</code> 分开计数）</td>
+<td>远驾接管、任务指令不能因容量满被丢，而遥测可以</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>这两个队列有本质区别</strong>：入站队列丢的是「已经收到的报文」（上游还有机会重发），离线队列丢的是「还没发出去的下行指令」（丢了就真丢了）。因此离线队列必须做优先级淘汰，入站队列只需要保住最新的。</p>
+<h3 id="65-本章明确未验证的部分">6.5 本章明确未验证的部分<a class="headerlink" href="#65-本章明确未验证的部分" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>未验证项</th>
+<th>风险</th>
+<th>验证方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1000 条/秒连续写入时的实际批处理耗时</td>
+<td>若单次 <code>saveAll(1000)</code> 超过 1 秒，队列会持续积压直至丢弃</td>
+<td>用 <code>SimulatorController</code> 注入高频报文，观察 <code>telemetryBuffered</code> 是否稳定在低位</td>
+</tr>
+<tr>
+<td>MySQL 真实 <code>rewriteBatchedStatements</code> 生效情况</td>
+<td>未生效则退化为逐条 INSERT，性能差 5~10 倍</td>
+<td>开 <code>general_log</code> 或 ProxySQL 抓包，确认生成的是多值 INSERT</td>
+</tr>
+<tr>
+<td>索引维护对写入的影响</td>
+<td>轨迹表有二级索引，写入放大约 1 倍</td>
+<td><code>SHOW TABLE STATUS</code> 观察 <code>data_length</code> 与 <code>index_length</code> 比例</td>
+</tr>
+<tr>
+<td>保留期清理对写入的影响</td>
+<td>每天 03:30 分批 DELETE 会与业务写入争抢 IO 与锁</td>
+<td>在预发环境手动触发 <code>scheduledPurge</code>，观察主从延迟与写入 P99</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="7-其他优化项的核查结果">7 其他优化项的核查结果<a class="headerlink" href="#7-其他优化项的核查结果" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项</th>
+<th>状态</th>
+<th>结论</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>二级缓存</td>
+<td><strong>已实测</strong></td>
+<td>生效，冷启动场景 P50 -81%~-85%（第 4 章）</td>
+</tr>
+<tr>
+<td>限流保护</td>
+<td><strong>已实测（反面）</strong></td>
+<td><strong>未接入，完全不生效（F-01，第 5 章）</strong></td>
+</tr>
+<tr>
+<td>虚拟线程</td>
+<td>配置核查</td>
+<td>配置正确，<strong>未做 A/B 对比</strong>（说明见 7.1）</td>
+</tr>
+<tr>
+<td>轨迹抽稀</td>
+<td>代码核查</td>
+<td>算法正确且有单测，<strong>8.6 万点的实测耗时（20ms）为代码注释所述，本轮未复现</strong></td>
+</tr>
+<tr>
+<td>报文留痕采样</td>
+<td>配置核查 + 体积推算</td>
+<td>生效，全量 → 采样 5% 可省 95% 体积</td>
+</tr>
+<tr>
+<td>HTTP 压缩</td>
+<td>配置核查</td>
+<td>已开启，<code>min-response-size: 2048</code></td>
+</tr>
+<tr>
+<td>分页上限</td>
+<td>配置核查</td>
+<td><code>max-page-size: 200</code>，服务层二次钳制</td>
+</tr>
+<tr>
+<td>线程池 / 连接池</td>
+<td>配置核查</td>
+<td>已配置；<strong>虚拟线程启用后 <code>max-threads</code> 不再是并发上限，真正的瓶颈变成 HikariCP 的 20 个连接</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="71-虚拟线程为什么没做-ab-对比">7.1 虚拟线程：为什么没做 A/B 对比<a class="headerlink" href="#71-虚拟线程为什么没做-ab-对比" title="永久链接">#</a></h3>
+<p>配置状态：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>位置</th>
+<th>配置</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tomcat 请求处理</td>
+<td><code>spring.threads.virtual.enabled</code></td>
+<td>prod: <code>true</code>；local: 未设置（默认平台线程）</td>
+</tr>
+<tr>
+<td>MQTT 消费线程</td>
+<td><code>dssad.mqtt.virtual-threads</code></td>
+<td><code>true</code>（代码默认）</td>
+</tr>
+<tr>
+<td>消费线程数</td>
+<td><code>dssad.mqtt.consumer-threads</code></td>
+<td>4</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>未做 A/B 的原因</strong>：本机压测的并发只有 6，且请求几乎全是"缓存命中 + 内存返回"，平台线程池（<code>max-threads: 200</code>）根本用不满——<strong>此时切换虚拟线程不会有可测量的差异</strong>。虚拟线程的价值要在大并发 + 阻塞型 IO 下才显现，而本机不具备复现条件。</p>
+<p><strong>纳入核查的两条判断</strong>：</p>
+<ol>
+<li><strong>虚拟线程的收益点是对的</strong>。<code>MqttInboundWorker</code> 的消费循环是纯阻塞型（<code>queue.take()</code> + JDBC 往返），正是虚拟线程的设计目标场景。代码注释里"把 <code>consumer-threads</code> 变成可以放心调大的旋钮"这个定位准确。</li>
+<li><strong>要注意一个语义变化</strong>：启用虚拟线程后，Tomcat 的 <code>max-threads: 200</code> <strong>不再是并发上限</strong>，请求会无限制地被受理，真正的排队点转移到 HikariCP（生产 <code>maximum-pool-size: 20</code>）。这意味着<strong>数据库连接池成为了唯一的并发控制点</strong>，若连接池配置不当（如 <code>connection-timeout: 3000</code> 到期抛异常），表现会是"突发流量下大批请求 3 秒后失败"而不是"排队等待"。<strong>上线前需在预发环境验证：并发 200 时是否出现连接获取超时。</strong></li>
+</ol>
+<h3 id="72-轨迹两段式降采样">7.2 轨迹两段式降采样<a class="headerlink" href="#72-轨迹两段式降采样" title="永久链接">#</a></h3>
+<p><code>TrackQueryService</code> 的降采样分两段，这个设计值得单独说明：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>手段</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SQL 侧</td>
+<td>先 <code>count</code> 判定量级；量大时按时间桶粗筛（<code>mod(ts, bucket) &lt; 1000</code>）</td>
+<td>把几十万行压到万级，<strong>在数据库侧就减少数据搬运</strong></td>
+</tr>
+<tr>
+<td>内存侧</td>
+<td>Douglas-Peucker 抽稀（容差 8m）</td>
+<td>在形变可控的前提下继续压到千级</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>设计上正确的一点</strong>：<code>alignBucket()</code> 把时间桶对齐到 1 秒整数倍。因为数据是 1Hz 上报，若桶不是 1000ms 的整数倍，会出现"某些桶命中 0 次或 2 次"，轨迹会出现空洞或抖动 —— 这是一个只有理解了数据上报周期才能想到的边界问题。</p>
+<p><strong>两个已知限制</strong>（属《详细设计说明书》已记录项）：</p>
+<ul>
+<li><code>P-10</code>：抽稀容差是全局单一值（<code>dssad.api.track-simplify-tolerance: 8.0</code>），大屏概览与事故复盘需要不同精度，应改为接口可选参数。</li>
+<li><code>TrackSimplifier</code> 最坏复杂度 O(n²)（单调点集）。代码注释称 8.6 万点单次约 20ms，本轮未复现验证；若遇到极端直线路段（如高速长直道）可能出现明显尖峰，建议补一条性能回归测试。</li>
+</ul>
+<h3 id="73-报文留痕采样一行配置省-95">7.3 报文留痕采样：一行配置省 95%<a class="headerlink" href="#73-报文留痕采样一行配置省-95" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>模式</th>
+<th>留痕比例</th>
+<th>1000 台车日增体积</th>
+<th>适用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>full</code></td>
+<td>100%</td>
+<td><strong>59.6 GB/天</strong></td>
+<td>仅供参考，任何生产环境都不应使用</td>
+</tr>
+<tr>
+<td><code>sampled</code></td>
+<td>5%</td>
+<td>2.98 GB/天</td>
+<td><strong>生产默认</strong>（<code>application-prod.yml</code>）</td>
+</tr>
+<tr>
+<td><code>event-only</code></td>
+<td>≈0.1%</td>
+<td>0.06 GB/天</td>
+<td>磁盘紧张时</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>工程建议</strong>：磁盘不足时<strong>优先降采样率，而不是缩短轨迹保留期</strong>。理由是留痕有"事件类报文始终全量"兜底（<code>MqttAuditService</code> 对事故/故障类报文不做采样），而轨迹是事故回溯的原始证据，删了就没了。这条与《数据库设计说明书》5.3 的建议一致。</p>
+</blockquote>
+<h3 id="74-传输与并发配置核查">7.4 传输与并发配置核查<a class="headerlink" href="#74-传输与并发配置核查" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>配置</th>
+<th>值</th>
+<th>评价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>server.compression.enabled</code></td>
+<td><code>true</code>（JSON/text，&gt;2KB 才压缩）</td>
+<td>合理。门槛 2048 字节避免为小响应付出压缩开销；大屏总览这类响应用压缩收益明显</td>
+</tr>
+<tr>
+<td><code>server.tomcat.threads.max</code></td>
+<td>200</td>
+<td>平台线程模式下合理；虚拟线程模式下失去意义（见 7.1）</td>
+</tr>
+<tr>
+<td><code>spring.datasource.hikari.maximum-pool-size</code></td>
+<td>20（生产）</td>
+<td>按"8 核 × 2 + 有效磁盘数"估算。<strong>虚拟线程启用后这是真正的并发上限</strong>，需实测验证</td>
+</tr>
+<tr>
+<td><code>dssad.api.max-page-size</code></td>
+<td>200</td>
+<td>服务层还有 <code>Math.min(Math.max(size,1), maxPageSize)</code> 二次钳制，防止前端传 <code>size=100000</code> 拖垮数据库</td>
+</tr>
+<tr>
+<td><code>server.forward-headers-strategy</code></td>
+<td><code>framework</code></td>
+<td>生产经 Nginx 反代，需要还原真实客户端 IP 才能按 IP 做审计与限流（<strong>在 F-01 修复后才有意义</strong>）</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="8-瓶颈分析与容量推算">8 瓶颈分析与容量推算<a class="headerlink" href="#8-瓶颈分析与容量推算" title="永久链接">#</a></h2>
+<h3 id="81-当前瓶颈排序">8.1 当前瓶颈排序<a class="headerlink" href="#81-当前瓶颈排序" title="永久链接">#</a></h3>
+<p><strong>读路径：不构成瓶颈。</strong> 稳态 P50 1.3~2.0ms，系统总吞吐约 1180 req/s，而实际业务需要约 40 req/s（100 个前端 × 10 秒 × 4 接口），<strong>余量约 30 倍</strong>。</p>
+<p><strong>写路径：唯一的真实瓶颈。</strong> 1000 台车每天 8640 万行轨迹、约 14.3 GB，这是物理量，无法用缓存或并发优化消除，只能靠：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>手段</th>
+<th>效果</th>
+<th>当前状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>批量写入</td>
+<td>往返次数降低 200~500 倍</td>
+<td>✅ 已实现</td>
+</tr>
+<tr>
+<td>保留期清理</td>
+<td>把"无限增长"变成"稳态容量"</td>
+<td>✅ 已实现（<code>TelemetryRetentionService</code>）</td>
+</tr>
+<tr>
+<td>留痕采样</td>
+<td>审计表体积 -95%</td>
+<td>✅ 已实现（<code>sampled</code>）</td>
+</tr>
+<tr>
+<td>迁往时序库</td>
+<td>压缩率与聚合查询数量级改善</td>
+<td>❌ 未做（数据库文档 8.6 已提出）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>存储：与写路径同一个问题的另一面。</strong> 除轨迹表外，媒体文件是最大单项（1080p H.265 每起事故约 20MB，见数据库文档 5.2）。</p>
+<h3 id="82-与数据库容量估算的互证">8.2 与数据库容量估算的互证<a class="headerlink" href="#82-与数据库容量估算的互证" title="永久链接">#</a></h3>
+<p>数据库文档第 5 章的容量测算与本报告的写入推演<strong>必须能对上</strong>，否则说明两者有一方算错：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项</th>
+<th>《数据库设计说明书》5.2</th>
+<th>本报告 6.2</th>
+<th>是否一致</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>轨迹行数/天（1000 车）</td>
+<td>8640 万</td>
+<td>8640 万（1000 × 86400）</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>轨迹体积/天</td>
+<td>14.32 GB（178 B/行）</td>
+<td>14.3 GB</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>状态行数/天</td>
+<td>144 万</td>
+<td>144 万（1000 × 1440）</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>状态体积/天</td>
+<td>0.327 GB</td>
+<td>0.33 GB</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>留痕 <code>sampled</code> 日增</td>
+<td>2.98 GB/天</td>
+<td>2.98 GB/天（59.6 × 5%）</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>交叉核对结论：写入速率推算与行占用测算自洽。</strong> 两个数字分别来自"报文频率"与"行格式测算"两条独立路径，结果一致，说明 <code>178 B/行</code> 与 <code>1Hz/车</code> 这两个基础假设可靠。</p>
+<p><strong>由此得到一条可执行的运维规则</strong>：<code>dssad.retention.track-point-days</code> 必须由磁盘容量反推，而不是拍脑袋定：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>数据盘可用空间</th>
+<th>建议 <code>track-point-days</code></th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>350 GB</td>
+<td><strong>15 天</strong></td>
+<td>215 GB，满足"事发后回溯近两周"的常规取证需求</td>
+</tr>
+<tr>
+<td>750 GB</td>
+<td>30 天</td>
+<td>430 GB，但需同时保留状态流水 180 天（59 GB）</td>
+</tr>
+<tr>
+<td>2 TB</td>
+<td>90 天</td>
+<td>1289 GB，或改迁时序库</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="83-三种先崩场景推演">8.3 三种"先崩"场景推演<a class="headerlink" href="#83-三种先崩场景推演" title="永久链接">#</a></h3>
+<p>按"最可能先发生"排序：</p>
+<p><strong>场景 1：磁盘写满（最可能）</strong></p>
+<ul>
+<li>触发条件：<code>track-point-days</code> 配错（如设为 0 或过大），或车辆数从试点的几十台快速扩到上千台而没改配置。</li>
+<li>表现：轨迹表涨到数十亿行 → 查询变慢 → 清理任务（分批 DELETE）耗时超过 1 天 → <strong>清理追不上增长</strong>，最终 MySQL 无法写入。</li>
+<li>为什么最可能：这是<strong>唯一随时间必然恶化的方向</strong>，其他问题都需要特定触发条件。</li>
+<li>前置信号：<code>data_length + index_length</code> 日增超预期（应约 14 GB/天）、<code>TelemetryRetentionService</code> 的清理日志耗时持续上升。</li>
+</ul>
+<p><strong>场景 2：一台异常车端打满消费能力（次可能，且因 F-01 而放大）</strong></p>
+<ul>
+<li>触发条件：某车端因程序缺陷以远高于 1Hz 的频率上报（如重连后循环补发）。</li>
+<li>表现：<code>InboundMessageQueue</code> 积压持续增长 → 开始丢弃、<code>droppedCount</code> 上升 → 其他车辆的处理延迟变长。</li>
+<li><strong>F-01 让这件事失去了第一道防线</strong>：设计的本意是"单车辆 10 条/秒"限流挡住它，但限流未接入。目前只剩入站队列容量（20000）作兜底，且兜底策略是"丢掉最旧的"——<strong>会连带丢掉正常车辆的数据</strong>。</li>
+<li>前置信号：<code>inboundQueueSize</code> / <code>inboundDropped</code> 持续增长，<code>mqttInboundQueue</code> 在大屏上不再归零。</li>
+</ul>
+<p><strong>场景 3：数据库连接池成为并发瓶颈（虚拟线程启用后）</strong></p>
+<ul>
+<li>触发条件：突发大量并发请求（如多个客户端同时首次加载大屏、或缓存集体过期瞬间）。</li>
+<li>表现：HikariCP 20 个连接被占满 → 后续请求等待 → 超过 <code>connection-timeout: 3000</code> 抛异常 → 用户看到 500。</li>
+<li>为什么在虚拟线程启用后概率提高：Tomcat 不再限制并发数（见 7.1），请求会全部涌到连接池。</li>
+<li>前置信号：<code>hikaricp_connections_pending</code>（Actuator 已暴露 <code>prometheus</code> 端点）持续 &gt; 0。</li>
+</ul>
+<h3 id="84-扩容路径">8.4 扩容路径<a class="headerlink" href="#84-扩容路径" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>车辆规模</th>
+<th>需要的动作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>试点</td>
+<td>≤ 50 台</td>
+<td>当前配置即可（单实例、MySQL 单库）</td>
+</tr>
+<tr>
+<td>小规模</td>
+<td>50~300 台</td>
+<td>①修复 F-01；②按磁盘反推 <code>track-point-days</code>；③开启 Redis（L2 缓存 + 跨实例去重）</td>
+</tr>
+<tr>
+<td>中等</td>
+<td>300~1000 台</td>
+<td>①多实例（需先解决《详细设计说明书》P-01 的定时任务分布式锁）；②MySQL 主从读写分离；③<code>telemetryBuffered</code> / <code>inboundQueueSize</code> 配告警</td>
+</tr>
+<tr>
+<td>大规模</td>
+<td>&gt; 1000 台</td>
+<td>①轨迹迁时序库（TDengine/InfluxDB）；②按区域分库；③媒体走对象存储 + CDN</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="9-优化建议按优先级">9 优化建议（按优先级）<a class="headerlink" href="#9-优化建议按优先级" title="永久链接">#</a></h2>
+<h3 id="91-p0-上线前必须解决">9.1 P0 — 上线前必须解决<a class="headerlink" href="#91-p0-上线前必须解决" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>建议</th>
+<th>依据</th>
+<th>工作量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>接入限流（F-01）</strong>：新增 <code>RateLimitInterceptor</code>，注册到 <code>/api/v1/**</code>；补一条"130 次请求应被拒"的集成测试</td>
+<td>第 5 章实测：限流完全不生效</td>
+<td>小（约 60 行 + 1 条测试）</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong><code>telemetryBuffered</code> / <code>inboundQueueSize</code> / <code>telemetryDropped</code> 配告警</strong></td>
+<td>写侧是唯一真实瓶颈（8.1），且丢数据是静默的（6.3）</td>
+<td>小（纯配置）</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>按磁盘容量核算 <code>track-point-days</code> 并留出增长余量</strong></td>
+<td>场景 1 是最可能先崩的方向（8.3）</td>
+<td>小（一次测算）</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>在启用 Redis 的环境重跑 DS-2 对照实验</strong></td>
+<td>L2 完全未验证（4.6）；生产是多实例，L2 是跨实例一致性的唯一保障</td>
+<td>小（复用现有脚本）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="92-p1-上线前建议">9.2 P1 — 上线前建议<a class="headerlink" href="#92-p1-上线前建议" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>建议</th>
+<th>依据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5</td>
+<td><strong>验证虚拟线程 + 连接池的组合行为</strong>：并发 200 时是否出现 <code>connection-timeout</code></td>
+<td>7.1：虚拟线程启用后 20 个连接成为唯一并发上限</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>接入链路追踪</strong>（原 P-11）：跨 MQTT/HTTP/定时任务的调用链无法关联</td>
+<td>第 3 章的长尾排查需要它；日志 pattern 已预留占位</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>补一条 <code>TrackSimplifier</code> 的性能回归测试</strong>（8.6 万点、单调点集最坏情况）</td>
+<td>7.2：最坏复杂度 O(n²)，注释中的 20ms 未复现</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>发布后先打一轮预热流量再放开入口</strong></td>
+<td>3.2：冷启动首个 TTL 窗口内的延迟约为稳态的 1.5~2 倍</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="93-p2-观察后再做">9.3 P2 — 观察后再做<a class="headerlink" href="#93-p2-观察后再做" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>建议</th>
+<th>依据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>9</td>
+<td>轨迹表迁时序库</td>
+<td>8.4：&gt; 1000 台车时的必然选择，但当前规模没必要</td>
+</tr>
+<tr>
+<td>10</td>
+<td>多实例定时任务加分布式锁（原 P-01）</td>
+<td>单实例部署时无影响</td>
+</tr>
+<tr>
+<td>11</td>
+<td>抽稀容差改为接口可选参数（原 P-10）</td>
+<td>不同场景精度需求不同，属体验优化</td>
+</tr>
+<tr>
+<td>12</td>
+<td>引入前端性能度量（首屏时间、地图渲染耗时）</td>
+<td>本文未覆盖前端（0.2），需另立测量</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="10-压测工具的缺陷修复记录">10 压测工具的缺陷修复记录<a class="headerlink" href="#10-压测工具的缺陷修复记录" title="永久链接">#</a></h2>
+<blockquote>
+<p><strong>这一章存在的理由</strong>：本轮的 3 个数据集全部由自研脚本产生。一个会"安静地给出漂亮数字"的脚本比一个跑不起来的脚本危险得多——后者会被立刻发现，前者会被写进报告当成结论。以下 5 项都是本轮实际遇到并修复的，<strong>其中前 4 项在修复前会让数据完全失真，且不会产生任何报错</strong>。</p>
+</blockquote>
+<h3 id="101-f-t01鉴权头写错bearer-vs-x-token">10.1 F-T01：鉴权头写错（Bearer vs X-Token）<a class="headerlink" href="#101-f-t01鉴权头写错bearer-vs-x-token" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>位置</td>
+<td><code>load_test.py::fetch_json</code></td>
+</tr>
+<tr>
+<td>原代码</td>
+<td><code>request.add_header("Authorization", "Bearer " + token)</code></td>
+</tr>
+<tr>
+<td>问题</td>
+<td>平台的 <code>AdminTokenInterceptor</code> <strong>只读 <code>X-Token</code> 头</strong>，不认 Bearer 前缀</td>
+</tr>
+<tr>
+<td>后果</td>
+<td>每次请求都返回业务码 <code>2001</code>。而<strong>鉴权失败的路径比正常查询更快</strong>（拦截器直接返回，不进业务层），压测结果会呈现"QPS 极高、耗时极低"——与"性能优秀"的表象完全一致</td>
+</tr>
+<tr>
+<td>修复</td>
+<td>统一使用 <code>X-Token</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="102-f-t02token_header-常量未定义">10.2 F-T02：<code>TOKEN_HEADER</code> 常量未定义<a class="headerlink" href="#102-f-t02token_header-常量未定义" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>位置</td>
+<td><code>load_test.py</code> 模块级常量</td>
+</tr>
+<tr>
+<td>问题</td>
+<td><code>http_get()</code> 里使用了 <code>TOKEN_HEADER</code>，但文件里只定义了 <code>TOKEN_BEARER_PREFIX</code></td>
+</tr>
+<tr>
+<td>后果</td>
+<td>带 <code>--token</code> 运行时立即 <code>NameError</code>。<strong>这条路径只在"手动传入令牌"时被触发</strong>，不带令牌运行完全正常——属于"只在一条分支上暴露"的缺陷</td>
+</tr>
+<tr>
+<td>修复</td>
+<td>定义 <code>TOKEN_HEADER = "X-Token"</code> 并删除误导性的 <code>TOKEN_BEARER_PREFIX</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="103-f-t03login-函数未实现">10.3 F-T03：<code>login()</code> 函数未实现<a class="headerlink" href="#103-f-t03login-函数未实现" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>位置</td>
+<td><code>load_test.py::main</code> 调用了 <code>login()</code>，但<strong>函数体不存在</strong></td>
+</tr>
+<tr>
+<td>后果</td>
+<td>用 <code>--username/--password</code> 自动登录时 <code>NameError</code>。与 F-T02 互为镜像：一个坏在"手动传令牌"，一个坏在"自动登录"，<strong>两条路径各自有一个坑</strong></td>
+</tr>
+<tr>
+<td>修复</td>
+<td>实现 <code>login()</code>（POST <code>/api/v1/auth/login</code>，解析 <code>data.token</code>）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="104-f-t04收尾读数用错了令牌变量">10.4 F-T04：收尾读数用错了令牌变量<a class="headerlink" href="#104-f-t04收尾读数用错了令牌变量" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>位置</td>
+<td><code>load_test.py::main</code> 末行 <code>print_cache_metrics(args.base_url, args.token)</code></td>
+</tr>
+<tr>
+<td>问题</td>
+<td>应为登录后得到的 <code>token</code>。用 <code>--username</code> 登录时 <code>args.token</code> 恒为 <code>None</code></td>
+</tr>
+<tr>
+<td>后果</td>
+<td><strong>恰好把"压测跑完后最需要看的那份缓存命中率"变成一行 <code>2001</code> 失败提示</strong>（本轮实测中被抓到：第一次采集时收尾的缓存指标为空）。压测本身仍有数据，所以很容易被忽略</td>
+</tr>
+<tr>
+<td>修复</td>
+<td>改为 <code>print_cache_metrics(args.base_url, token)</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="105-f-t05并发参数在接口数较少时失效口径问题未修">10.5 F-T05：并发参数在接口数较少时失效（口径问题，未修）<a class="headerlink" href="#105-f-t05并发参数在接口数较少时失效口径问题未修" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>位置</td>
+<td><code>load_test.py::run_round</code></td>
+</tr>
+<tr>
+<td>问题</td>
+<td>实现为"每接口 1 个 worker"，提交的任务数 = 接口数 = 6，<code>max_workers=13</code> 的余量用不上</td>
+</tr>
+<tr>
+<td>实测影响</td>
+<td><strong>实际并发 = 6，而不是参数写的 13。</strong> 本文所有数据均按"实际并发 6"理解（口径 2）</td>
+</tr>
+<tr>
+<td>现状</td>
+<td><strong>本轮未修改</strong>（改了会导致数据口径与已采集的三组数据不一致）。已在文档中显式标注口径，下一版脚本将按 <code>并发数 ÷ 接口数</code> 拆分 worker，使并发参数真正生效</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="106-为什么这类缺陷比压测跑不起来危险">10.6 为什么这类缺陷比"压测跑不起来"危险<a class="headerlink" href="#106-为什么这类缺陷比压测跑不起来危险" title="永久链接">#</a></h3>
+<p>五个缺陷有一个共同特征：<strong>它们不产生错误，只产生偏差。</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>缺陷</th>
+<th>表面现象</th>
+<th>真实情况</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-T01</td>
+<td>QPS 极高、耗时极低</td>
+<td>全部请求被鉴权拦截，压根没测到业务</td>
+</tr>
+<tr>
+<td>F-T02/F-T03</td>
+<td>只有某一条使用路径报错</td>
+<td>换一种用法就"正常"，缺陷被掩盖</td>
+</tr>
+<tr>
+<td>F-T04</td>
+<td>压测数据看起来完整</td>
+<td>唯一能证明缓存生效的那项指标是空的</td>
+</tr>
+<tr>
+<td>F-T05</td>
+<td>报告写着"并发 13"</td>
+<td>实际并发 6，压力被低估一半以上</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>因此本节的三条方法论</strong>（已固化进脚本注释，供后续压测复用）：</p>
+<ol>
+<li><strong>先验证测量工具本身</strong>：压测前先确认"业务码是不是 0000"，而不是只看 HTTP 200。本次 DS-3 的探针脚本专门做了这件事——它把"鉴权失败"单独计数，因为鉴权失败会让"没有限流"这个结论变得不可靠。</li>
+<li><strong>每个新脚本都要跑一次"已知会失败"的用例</strong>：例如故意用错误口令跑一次，确认脚本会报错而不是给出漂亮数据。</li>
+<li><strong>报告里必须能追溯原始输出</strong>：本文所有数字都对应 <code>perf/*.txt</code> 中的原始日志，任何数字都可以被独立复核。</li>
+</ol>
+<hr>
+<h2 id="附录-a-原始产物清单">附录 A 原始产物清单<a class="headerlink" href="#附录-a-原始产物清单" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>文件</th>
+<th>内容</th>
+<th>对应章节</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>perf/load_test.py</code></td>
+<td>只读接口压测脚本（已修复 F-T01~F-T04）</td>
+<td>2.4</td>
+</tr>
+<tr>
+<td><code>perf/rate_limit_probe.py</code></td>
+<td>限流行为验证探针（本轮新增）</td>
+<td>第 5 章</td>
+</tr>
+<tr>
+<td><code>perf/load-test-20260923.txt</code></td>
+<td>DS-1 基线压测全文（6 接口 × 6 轮）</td>
+<td>第 3 章</td>
+</tr>
+<tr>
+<td><code>perf/load-test-nocache-20260923.txt</code></td>
+<td>DS-2 A 组（缓存关闭）全文</td>
+<td>第 4 章</td>
+</tr>
+<tr>
+<td><code>perf/load-test-cache-20260923.txt</code></td>
+<td>DS-2 B 组（缓存开启）全文</td>
+<td>第 4 章</td>
+</tr>
+<tr>
+<td><code>perf/rate-limit-probe-20260923.txt</code></td>
+<td>DS-3 限流探针全文（130 次请求）</td>
+<td>第 5 章</td>
+</tr>
+<tr>
+<td><code>perf/cache-metrics-20260923.json</code></td>
+<td><code>/api/v1/monitor/cache</code> 响应快照（命中率 99.86%）</td>
+<td>4.4</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="附录-b-复现步骤">附录 B 复现步骤<a class="headerlink" href="#附录-b-复现步骤" title="永久链接">#</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1) 构建（如 jar 已存在可跳过）</span>
+mvn<span class="w"> </span>-f<span class="w"> </span>cloud-platform-server/pom.xml<span class="w"> </span>package<span class="w"> </span>-DskipTests
+
+<span class="c1"># 2) 起服务（本地 profile）</span>
+java<span class="w"> </span>-jar<span class="w"> </span>cloud-platform-server/target/dssad-cloud-platform.jar<span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>--spring.profiles.active<span class="o">=</span><span class="nb">local</span><span class="w"> </span>--server.port<span class="o">=</span><span class="m">18080</span>
+
+<span class="c1"># 3) DS-1 基线</span>
+python<span class="w"> </span>perf/load_test.py<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:18080<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--concurrency<span class="w"> </span><span class="m">13</span><span class="w"> </span>--rounds<span class="w"> </span><span class="m">6</span><span class="w"> </span>--requests-per-endpoint<span class="w"> </span><span class="m">120</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--username<span class="w"> </span>admin<span class="w"> </span>--password<span class="w"> </span><span class="s1">'&lt;口令&gt;'</span>
+
+<span class="c1"># 4) DS-2 缓存对照（两个独立实例 + 各自独立内存库）</span>
+java<span class="w"> </span>-jar<span class="w"> </span>...<span class="w"> </span>--server.port<span class="o">=</span><span class="m">18081</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span><span class="s2">"--spring.datasource.url=jdbc:h2:mem:perfA;MODE=MySQL;DB_CLOSE_DELAY=-1"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>--dssad.cache.enabled<span class="o">=</span><span class="nb">false</span><span class="w"> </span>--spring.cache.type<span class="o">=</span>none<span class="w"> </span><span class="p">&amp;</span>
+java<span class="w"> </span>-jar<span class="w"> </span>...<span class="w"> </span>--server.port<span class="o">=</span><span class="m">18082</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span><span class="s2">"--spring.datasource.url=jdbc:h2:mem:perfB;MODE=MySQL;DB_CLOSE_DELAY=-1"</span><span class="w"> </span><span class="p">&amp;</span>
+python<span class="w"> </span>perf/load_test.py<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:18081<span class="w"> </span>--rounds<span class="w"> </span><span class="m">4</span><span class="w"> </span>--requests-per-endpoint<span class="w"> </span><span class="m">200</span><span class="w"> </span>--username<span class="w"> </span>admin<span class="w"> </span>--password<span class="w"> </span><span class="s1">'&lt;口令&gt;'</span>
+python<span class="w"> </span>perf/load_test.py<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:18082<span class="w"> </span>--rounds<span class="w"> </span><span class="m">4</span><span class="w"> </span>--requests-per-endpoint<span class="w"> </span><span class="m">200</span><span class="w"> </span>--username<span class="w"> </span>admin<span class="w"> </span>--password<span class="w"> </span><span class="s1">'&lt;口令&gt;'</span>
+
+<span class="c1"># 5) DS-3 限流探针（先造一台真实车辆）</span>
+curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"http://127.0.0.1:18080/api/v1/simulator/scenario/accident?vin=LSVAAPERF00000001"</span>
+python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:18080<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--vin<span class="w"> </span>LSVAAPERF00000001<span class="w"> </span>--count<span class="w"> </span><span class="m">130</span><span class="w"> </span>--username<span class="w"> </span>admin<span class="w"> </span>--password<span class="w"> </span><span class="s1">'&lt;口令&gt;'</span>
+</code></pre></div>
+
+<blockquote>
+<p><strong>注意</strong>：本机沙箱会注入 <code>http_proxy</code> / <code>SERVER__PORT</code> 等环境变量，导致连 <code>127.0.0.1</code> 也被代理、端口被改写。复现时需 <code>env -u http_proxy -u SERVER__PORT ...</code> 并在 <code>curl</code> 上加 <code>--noproxy '*'</code>。</p>
+</blockquote>
+<h2 id="附录-c-缺陷编号汇总">附录 C 缺陷编号汇总<a class="headerlink" href="#附录-c-缺陷编号汇总" title="永久链接">#</a></h2>
+<h3 id="c1-本报告新发现">C.1 本报告新发现<a class="headerlink" href="#c1-本报告新发现" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>编号</th>
+<th>等级</th>
+<th>问题</th>
+<th>状态</th>
+<th>章节</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>F-01</strong></td>
+<td><strong>高（P0）</strong></td>
+<td>限流器未接入任何请求链路，实际完全不生效</td>
+<td><strong>未修复</strong>（已给出方案）</td>
+<td>5.4</td>
+</tr>
+<tr>
+<td>F-T01</td>
+<td>中</td>
+<td>压测脚本鉴权头写成 <code>Authorization: Bearer</code>，平台只认 <code>X-Token</code></td>
+<td>✅ 已修复</td>
+<td>10.1</td>
+</tr>
+<tr>
+<td>F-T02</td>
+<td>中</td>
+<td><code>TOKEN_HEADER</code> 常量未定义</td>
+<td>✅ 已修复</td>
+<td>10.2</td>
+</tr>
+<tr>
+<td>F-T03</td>
+<td>中</td>
+<td><code>login()</code> 函数未实现</td>
+<td>✅ 已修复</td>
+<td>10.3</td>
+</tr>
+<tr>
+<td>F-T04</td>
+<td>中</td>
+<td>收尾读缓存指标用了错误的令牌变量</td>
+<td>✅ 已修复</td>
+<td>10.4</td>
+</tr>
+<tr>
+<td>F-T05</td>
+<td>低</td>
+<td><code>--concurrency</code> 在接口数较少时失效（口径问题）</td>
+<td>⏸️ 已标注口径，未改代码</td>
+<td>10.5</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c2-与既有文档的关系">C.2 与既有文档的关系<a class="headerlink" href="#c2-与既有文档的关系" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>既有编号</th>
+<th>本报告的补充</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>《详细设计说明书》P-03「入站报文无频率限流」</td>
+<td><strong>该描述不准确</strong>：实际 HTTP 与 MQTT 发布限流也均未接入。P-03 已按 F-01 修订，并升级为 P0</td>
+</tr>
+<tr>
+<td>《详细设计说明书》P-01（多实例定时任务无锁）</td>
+<td>无补充。8.4 的扩容路径中已标明"多实例前必须先解决"</td>
+</tr>
+<tr>
+<td>《数据库设计说明书》D-01（新增遥测清理任务）</td>
+<td>本报告 6.3 / 8.2 给出清理任务的运维配套要求（配置由磁盘反推）</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="附录-d-变更记录">附录 D 变更记录<a class="headerlink" href="#附录-d-变更记录" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>版本</th>
+<th>日期</th>
+<th>变更</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>v1.0</td>
+<td>2026-09-23</td>
+<td>首版。含 3 个数据集（基线 / 缓存 A/B 对照 / 限流探针）的实测数据、写入链路推演、8 项优化手段核查、3 个"先崩"场景推演与扩容路径；新增限流探针脚本 <code>rate_limit_probe.py</code>；修复压测脚本 4 个会污染数据的缺陷；发现 P0 级缺陷 F-01</td>
+</tr>
+</tbody>
+</table></div>
+  </main>
+</div>
+<button id="to-top" type="button" title="回到顶部" aria-label="回到顶部">&#8593;</button>
+<script>
+
+(function () {
+  'use strict';
+
+  /* --- 1. 侧边栏滚动高亮当前章节 --- */
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  var targets = links
+    .map(function (a) {
+      var id = decodeURIComponent(a.getAttribute('href').slice(1));
+      var el = document.getElementById(id);
+      return el ? { link: a, el: el } : null;
+    })
+    .filter(Boolean);
+
+  function setActive(link) {
+    links.forEach(function (a) { a.classList.remove('active'); });
+    if (!link) return;
+    link.classList.add('active');
+    // 让高亮项始终留在侧边栏可视区内
+    var bar = document.querySelector('.sidebar');
+    if (!bar) return;
+    var r = link.getBoundingClientRect(), b = bar.getBoundingClientRect();
+    if (r.top < b.top + 60 || r.bottom > b.bottom - 40) {
+      bar.scrollTop += r.top - b.top - bar.clientHeight / 3;
+    }
+  }
+
+  var ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      ticking = false;
+      var best = null;
+      for (var i = 0; i < targets.length; i++) {
+        if (targets[i].el.getBoundingClientRect().top <= 120) best = targets[i];
+        else break;
+      }
+      if (best) setActive(best.link);
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* --- 2. 代码块复制按钮 --- */
+  document.querySelectorAll('.highlight').forEach(function (block) {
+    var code = block.querySelector('code');
+    if (!code) return;
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.addEventListener('click', function () {
+      var text = code.innerText;
+      var done = function () {
+        btn.textContent = '已复制';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = '复制';
+          btn.classList.remove('done');
+        }, 1400);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    block.appendChild(btn);
+  });
+
+  // file:// 下 navigator.clipboard 不可用时的兜底
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* 忽略 */ }
+    document.body.removeChild(ta);
+  }
+
+  /* --- 3. 回到顶部 --- */
+  var top = document.getElementById('to-top');
+  if (top) {
+    top.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    window.addEventListener('scroll', function () {
+      top.classList.toggle('show', window.scrollY > 500);
+    }, { passive: true });
+  }
+
+  /* --- 4. 窄屏侧边栏 --- */
+  var menuBtn = document.getElementById('menu-btn');
+  var sidebar = document.querySelector('.sidebar');
+  if (menuBtn && sidebar) {
+    menuBtn.addEventListener('click', function () { sidebar.classList.toggle('open'); });
+    sidebar.addEventListener('click', function (e) {
+      if (e.target.tagName === 'A') sidebar.classList.remove('open');
+    });
+  }
+})();
+
+</script>
+</body>
+</html>

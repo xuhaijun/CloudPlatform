@@ -1,0 +1,71 @@
+# ============================================================================
+# 本地开发配置：零外部依赖启动
+#   - H2 文件库（./data/db/dssad），重启数据不丢，便于反复调试
+#   - MQTT 关闭，避免开发机必须装 Broker
+#   - 短信/视频等外部能力全部走本地兜底实现
+#
+# 切换为真实联调：
+#   mvn spring-boot:run -Dspring-boot.run.profiles=local \
+#     -Dspring-boot.run.arguments="--dssad.mqtt.enabled=true --dssad.mqtt.broker-url=tcp://192.168.x.x:1883"
+# ============================================================================
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/db/dssad;MODE=MySQL;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      pool-name: dssad-hikari
+  jpa:
+    # 本地用 update：改实体即时生效，省去手工改表
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  h2:
+    console:
+      # 浏览器打开 http://127.0.0.1:8080/h2-console 即可查数据（本地专用，生产绝不开启）
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: false
+
+dssad:
+  mqtt:
+    enabled: false
+  redis:
+    enabled: false
+  # 本地单机：L2(Redis) 不启用，二级缓存自动降级为仅 Caffeine 一级；
+  # 缩短 TTL 便于「改代码 → 立刻看到新数据」，不会被 60 秒缓存挡住
+  cache:
+    l1-max-size: 10000
+    l1-default-ttl-seconds: 10
+    l2-default-ttl-seconds: 10
+  # 本地开启报文注入模拟器：无需 Broker 即可跑通「事故上报 → 取证请求 → 视频上传」全链路
+  simulator:
+    enabled: true
+  audit:
+    # 本地调试需要看到每一条报文，用全量留痕
+    mode: full
+    retention-days: 7
+  # 本地把保留期压到一周，便于「反复联调 → 观察清理效果」而不用等三个月；
+  # 线上默认 90 天（见 application-prod.yml）。
+  retention:
+    track-point-days: 7
+    state-snapshot-days: 14
+    batch-size: 2000
+  remote-driving:
+    cockpits:
+      - cockpit-id: YK-LOCAL-01
+        driver: 本地调试员
+        identity-number: "510100199001011234"
+        driver-license-number: "510100199001011"
+        mobile: "13800000000"
+
+logging:
+  level:
+    com.genvict.dssad.cloud: DEBUG
+    # 需要看 SQL 时打开下面两行
+    # org.hibernate.SQL: DEBUG
+    # org.hibernate.orm.jdbc.bind: TRACE

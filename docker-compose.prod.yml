@@ -1,0 +1,194 @@
+# ============================================================================
+#  生产编排 —— Nginx（唯一入口）+ 应用 + MySQL + Redis
+#
+#  用法：
+#    cp deploy/systemd/dssad-cloud-platform.env.example .env   # 填好后再执行
+#    docker compose -f docker-compose.prod.yml up -d
+#    docker compose -f docker-compose.prod.yml ps
+#
+#  三个刻意的设计决定（每一条都对应一类线上事故）：
+#
+#  1) 应用**只 expose 不 ports**：唯一入口是 Nginx。
+#     一旦应用端口映射到宿主机，就存在「绕过 TLS 直连后端」的路径，
+#     HTTPS 强制、限流、审计全部形同虚设。
+#
+#  2) **双网络隔离**：frontend（Nginx ↔ app）+ backend（app ↔ DB/Cache，internal）。
+#     Nginx 不接 backend —— 即使 Nginx 被攻破，也摸不到数据库网段。
+#
+#  3) 关键变量用 `${VAR:?}`：缺失时 compose 直接报错退出，
+#     而不是起一个「连不上库、静默降级、看起来在跑」的容器 ——
+#     后者往往要等到第一次真实业务请求才发现，排查成本高得多。
+# ============================================================================
+
+name: dssad-cloud-prod
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: dssad-nginx
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/dssad-cloud.conf:/etc/nginx/conf.d/default.conf:ro
+      # 前端静态产物：先在构建机执行 `bash scripts/build.sh --web`，把 dist 同步到服务器
+      - ./cloud-platform-web/dist:/usr/share/nginx/html:ro
+      # 媒体文件（事故四方向视频等）直出，不经应用层
+      - dssad-media:/var/www/media:ro
+      # 证书目录必须**非空**：目录为空时 Nginx 直接退出，
+      # 而 compose 已把应用拉起 → 表现成「进程都在跑但网站打不开」
+      - ./deploy/nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - frontend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dssad-cloud-platform:${APP_TAG:-latest}
+    container_name: dssad-app
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      SPRING_PROFILES_ACTIVE: prod
+      # ---- 数据库 ----
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_NAME: ${DB_NAME:?必须在 .env 中设置 DB_NAME}
+      DB_USERNAME: ${DB_USERNAME:?必须在 .env 中设置 DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD:?必须在 .env 中设置 DB_PASSWORD}
+      # ---- 缓存 ----
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?必须在 .env 中设置 REDIS_PASSWORD}
+      # ---- 平台身份 ----
+      DSSAD_ENTERPRISE_ID: ${DSSAD_ENTERPRISE_ID:?准入平台分配的企业ID必填}
+      DSSAD_ENTERPRISE_NAME: ${DSSAD_ENTERPRISE_NAME:-车路通DSSAD云平台}
+      # ---- MQTT ----
+      DSSAD_MQTT_BROKER_URL: ${DSSAD_MQTT_BROKER_URL:?MQTT Broker 地址必填}
+      DSSAD_MQTT_USERNAME: ${DSSAD_MQTT_USERNAME:-}
+      DSSAD_MQTT_PASSWORD: ${DSSAD_MQTT_PASSWORD:-}
+      # ---- 对外依赖 ----
+      DSSAD_REGULATORY_BASE_URL: ${DSSAD_REGULATORY_BASE_URL:?监管平台地址必填}
+      DSSAD_STORAGE_PUBLIC_URL: ${DSSAD_STORAGE_PUBLIC_URL:?媒体公网基址必填}
+      DSSAD_STORAGE_ROOT: /data/dssad/media
+      DSSAD_SRS_URL: ${DSSAD_SRS_URL:?SRS 地址必填}
+      # ---- 管理端口令（未设置会落到开发默认口令）----
+      DSSAD_ADMIN_USER: ${DSSAD_ADMIN_USER:-admin}
+      DSSAD_ADMIN_PASSWORD: ${DSSAD_ADMIN_PASSWORD:?生产必须显式设置管理端口令}
+      # ---- 数据生命周期 ----
+      DSSAD_AUDIT_MODE: ${DSSAD_AUDIT_MODE:-sampled}
+      DSSAD_TRACK_RETENTION_DAYS: ${DSSAD_TRACK_RETENTION_DAYS:-90}
+      DSSAD_STATE_RETENTION_DAYS: ${DSSAD_STATE_RETENTION_DAYS:-180}
+      DSSAD_LOG_DIR: /var/log/dssad
+      # ---- Actuator 访问控制（O-03）----
+      # 白名单是「唯一允许集合」，其余来源一律 404（不是「配置了就放行」）。
+      # 必须包含 Docker 地址池：Nginx 转发的 /actuator/health* 源地址是
+      # nginx 容器在 frontend 网络中的 IP（172.x），**不是回环地址** ——
+      # 漏掉它会让网关侧探活拿到 404，而应用日志只留一行 WARN。
+      # app 自身的 healthcheck 在容器内打 127.0.0.1，靠 ::1/127.0.0.1 项即可。
+      # 若宿主机上还有其它 Docker 项目，建议把 172.16.0.0/12 收窄到本项目实际网段。
+      DSSAD_ACTUATOR_ALLOWED_CIDRS: ${DSSAD_ACTUATOR_ALLOWED_CIDRS:-127.0.0.1/32,::1/128,172.16.0.0/12}
+      JAVA_OPTS: ${JAVA_OPTS:--Xms512m -Xmx2g -XX:MaxRAMPercentage=75 -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai}
+    expose:
+      - "8080"          # 不写 ports：只能被 Nginx 访问
+    volumes:
+      - dssad-media:/data/dssad/media
+      - dssad-logs:/var/log/dssad
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - frontend
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/actuator/health/liveness || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+
+  mysql:
+    image: mysql:8.4
+    container_name: dssad-mysql
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?必须在 .env 中设置 MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:?}
+      MYSQL_USER: ${DB_USERNAME:?}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+      - --max-connections=500
+      - --innodb-buffer-pool-size=${MYSQL_BUFFER_POOL:-1G}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 仅在数据卷为空（首次启动）时执行；已建库后改 DDL 需人工发布（见部署指南「升级与回滚」）
+      - ./cloud-platform-server/db/schema-mysql.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+    networks:
+      - backend        # 不接 frontend：数据库不对入口网络暴露
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  redis:
+    image: redis:7-alpine
+    container_name: dssad-redis
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    command:
+      - redis-server
+      - --requirepass
+      - ${REDIS_PASSWORD:?}
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - ${REDIS_MAXMEMORY:-512mb}
+      - --maxmemory-policy
+      - allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+networks:
+  # 入口网络：Nginx ↔ app
+  frontend:
+    driver: bridge
+  # 数据网络：app ↔ MySQL/Redis，internal 表示无法访问外网、外部也无法进入
+  backend:
+    driver: bridge
+    internal: true
+
+volumes:
+  mysql-data:
+  redis-data:
+  dssad-media:
+  dssad-logs:

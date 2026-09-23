@@ -1,0 +1,95 @@
+# ============================================================================
+#  本地开发依赖编排 —— 只起**依赖**，应用本身留给 IDE / scripts/dev.sh 跑
+#
+#  为什么应用不进这个文件：开发时需要热重启、断点、改配置即时生效，
+#  容器化的应用每次改动都要重建镜像，反而拖慢节奏。
+#
+#  用法：
+#    docker compose up -d              # 起 MySQL + Redis（+可选的 MQTT Broker）
+#    docker compose ps
+#    docker compose logs -f mysql
+#    docker compose down               # 停止（保留数据卷）
+#    docker compose down -v            # 停止并删除数据（重置环境）
+#
+#  起好之后把应用切到「真依赖」模式：
+#    # 用 MySQL（需先执行 db/schema-mysql.sql，容器首次启动会自动执行）
+#    mvn spring-boot:run -Dspring-boot.run.profiles=prod \
+#      -Dspring-boot.run.arguments="--server.port=8080"
+#    或直接用 scripts/run-local.sh --prod（会读仓库根的 .env）
+# ============================================================================
+
+name: dssad-cloud-dev
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: dssad-mysql
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-dssad_root}
+      MYSQL_DATABASE: ${DB_NAME:-dssad_cloud}
+      MYSQL_USER: ${DB_USERNAME:-dssad}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-dssad_pass}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      # 时区：容器默认 UTC，会让「按天统计」整体错位 8 小时
+      - --default-time-zone=+08:00
+    ports:
+      # 仅绑定回环：开发机上的库不对局域网暴露
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 首次初始化时自动建表（脚本无 USE/CREATE DATABASE，因此必须依赖 MYSQL_DATABASE 选库）
+      - ./cloud-platform-server/db/schema-mysql.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: dssad-redis
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    command:
+      - redis-server
+      - --requirepass
+      - ${REDIS_PASSWORD:-dssad_redis}
+      - --appendonly
+      - "yes"
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $$(cat /proc/1/environ | tr '\\0' '\\n' | sed -n 's/^REDIS_PASSWORD=//p') ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # MQTT Broker：仅在需要联调「车端上行 / 监管云云」时启用
+  #   docker compose --profile mqtt up -d
+  # 默认不启用，避免只想改 REST 接口的人被迫起一个 Broker。
+  mqtt:
+    image: eclipse-mosquitto:2
+    container_name: dssad-mosquitto
+    profiles: ["mqtt"]
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "127.0.0.1:1883:1883"
+    volumes:
+      - ./deploy/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+
+volumes:
+  mysql-data:
+  redis-data:
+  mosquitto-data:

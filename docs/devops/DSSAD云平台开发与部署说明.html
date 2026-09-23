@@ -1,0 +1,3116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>车路通 DSSAD 产品云平台 — 开发与部署说明</title>
+<meta name="generator" content="scripts/md2html.py">
+<style>
+
+:root{
+  --bg:#0d1117;
+  --bg-side:#090c11;
+  --bg-elev:#161b22;
+  --bg-code:#161b22;
+  --border:#21262d;
+  --border-soft:#1a1f27;
+  --text:#c9d1d9;
+  --text-strong:#e6edf3;
+  --text-dim:#8b949e;
+  --accent:#58a6ff;
+  --accent-soft:rgba(88,166,255,.12);
+  --green:#3fb950;
+  --orange:#d29922;
+  --red:#f85149;
+  --purple:#bc8cff;
+  --sidebar-w:308px;
+  --radius:8px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+              "Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15.5px;line-height:1.78;
+  -webkit-font-smoothing:antialiased;
+}
+code,pre,kbd,.mono{
+  font-family:"JetBrains Mono","Cascadia Code",Consolas,"Courier New",monospace;
+  font-variant-ligatures:none;
+}
+
+/* ---------- 布局：左固定 TOC / 右正文 ---------- */
+.layout{display:flex;align-items:flex-start;min-height:100vh}
+
+.sidebar{
+  width:var(--sidebar-w);flex:0 0 var(--sidebar-w);
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  background:var(--bg-side);border-right:1px solid var(--border);
+  padding:22px 0 60px;
+}
+.sidebar-brand{
+  padding:0 20px 16px;margin-bottom:14px;border-bottom:1px solid var(--border-soft);
+}
+.sidebar-brand .t{font-size:14px;font-weight:600;color:var(--text-strong);letter-spacing:.2px}
+.sidebar-brand .s{font-size:12px;color:var(--text-dim);margin-top:4px}
+
+.toc{padding:0 10px}
+.toc ul{list-style:none;margin:0;padding:0}
+.toc > ul > li{margin:2px 0}
+.toc a{
+  display:block;padding:6px 10px;border-radius:6px;
+  color:var(--text-dim);text-decoration:none;font-size:13.5px;
+  border-left:2px solid transparent;transition:all .15s ease;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.toc > ul > li > a{color:var(--text);font-weight:500}
+.toc a:hover{background:var(--bg-elev);color:var(--text-strong)}
+.toc a.active{
+  color:var(--accent);background:var(--accent-soft);
+  border-left-color:var(--accent);font-weight:600;
+}
+.toc ul ul{margin-left:12px}
+.toc ul ul a{font-size:12.8px;padding:4px 10px}
+
+/* ---------- 正文 ---------- */
+.content{
+  flex:1 1 auto;min-width:0;max-width:1000px;
+  padding:44px 56px 120px;
+}
+.content > *:first-child{margin-top:0}
+
+/* 页头 */
+.doc-header{margin-bottom:34px;padding-bottom:22px;border-bottom:1px solid var(--border)}
+h1{
+  font-size:30px;line-height:1.35;margin:0 0 16px;color:var(--text-strong);
+  font-weight:700;letter-spacing:-.3px;
+}
+.doc-meta{font-size:12.5px;color:var(--text-dim);display:flex;gap:14px;flex-wrap:wrap}
+.doc-meta span{display:inline-flex;align-items:center;gap:5px}
+.doc-meta code{font-size:12px;color:var(--text-dim);background:transparent;padding:0}
+
+/* 「定位说明」摘要卡（md 中紧跟 h1 的引用块） */
+.doc-lead{
+  background:linear-gradient(180deg,rgba(88,166,255,.07),rgba(88,166,255,.02));
+  border:1px solid rgba(88,166,255,.22);border-left:3px solid var(--accent);
+  border-radius:var(--radius);padding:14px 18px;margin:0 0 30px;
+  font-size:14px;color:var(--text-dim);line-height:1.8;
+}
+.doc-lead p{margin:0 0 8px}
+.doc-lead p:last-child{margin-bottom:0}
+.doc-lead strong{color:var(--text-strong)}
+.doc-lead code{font-size:12.5px;color:var(--accent);background:rgba(88,166,255,.1);padding:1px 5px;border-radius:4px}
+
+/* 标题层级 */
+h2{
+  font-size:23px;font-weight:650;color:var(--text-strong);
+  margin:56px 0 18px;padding:0 0 10px 0;
+  border-bottom:1px solid var(--border);position:relative;
+}
+h2::before{
+  content:"";position:absolute;left:-56px;top:6px;width:3px;height:20px;
+  background:var(--accent);border-radius:2px;
+}
+h3{
+  font-size:18px;font-weight:600;color:var(--accent);
+  margin:34px 0 12px;padding-left:0;
+}
+h4{font-size:15.5px;font-weight:600;color:var(--text-strong);margin:24px 0 10px}
+h5,h6{font-size:14.5px;font-weight:600;color:var(--text-dim);margin:20px 0 8px}
+
+/* 标题锚点链接（hover 显现） */
+.headerlink{
+  color:var(--text-dim);text-decoration:none;opacity:0;
+  margin-left:8px;font-size:.75em;transition:opacity .15s ease;
+}
+h2:hover .headerlink,h3:hover .headerlink,h4:hover .headerlink{opacity:.7}
+.headerlink:hover{opacity:1;color:var(--accent)}
+
+p{margin:0 0 15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+
+strong{color:var(--text-strong);font-weight:650}
+em{color:var(--text-strong)}
+hr{border:0;border-top:1px solid var(--border);margin:38px 0}
+
+ul,ol{margin:0 0 15px;padding-left:26px}
+li{margin:5px 0}
+li > ul,li > ol{margin:5px 0}
+ul li::marker{color:var(--text-dim)}
+ol li::marker{color:var(--accent);font-weight:600}
+
+/* 引用块（除 .doc-lead 外的） */
+blockquote{
+  margin:0 0 16px;padding:12px 18px;
+  background:var(--bg-elev);border-left:3px solid var(--border);
+  border-radius:0 var(--radius) var(--radius) 0;color:var(--text-dim);
+}
+blockquote p:last-child{margin-bottom:0}
+
+/* 行内代码 */
+code{
+  font-size:13px;background:rgba(110,118,129,.18);color:#79c0ff;
+  padding:2px 6px;border-radius:5px;white-space:nowrap;
+}
+pre code{background:none;padding:0;color:inherit;white-space:pre;font-size:13.2px}
+pre{
+  margin:0;padding:16px 18px;overflow-x:auto;
+  background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);
+  line-height:1.62;
+}
+
+/* 代码块容器 + 复制按钮 */
+.highlight{
+  position:relative;margin:0 0 18px;
+  background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;
+}
+.highlight pre{border:0;border-radius:0;background:transparent}
+.copy-btn{
+  position:absolute;top:8px;right:8px;z-index:2;
+  background:rgba(110,118,129,.22);color:var(--text-dim);
+  border:1px solid var(--border);border-radius:6px;
+  padding:3px 9px;font-size:11.5px;cursor:pointer;
+  font-family:inherit;opacity:0;transition:opacity .15s ease,background .15s ease;
+}
+.highlight:hover .copy-btn{opacity:1}
+.copy-btn:hover{background:rgba(88,166,255,.22);color:var(--accent);border-color:rgba(88,166,255,.4)}
+.copy-btn.done{color:var(--green);border-color:rgba(63,185,80,.45)}
+
+/* 任务列表（- [ ] / - [x]）*/
+li.task{list-style:none;margin-left:-22px;display:flex;align-items:flex-start;gap:9px}
+li.task > p{display:contents}
+li.task .cb{
+  flex:0 0 auto;width:14px;height:14px;margin-top:6px;
+  border:1.5px solid var(--text-dim);border-radius:3px;
+}
+li.task.done .cb{background:var(--green);border-color:var(--green)}
+li.task.done{color:var(--text-dim)}
+
+/* 表格 */
+.table-wrap{overflow-x:auto;margin:0 0 18px}
+table{
+  border-collapse:collapse;width:100%;font-size:14px;
+  border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;
+}
+thead th{
+  background:var(--bg-elev);color:var(--text-strong);font-weight:600;
+  text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+tbody td{padding:9px 14px;border-bottom:1px solid var(--border-soft);vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:rgba(255,255,255,.014)}
+tbody tr:hover{background:rgba(88,166,255,.05)}
+td code,th code{font-size:12.5px}
+
+/* 回到顶部 */
+#to-top{
+  position:fixed;right:26px;bottom:26px;z-index:10;
+  width:40px;height:40px;border-radius:50%;
+  background:var(--bg-elev);color:var(--text-dim);
+  border:1px solid var(--border);cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:all .2s ease;
+}
+#to-top.show{opacity:1;pointer-events:auto}
+#to-top:hover{color:var(--accent);border-color:var(--accent);transform:translateY(-2px)}
+
+/* 窄屏：侧边栏收起 */
+#menu-btn{
+  display:none;position:fixed;top:14px;left:14px;z-index:20;
+  width:38px;height:38px;border-radius:8px;
+  background:var(--bg-elev);border:1px solid var(--border);
+  color:var(--text);cursor:pointer;font-size:17px;
+}
+@media (max-width:960px){
+  #menu-btn{display:block}
+  .sidebar{
+    position:fixed;left:0;top:0;z-index:15;height:100vh;
+    transform:translateX(-100%);transition:transform .22s ease;
+    box-shadow:0 0 40px rgba(0,0,0,.5);
+  }
+  .sidebar.open{transform:translateX(0)}
+  .content{padding:70px 22px 100px}
+  h2::before{display:none}
+}
+@media print{
+  .sidebar,#to-top,#menu-btn,.copy-btn{display:none}
+  body{background:#fff;color:#111}
+  .content{max-width:none;padding:0}
+}
+
+/* ---------- pygments 语法高亮（github-dark） ---------- */
+pre { line-height: 125%; }
+td.linenos .normal { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+.highlight .hll { background-color: #6e7681 }
+.highlight { background: transparent; }
+.highlight .c { color: #8B949E; font-style: italic } /* Comment */
+.highlight .err { color: #F85149 } /* Error */
+.highlight .esc { color: #E6EDF3 } /* Escape */
+.highlight .g { color: #E6EDF3 } /* Generic */
+.highlight .k { color: #FF7B72 } /* Keyword */
+.highlight .l { color: #A5D6FF } /* Literal */
+.highlight .n { color: #E6EDF3 } /* Name */
+.highlight .o { color: #FF7B72; font-weight: bold } /* Operator */
+.highlight .x { color: #E6EDF3 } /* Other */
+.highlight .p { color: #E6EDF3 } /* Punctuation */
+.highlight .ch { color: #8B949E; font-style: italic } /* Comment.Hashbang */
+.highlight .cm { color: #8B949E; font-style: italic } /* Comment.Multiline */
+.highlight .cp { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Preproc */
+.highlight .cpf { color: #8B949E; font-style: italic } /* Comment.PreprocFile */
+.highlight .c1 { color: #8B949E; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Special */
+.highlight .gd { color: #FFA198; background-color: #490202 } /* Generic.Deleted */
+.highlight .ge { color: #E6EDF3; font-style: italic } /* Generic.Emph */
+.highlight .ges { color: #E6EDF3; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.highlight .gr { color: #FFA198 } /* Generic.Error */
+.highlight .gh { color: #79C0FF; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #56D364; background-color: #0F5323 } /* Generic.Inserted */
+.highlight .go { color: #8B949E } /* Generic.Output */
+.highlight .gp { color: #8B949E } /* Generic.Prompt */
+.highlight .gs { color: #E6EDF3; font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #79C0FF } /* Generic.Subheading */
+.highlight .gt { color: #FF7B72 } /* Generic.Traceback */
+.highlight .g-Underline { color: #E6EDF3; text-decoration: underline } /* Generic.Underline */
+.highlight .kc { color: #79C0FF } /* Keyword.Constant */
+.highlight .kd { color: #FF7B72 } /* Keyword.Declaration */
+.highlight .kn { color: #FF7B72 } /* Keyword.Namespace */
+.highlight .kp { color: #79C0FF } /* Keyword.Pseudo */
+.highlight .kr { color: #FF7B72 } /* Keyword.Reserved */
+.highlight .kt { color: #FF7B72 } /* Keyword.Type */
+.highlight .ld { color: #79C0FF } /* Literal.Date */
+.highlight .m { color: #A5D6FF } /* Literal.Number */
+.highlight .s { color: #A5D6FF } /* Literal.String */
+.highlight .na { color: #E6EDF3 } /* Name.Attribute */
+.highlight .nb { color: #E6EDF3 } /* Name.Builtin */
+.highlight .nc { color: #F0883E; font-weight: bold } /* Name.Class */
+.highlight .no { color: #79C0FF; font-weight: bold } /* Name.Constant */
+.highlight .nd { color: #D2A8FF; font-weight: bold } /* Name.Decorator */
+.highlight .ni { color: #FFA657 } /* Name.Entity */
+.highlight .ne { color: #F0883E; font-weight: bold } /* Name.Exception */
+.highlight .nf { color: #D2A8FF; font-weight: bold } /* Name.Function */
+.highlight .nl { color: #79C0FF; font-weight: bold } /* Name.Label */
+.highlight .nn { color: #FF7B72 } /* Name.Namespace */
+.highlight .nx { color: #E6EDF3 } /* Name.Other */
+.highlight .py { color: #79C0FF } /* Name.Property */
+.highlight .nt { color: #7EE787 } /* Name.Tag */
+.highlight .nv { color: #79C0FF } /* Name.Variable */
+.highlight .ow { color: #FF7B72; font-weight: bold } /* Operator.Word */
+.highlight .pm { color: #E6EDF3 } /* Punctuation.Marker */
+.highlight .w { color: #6E7681 } /* Text.Whitespace */
+.highlight .mb { color: #A5D6FF } /* Literal.Number.Bin */
+.highlight .mf { color: #A5D6FF } /* Literal.Number.Float */
+.highlight .mh { color: #A5D6FF } /* Literal.Number.Hex */
+.highlight .mi { color: #A5D6FF } /* Literal.Number.Integer */
+.highlight .mo { color: #A5D6FF } /* Literal.Number.Oct */
+.highlight .sa { color: #79C0FF } /* Literal.String.Affix */
+.highlight .sb { color: #A5D6FF } /* Literal.String.Backtick */
+.highlight .sc { color: #A5D6FF } /* Literal.String.Char */
+.highlight .dl { color: #79C0FF } /* Literal.String.Delimiter */
+.highlight .sd { color: #A5D6FF } /* Literal.String.Doc */
+.highlight .s2 { color: #A5D6FF } /* Literal.String.Double */
+.highlight .se { color: #79C0FF } /* Literal.String.Escape */
+.highlight .sh { color: #79C0FF } /* Literal.String.Heredoc */
+.highlight .si { color: #A5D6FF } /* Literal.String.Interpol */
+.highlight .sx { color: #A5D6FF } /* Literal.String.Other */
+.highlight .sr { color: #79C0FF } /* Literal.String.Regex */
+.highlight .s1 { color: #A5D6FF } /* Literal.String.Single */
+.highlight .ss { color: #A5D6FF } /* Literal.String.Symbol */
+.highlight .bp { color: #E6EDF3 } /* Name.Builtin.Pseudo */
+.highlight .fm { color: #D2A8FF; font-weight: bold } /* Name.Function.Magic */
+.highlight .vc { color: #79C0FF } /* Name.Variable.Class */
+.highlight .vg { color: #79C0FF } /* Name.Variable.Global */
+.highlight .vi { color: #79C0FF } /* Name.Variable.Instance */
+.highlight .vm { color: #79C0FF } /* Name.Variable.Magic */
+.highlight .il { color: #A5D6FF } /* Literal.Number.Integer.Long */
+.highlight .l-Scalar, .highlight .l-Scalar-Plain { color:#A5D6FF }
+.highlight .p-Indicator { color:#E6EDF3 }
+.highlight .highlight { background: transparent; }
+</style>
+</head>
+<body>
+<button id="menu-btn" type="button" aria-label="目录">&#9776;</button>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="t">车路通 DSSAD 产品云平台 — 开发与部署说明</div>
+      <div class="s">docs/devops/DSSAD云平台开发与部署说明.md</div>
+    </div>
+    <nav class="toc">
+<div class="toc">
+<ul>
+<li><a href="#0-文档说明">0 文档说明</a><ul>
+<li><a href="#01-本文回答什么">0.1 本文回答什么</a></li>
+<li><a href="#02-本次验证覆盖了什么">0.2 本次验证覆盖了什么</a></li>
+<li><a href="#03-本文不回答什么">0.3 本文不回答什么</a></li>
+</ul>
+</li>
+<li><a href="#1-三条路径辨析最容易出错的地方">1 三条路径辨析（最容易出错的地方）</a><ul>
+<li><a href="#11-为什么必须分开">1.1 为什么必须分开</a></li>
+<li><a href="#12-决策路径">1.2 决策路径</a></li>
+</ul>
+</li>
+<li><a href="#2-部署拓扑">2 部署拓扑</a><ul>
+<li><a href="#21-生产拓扑容器方式">2.1 生产拓扑（容器方式）</a></li>
+<li><a href="#22-端口与网络矩阵">2.2 端口与网络矩阵</a></li>
+</ul>
+</li>
+<li><a href="#3-环境要求">3 环境要求</a><ul>
+<li><a href="#31-开发机">3.1 开发机</a></li>
+<li><a href="#32-服务器硬件建议与依据">3.2 服务器（硬件建议与依据）</a></li>
+<li><a href="#33-软件版本矩阵">3.3 软件版本矩阵</a></li>
+</ul>
+</li>
+<li><a href="#4-配置体系">4 配置体系</a><ul>
+<li><a href="#41-分层结构与正交组合">4.1 分层结构与正交组合</a></li>
+<li><a href="#42-环境变量总表">4.2 环境变量总表</a></li>
+<li><a href="#43-业务配置项参考dssad">4.3 业务配置项参考（dssad.*）</a></li>
+<li><a href="#44-密钥管理原则">4.4 密钥管理原则</a></li>
+</ul>
+</li>
+<li><a href="#5-本地开发">5 本地开发</a><ul>
+<li><a href="#51-三步上手已验证">5.1 三步上手（已验证）</a></li>
+<li><a href="#52-脚本行为说明">5.2 脚本行为说明</a></li>
+<li><a href="#53-常见开发任务">5.3 常见开发任务</a></li>
+<li><a href="#54-本地数据与清理">5.4 本地数据与清理</a></li>
+</ul>
+</li>
+<li><a href="#6-本地生产态验证不要跳过">6 本地生产态验证（不要跳过）</a><ul>
+<li><a href="#61-为什么不能跳过">6.1 为什么不能跳过</a></li>
+<li><a href="#62-用成品-jar-起服已验证ev-2-ev-4">6.2 用成品 jar 起服（已验证，EV-2 / EV-4）</a></li>
+<li><a href="#63-生产建表脚本在真实-mysql-上执行已验证ev-5">6.3 生产建表脚本在真实 MySQL 上执行（已验证，EV-5）</a></li>
+<li><a href="#64-prod-profile-真实-mysql-起服已验证ev-6-ev-7">6.4 prod profile + 真实 MySQL 起服（已验证，EV-6 / EV-7）</a></li>
+<li><a href="#65-反向探针证明门禁真的在拦已验证ev-8">6.5 反向探针：证明门禁真的在拦（已验证，EV-8）</a></li>
+</ul>
+</li>
+<li><a href="#7-构建">7 构建</a><ul>
+<li><a href="#71-后端">7.1 后端</a></li>
+<li><a href="#72-前端">7.2 前端</a></li>
+<li><a href="#73-覆盖率门槛本次已修复接线">7.3 覆盖率门槛（本次已修复接线）</a></li>
+<li><a href="#74-版本与产物命名">7.4 版本与产物命名</a></li>
+</ul>
+</li>
+<li><a href="#8-部署方式一容器">8 部署方式一：容器</a><ul>
+<li><a href="#81-dockerfile-要点逐条对应一类真实故障">8.1 Dockerfile 要点（逐条对应一类真实故障）</a></li>
+<li><a href="#82-生产编排要点">8.2 生产编排要点</a></li>
+<li><a href="#83-首次上线步骤">8.3 首次上线步骤</a></li>
+<li><a href="#84-生产必查的三件事">8.4 生产必查的三件事</a></li>
+</ul>
+</li>
+<li><a href="#9-部署方式二jar-systemd-nginx">9 部署方式二：jar + systemd + Nginx</a><ul>
+<li><a href="#91-初始化步骤">9.1 初始化步骤</a></li>
+<li><a href="#92-systemd-单元要点">9.2 systemd 单元要点</a></li>
+<li><a href="#93-nginx-必写项漏了会出事">9.3 Nginx 必写项（漏了会出事）</a></li>
+<li><a href="#94-tls-与证书">9.4 TLS 与证书</a></li>
+</ul>
+</li>
+<li><a href="#10-上线验收清单">10 上线验收清单</a></li>
+<li><a href="#11-运维手册">11 运维手册</a><ul>
+<li><a href="#111-日志">11.1 日志</a></li>
+<li><a href="#112-监控指标与告警">11.2 监控指标与告警</a></li>
+<li><a href="#113-备份与恢复">11.3 备份与恢复</a></li>
+<li><a href="#114-升级与回滚">11.4 升级与回滚</a></li>
+<li><a href="#115-数据清理">11.5 数据清理</a></li>
+<li><a href="#116-扩容建议按瓶颈顺序">11.6 扩容建议（按瓶颈顺序）</a></li>
+</ul>
+</li>
+<li><a href="#12-安全清单投产前逐条确认">12 安全清单（投产前逐条确认）</a></li>
+<li><a href="#13-排障-faq">13 排障 FAQ</a><ul>
+<li><a href="#q1-端口指定了却不生效">Q1 端口指定了却不生效</a></li>
+<li><a href="#q2-健康探测返回-502但服务其实活着">Q2 健康探测返回 502，但服务其实活着</a></li>
+<li><a href="#q3-构建报不支持发行版本-21">Q3 构建报「不支持发行版本 21」</a></li>
+<li><a href="#q4-上传到-linux-的脚本报-bad-interpreter-no-such-file-or-directory">Q4 上传到 Linux 的脚本报 bad interpreter: No such file or directory</a></li>
+<li><a href="#q5-systemd-报-failed-to-parse-invalid-argument">Q5 systemd 报 Failed to parse ... Invalid argument</a></li>
+<li><a href="#q6-容器起来了但连不上数据库">Q6 容器起来了，但连不上数据库</a></li>
+<li><a href="#q7-应用启动成功但一条车端数据都收不到">Q7 应用启动成功，但一条车端数据都收不到</a></li>
+<li><a href="#q8-启动耗时异常长十几秒到一两分钟">Q8 启动耗时异常长（十几秒到一两分钟）</a></li>
+<li><a href="#q9-容器反复重启">Q9 容器反复重启</a></li>
+<li><a href="#q10-nginx-报-cannot-load-certificate-而容器编排把应用也拉起来了">Q10 Nginx 报 cannot load certificate 而容器编排把应用也拉起来了</a></li>
+<li><a href="#q11-前端刷新页面-404">Q11 前端刷新页面 404</a></li>
+<li><a href="#q12-大文件上传被拒413">Q12 大文件上传被拒（413）</a></li>
+<li><a href="#q13-中文查询参数返回-400-invalid-character-found-in-the-request-target">Q13 中文查询参数返回 400 Invalid character found in the request target</a></li>
+<li><a href="#q14-覆盖率门槛没有拦住低覆盖率的构建">Q14 覆盖率门槛没有拦住低覆盖率的构建</a></li>
+</ul>
+</li>
+<li><a href="#14-部署风险与缺陷清单">14 部署风险与缺陷清单</a><ul>
+<li><a href="#与既有缺陷清单的交叉引用">与既有缺陷清单的交叉引用</a></li>
+</ul>
+</li>
+<li><a href="#附录-a-脚本速查">附录 A 脚本速查</a></li>
+<li><a href="#附录-b-配置项与文件对照">附录 B 配置项与文件对照</a></li>
+<li><a href="#附录-c-本次验证的证据与未验证项">附录 C 本次验证的证据与未验证项</a><ul>
+<li><a href="#c1-已验证命令可复现">C.1 已验证（命令可复现）</a></li>
+<li><a href="#c2-未验证不要当作已验证">C.2 未验证（不要当作已验证）</a></li>
+<li><a href="#c3-本次在用户机器上留下的痕迹">C.3 本次在用户机器上留下的痕迹</a></li>
+</ul>
+</li>
+<li><a href="#附录-d-本次新增修改的文件清单">附录 D 本次新增/修改的文件清单</a><ul>
+<li><a href="#新增">新增</a></li>
+<li><a href="#修改">修改</a></li>
+</ul>
+</li>
+<li><a href="#版本记录">版本记录</a></li>
+</ul>
+</div>
+
+    </nav>
+  </aside>
+  <main class="content">
+    <header class="doc-header">
+      <h1>车路通 DSSAD 产品云平台 — 开发与部署说明</h1>
+      <div class="doc-meta">
+        <span>源文件 <code>docs/devops/DSSAD云平台开发与部署说明.md</code></span>
+        <span>由 scripts/md2html.py 生成</span>
+      </div>
+    </header>
+    <div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文档版本</td>
+<td>v1.0</td>
+</tr>
+<tr>
+<td>编制日期</td>
+<td>2026-09-23</td>
+</tr>
+<tr>
+<td>适用版本</td>
+<td><code>dssad-cloud-platform</code> 1.0.0-SNAPSHOT · 前端 <code>dssad-cloud-web</code> 1.0.0</td>
+</tr>
+<tr>
+<td>交付形态</td>
+<td>后端可执行 jar（<code>target/dssad-cloud-platform.jar</code>，69 MB）· 前端静态产物（<code>cloud-platform-web/dist</code>，2.8 MB）· 容器镜像（多阶段 Dockerfile）</td>
+</tr>
+<tr>
+<td>部署方式</td>
+<td>① 容器（<code>docker-compose.prod.yml</code>）② 主机（jar + systemd + Nginx）</td>
+</tr>
+<tr>
+<td>本次验证环境</td>
+<td>Windows 11 23H2 · JDK 21.0.10 · MySQL 8.4.9（本机）· Redis 7（本机）· Node 22.22.2</td>
+</tr>
+<tr>
+<td>关联文档</td>
+<td>《接口文档》《数据库设计说明书》《详细设计说明书》《性能优化与压测报告》</td>
+</tr>
+<tr>
+<td>原始产物</td>
+<td>本次全部实测输出留档于 <code>cloud-platform-server/perf/*.txt</code>、<code>.run/*.log</code></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>本文的定位</strong>：这条流水线<strong>跑过一遍</strong>，所以本文以「可复现的验证」为主体。
+每一节凡写「已验证」的结论都附实测证据（命令 + 输出摘要）；
+未验证的部分（Docker 守护进程未启动、无 HTTPS 证书、无 Linux 主机）集中列在<strong>附录 C</strong>，
+不使用「配置看起来是对的」冒充「已验证」。</p>
+<p>同样，本次验证过程中发现的部署级风险单独列在第 14 章（编号 <code>E-xx</code>），
+其中 <code>E-01</code> 会导致「所有探针全绿、监控面板 100% 可用，但平台收不到任何车端数据」
+—— 该问题<strong>已在 v1.1 修复</strong>（新增通道探针端点与脚本），完整处置与告警方案见
+《DSSAD 云平台运维手册与告警预案》。</p>
+</blockquote>
+<hr>
+<h2 id="0-文档说明">0 文档说明<a class="headerlink" href="#0-文档说明" title="永久链接">#</a></h2>
+<h3 id="01-本文回答什么">0.1 本文回答什么<a class="headerlink" href="#01-本文回答什么" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>问题</th>
+<th>对应章节</th>
+<th>结论强度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>开发机、服务器各需要装什么？怎么确认装对了？</td>
+<td>第 3 章</td>
+<td><strong>实测（自检脚本实跑）</strong></td>
+</tr>
+<tr>
+<td>有哪些配置项？哪些必填？缺失会怎样？</td>
+<td>第 4 章</td>
+<td><strong>实测（fail-fast 已验证）</strong></td>
+</tr>
+<tr>
+<td>怎么把项目跑起来（开发 / 本地生产态 / 服务器）？</td>
+<td>第 5、6、8、9 章</td>
+<td><strong>实测（本地两条路径已实跑）</strong></td>
+</tr>
+<tr>
+<td>生产建表脚本能不能直接执行？</td>
+<td>第 6.3 节</td>
+<td><strong>实测（MySQL 8.4.9 实执行）</strong></td>
+</tr>
+<tr>
+<td>生产参数能不能起服？</td>
+<td>第 6.4 节</td>
+<td><strong>实测（prod profile + 真实 MySQL 已起服）</strong></td>
+</tr>
+<tr>
+<td>怎么确认「服务是好的」而不是「进程还在」？</td>
+<td>第 10 章</td>
+<td><strong>实测（14 条断言）</strong></td>
+</tr>
+<tr>
+<td>上线后怎么运维？出问题怎么查？</td>
+<td>第 11、13 章</td>
+<td>规程 + 实测依据</td>
+</tr>
+<tr>
+<td>有哪些部署级坑会让系统「静默失效」？</td>
+<td>第 13、14 章</td>
+<td>表格（每条均对应真实故障现象）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="02-本次验证覆盖了什么">0.2 本次验证覆盖了什么<a class="headerlink" href="#02-本次验证覆盖了什么" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>编号</th>
+<th>验证项</th>
+<th>方式</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EV-1</td>
+<td>环境自检脚本</td>
+<td><code>bash scripts/check-env.sh</code></td>
+<td>通过，0 阻塞项</td>
+</tr>
+<tr>
+<td>EV-2</td>
+<td>成品 jar + local profile 起服</td>
+<td><code>scripts/run-local.sh --bg --port 18080</code></td>
+<td>就绪，<code>Started ... in 9.337 seconds</code></td>
+</tr>
+<tr>
+<td>EV-3</td>
+<td>全链路冒烟（14 断言）</td>
+<td><code>scripts/health.sh</code></td>
+<td><strong>14 通过 / 0 失败</strong></td>
+</tr>
+<tr>
+<td>EV-4</td>
+<td>优雅停止</td>
+<td><code>scripts/run-local.sh --stop</code></td>
+<td>SIGTERM 后退出，端口释放</td>
+</tr>
+<tr>
+<td>EV-5</td>
+<td>生产建表脚本在真实 MySQL 执行</td>
+<td><code>mysql &lt; db/schema-mysql.sql</code></td>
+<td>13 表 / 47 索引，零报错</td>
+</tr>
+<tr>
+<td>EV-6</td>
+<td>prod profile + 真实 MySQL 起服（<code>ddl-auto=validate</code>）</td>
+<td><code>java -jar ... --spring.profiles.active=prod</code></td>
+<td>就绪，<code>Started ... in 15.95 seconds</code>，L2=Redis 已装配</td>
+</tr>
+<tr>
+<td>EV-7</td>
+<td>prod 态冒烟（跳过模拟器）</td>
+<td><code>scripts/health.sh --no-simulator</code></td>
+<td><strong>10 通过 / 0 失败 / 4 跳过</strong></td>
+</tr>
+<tr>
+<td>EV-8</td>
+<td>反向探针：库表缺失时是否拒绝启动</td>
+<td>空库 + prod profile</td>
+<td>退出码 1，<code>Schema-management missing table</code> —— <strong>门禁真实有效</strong></td>
+</tr>
+<tr>
+<td>EV-9</td>
+<td>编排文件与 Nginx 配置静态校验</td>
+<td>YAML 解析 + 8 项必写项核对</td>
+<td>全部通过</td>
+</tr>
+<tr>
+<td>EV-10</td>
+<td>测试与覆盖率门槛</td>
+<td><code>mvn verify</code></td>
+<td>164 用例通过，<code>All coverage checks have been met</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="03-本文不回答什么">0.3 本文不回答什么<a class="headerlink" href="#03-本文不回答什么" title="永久链接">#</a></h3>
+<ul>
+<li><strong>不覆盖容器镜像的实际构建与运行</strong>。本机 Docker 守护进程未启动，<code>docker build</code> / <code>compose up</code> / <code>nginx -t</code> <strong>均未真正执行过</strong>，只做了 YAML 合法性与关键项静态核对（见附录 C）。这是本文最大的未验证面。</li>
+<li><strong>不覆盖 HTTPS 端到端</strong>。无证书、无域名、无公网入口，TLS 终止与 301/证书链行为未验证。</li>
+<li><strong>不覆盖 systemd 单元的实际生效</strong>。开发机为 Windows，<code>systemd-analyze verify</code> 未执行。</li>
+<li><strong>不覆盖多实例部署</strong>。本次全部为单实例；多实例下的定时任务重复执行问题属《详细设计说明书》<code>P-01</code>（无分布式锁），<strong>当前状态是「多实例部署前必须先修」</strong>。</li>
+</ul>
+<hr>
+<h2 id="1-三条路径辨析最容易出错的地方">1 三条路径辨析（最容易出错的地方）<a class="headerlink" href="#1-三条路径辨析最容易出错的地方" title="永久链接">#</a></h2>
+<p>「跑起来」和「部署」是两件事，混为一谈会浪费大量时间。本项目刻意把三条路径分开，各有独立脚本与产物。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>路径</th>
+<th>目的</th>
+<th>profile</th>
+<th>产物</th>
+<th>进入方式</th>
+<th>本机验证</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>本地开发</strong></td>
+<td>改代码、调接口、走查 UI</td>
+<td><code>local</code></td>
+<td>无（classes 目录）</td>
+<td><code>bash scripts/dev.sh</code></td>
+<td>已验证</td>
+</tr>
+<tr>
+<td><strong>本地生产态验证</strong></td>
+<td>上服务器前终验「生产参数能否起服」</td>
+<td><code>prod</code></td>
+<td>可执行 jar</td>
+<td><code>bash scripts/run-local.sh --prod</code></td>
+<td>已验证（EV-6）</td>
+</tr>
+<tr>
+<td><strong>服务器部署</strong></td>
+<td>对外服务</td>
+<td><code>prod</code>（+ 依赖由环境变量注入）</td>
+<td>jar + systemd 或容器镜像</td>
+<td>第 8、9 章</td>
+<td><strong>未验证</strong>（无 Linux 主机）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="11-为什么必须分开">1.1 为什么必须分开<a class="headerlink" href="#11-为什么必须分开" title="永久链接">#</a></h3>
+<ul>
+<li><strong><code>local</code> 会掩盖生产问题</strong>：<code>local</code> 用 H2 文件库、<code>ddl-auto=update</code>、MQTT 关闭、模拟器开启。
+  这四点在 <code>prod</code> 下<strong>全部相反</strong>。只用 <code>local</code> 验证过的代码，在生产上会撞上「表结构不匹配」「MQTT 密码拿不到」这类只有 <code>prod</code> 才暴露的问题。<blockquote>
+<p>本次 EV-8 就是这个价值的证明：<strong>空库 + <code>prod</code> 会在启动阶段直接拒绝，而不是带着错表结构跑起来</strong>。</p>
+</blockquote>
+</li>
+<li><strong><code>mvn spring-boot:run</code> 不等于「包能用」</strong>：它跑的是 <code>target/classes</code>，跳过了打 jar 与 <code>spring-boot:repackage</code>。缺资源文件、MANIFEST 异常、Lombok 被误打进包等问题只有 <code>java -jar</code> 才会暴露。</li>
+<li><strong>容器不等于「部署」</strong>：容器解决的是运行时一致性与编排，不解决配置正确性。本次 <code>E-02</code>（启动被监管平台阻塞）在容器里同样存在，而且会因 <code>start-period</code> 不足被判定不健康。</li>
+</ul>
+<h3 id="12-决策路径">1.2 决策路径<a class="headerlink" href="#12-决策路径" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code>flowchart TD
+    A[要做什么？] --&gt; B{改代码还是发版？}
+    B --&gt;|改代码| C[scripts/dev.sh&lt;br/&gt;local profile&lt;br/&gt;H2 + 模拟器]
+    B --&gt;|发版| D[scripts/build.sh --web&lt;br/&gt;出 jar + dist]
+    D --&gt; E[scripts/run-local.sh --prod&lt;br/&gt;本地生产态终验]
+    E --&gt; F{服务器有容器运行时？}
+    F --&gt;|有| G[docker compose -f docker-compose.prod.yml up -d]
+    F --&gt;|无| H[jar + systemd + Nginx]
+    G --&gt; I[scripts/health.sh --no-simulator&lt;br/&gt;上线验收]
+    H --&gt; I
+    I --&gt; J[开启 MQTT 通道告警&lt;br/&gt;见 E-01]
+</code></pre></div>
+
+<hr>
+<h2 id="2-部署拓扑">2 部署拓扑<a class="headerlink" href="#2-部署拓扑" title="永久链接">#</a></h2>
+<h3 id="21-生产拓扑容器方式">2.1 生产拓扑（容器方式）<a class="headerlink" href="#21-生产拓扑容器方式" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code>flowchart LR
+    subgraph 外网
+        U[浏览器 / 运维终端]
+        R[监管平台]
+    end
+
+    subgraph frontend 网络
+        N[Nginx&lt;br/&gt;80/443&lt;br/&gt;TLS 终止 · 限流 · 静态资源 · SPA 回落]
+        A[app&lt;br/&gt;dssad-cloud-platform&lt;br/&gt;仅 expose 8080]
+    end
+
+    subgraph backend 网络 internal:true
+        M[(MySQL 8.4&lt;br/&gt;utf8mb4)]
+        C[(Redis 7&lt;br/&gt;L2 缓存 · 令牌 · 去重)]
+    end
+
+    B[车端 / 企业网关] --&gt;|MQTT 3.1.1| Q[准入平台 Broker]
+    Q --&gt; A
+    R &lt;--&gt;|云云 HTTP HMAC| N
+    U --&gt;|HTTPS| N
+    N --&gt; A
+    A --&gt; M
+    A --&gt; C
+
+    classDef note fill:none,stroke:none
+</code></pre></div>
+
+<p><strong>三个刻意的设计决定</strong>（每一条都对应一类线上事故）：</p>
+<ol>
+<li><strong>app 只 <code>expose</code> 不 <code>ports</code></strong> —— 唯一入口是 Nginx。
+   一旦把应用端口映射到宿主机，就存在「绕过 TLS 直连后端」的路径，HTTPS 强制、入口限流、访问审计全部形同虚设。</li>
+<li><strong>双网络隔离</strong> —— <code>frontend</code>（Nginx ↔ app）+ <code>backend</code>（app ↔ MySQL/Redis，<code>internal: true</code>）。
+   Nginx 不接 <code>backend</code>，即使 Nginx 被攻破也摸不到数据库网段；<code>internal: true</code> 同时让数据网段无法访问外网（防数据外带）。</li>
+<li><strong><code>depends_on</code> 用 <code>service_healthy</code>，不用 <code>service_started</code></strong> —— MySQL 的「进程起来了」与「能接受连接」之间差了十几秒，用 <code>service_started</code> 会让应用在数据库还没就绪时启动并失败。</li>
+</ol>
+<h3 id="22-端口与网络矩阵">2.2 端口与网络矩阵<a class="headerlink" href="#22-端口与网络矩阵" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>组件</th>
+<th>容器内端口</th>
+<th>宿主机暴露</th>
+<th>所属网络</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nginx</td>
+<td>80 / 443</td>
+<td><strong>是</strong>（唯一入口）</td>
+<td>frontend</td>
+<td>80 仅用于 301 跳转与 <code>/healthz</code></td>
+</tr>
+<tr>
+<td>app</td>
+<td>8080</td>
+<td><strong>否</strong>（仅 expose）</td>
+<td>frontend + backend</td>
+<td>由 Nginx 反代</td>
+</tr>
+<tr>
+<td>MySQL</td>
+<td>3306</td>
+<td><strong>否</strong></td>
+<td>backend（internal）</td>
+<td>数据卷持久化</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td>6379</td>
+<td><strong>否</strong></td>
+<td>backend（internal）</td>
+<td>AOF 持久化</td>
+</tr>
+<tr>
+<td>MQTT</td>
+<td>—</td>
+<td>—</td>
+<td>外部</td>
+<td>准入平台提供的 Broker，非本项目部署</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>对外路径</th>
+<th>转发目标</th>
+<th>鉴权方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/</code>、<code>/assets/**</code></td>
+<td>Nginx 静态文件</td>
+<td>无（前端登录页）</td>
+</tr>
+<tr>
+<td><code>/api/v1/**</code></td>
+<td>app</td>
+<td><code>X-Token</code>（登录换取，12 小时有效）</td>
+</tr>
+<tr>
+<td><code>/enterprise/api/v1/**</code></td>
+<td>app</td>
+<td>HMAC 签名（监管平台服务端调用）</td>
+</tr>
+<tr>
+<td><code>/manager/api/v1/**</code></td>
+<td>app</td>
+<td>按监管平台约定</td>
+</tr>
+<tr>
+<td><code>/media/**</code></td>
+<td>Nginx 直接读盘</td>
+<td>URL 可猜测性（生产应加签名 URL）</td>
+</tr>
+<tr>
+<td><code>/api/v1/monitor/health-check</code></td>
+<td>app</td>
+<td>无（负载均衡/业务探活）</td>
+</tr>
+<tr>
+<td><code>/api/v1/monitor/mqtt-health</code></td>
+<td>app</td>
+<td>无（<strong>数据通道探针</strong>，DOWN → 503，见第 11.2 节与运维手册）</td>
+</tr>
+<tr>
+<td><code>/api/v1/monitor/**</code>（其余）</td>
+<td>app</td>
+<td><code>X-Token</code>（通道指标、缓存指标、报文留痕）</td>
+</tr>
+<tr>
+<td><code>/actuator/health*</code></td>
+<td>app</td>
+<td><strong>Nginx 精确放行 + 应用层来源 IP 白名单</strong>（<code>ActuatorIpWhitelistFilter</code>，fail-closed，配置 <code>dssad.security.actuator.allowed-cidrs</code>）</td>
+</tr>
+<tr>
+<td><code>/actuator/</code>（其余）</td>
+<td>—</td>
+<td><strong>404</strong>（Nginx 直接返回，不暴露指标）</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="3-环境要求">3 环境要求<a class="headerlink" href="#3-环境要求" title="永久链接">#</a></h2>
+<h3 id="31-开发机">3.1 开发机<a class="headerlink" href="#31-开发机" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项</th>
+<th>要求</th>
+<th>本机实测</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作系统</td>
+<td>Windows 10/11 · macOS · Linux 均可</td>
+<td>Windows 11 23H2</td>
+</tr>
+<tr>
+<td>JDK</td>
+<td><strong>21</strong>（<code>pom.xml</code> 中 <code>java.version=21</code>）</td>
+<td>21.0.10（<code>C:\Program Files\Java\jdk-21.0.10</code>）</td>
+</tr>
+<tr>
+<td>Maven</td>
+<td>3.9+</td>
+<td>3.9.9（<code>C:\Program Files\apache-maven-3.9.9</code>）</td>
+</tr>
+<tr>
+<td>Node.js</td>
+<td>≥ 18（Vite 6 要求）</td>
+<td>22.22.2</td>
+</tr>
+<tr>
+<td>Shell</td>
+<td>Git Bash / WSL / 原生 bash</td>
+<td>Git Bash</td>
+</tr>
+<tr>
+<td>Docker</td>
+<td>可选（仅容器相关流程需要）</td>
+<td>CLI 29.4.3，<strong>守护进程未启动</strong></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>⚠️ <strong>JDK 版本选择的坑（本机已踩）</strong>：本机同时装有 <code>jdk-21.0.10</code> 与 <code>jdk-18.0.1.1</code>。
+按<strong>字母序</strong> glob <code>jdk-*</code> 会先命中 <strong>jdk-18</strong>，随后 Maven 报「不支持发行版本 21」——
+报错信息指向「代码或编译器配置」，完全指不到「选错了 JDK」这个真实原因。
+<code>scripts/_common.sh</code> 的 <code>find_java_home()</code> 按<strong>版本号排序</strong>（<code>sort -V</code>）取满足条件的最高版本，
+并在构建前校验 <code>major ≥ 21</code>，从机制上消除这个坑。</p>
+<p>另一个陷阱：<strong><code>PATH</code> 上的 <code>java</code> 与 Maven 实际使用的 JDK 可以不是同一个</strong>
+（Maven 认 <code>JAVA_HOME</code>；<code>which java</code> 常命中 Oracle 的 <code>javapath</code> 转发器）。
+脚本统一以 <code>JAVA_HOME</code> 为准，并用 <code>java -XshowSettings:properties -version</code> 反查兜底。</p>
+</blockquote>
+<h3 id="32-服务器硬件建议与依据">3.2 服务器（硬件建议与依据）<a class="headerlink" href="#32-服务器硬件建议与依据" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>规格</th>
+<th>建议</th>
+<th>依据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU</td>
+<td>4 核起，8 核推荐</td>
+<td>应用为 IO 等待型（虚拟线程 + 连接池），CPU 不是瓶颈</td>
+</tr>
+<tr>
+<td>内存</td>
+<td>8 GB 起</td>
+<td>JVM 堆 2~4 GB + MySQL buffer pool 1 GB + 系统余量</td>
+</tr>
+<tr>
+<td>磁盘</td>
+<td>系统盘 50 GB + <strong>数据盘按保留期核算</strong></td>
+<td>1000 台车 1 Hz 轨迹 ≈ 8640 万行/天 ≈ <strong>14 GB/天</strong>；留 30 天约 430 GB（详见《数据库设计说明书》容量估算）</td>
+</tr>
+<tr>
+<td>磁盘类型</td>
+<td>SSD 强烈建议</td>
+<td>轨迹表为顺序写入 + 范围查询，HDD 上清理任务（<code>DELETE</code> 分批）会明显拖慢主从</td>
+</tr>
+<tr>
+<td>网络</td>
+<td>到 Broker 与监管平台的双向连通</td>
+<td>平台启动即会连 Broker；云云接口由监管平台主动调用</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="33-软件版本矩阵">3.3 软件版本矩阵<a class="headerlink" href="#33-软件版本矩阵" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>软件</th>
+<th>版本</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JDK</td>
+<td>21（LTS）</td>
+<td>用到虚拟线程（<code>spring.threads.virtual.enabled</code>），<strong>不可降级到 17</strong></td>
+</tr>
+<tr>
+<td>MySQL</td>
+<td><strong>8.0.17+</strong>（本次实测 8.4.9）</td>
+<td>建表脚本按 8.0.17+ 编写；<code>utf8mb4</code> 必需</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td>6.2+（本次实测 7.x）</td>
+<td>仅作 L2 缓存/令牌/去重；单实例部署可 <code>DSSAD_REDIS_ENABLED=false</code> 关闭</td>
+</tr>
+<tr>
+<td>Nginx</td>
+<td>1.24+</td>
+<td>需要 <code>http2 on;</code> 与 <code>limit_req</code></td>
+</tr>
+<tr>
+<td>MQTT Broker</td>
+<td>支持 MQTT 3.1.1 + <strong>持久会话</strong>（<code>clean_session=false</code>）</td>
+<td>准入平台提供；自建需开启持久化，否则「断线补发」链路不可用</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="4-配置体系">4 配置体系<a class="headerlink" href="#4-配置体系" title="永久链接">#</a></h2>
+<h3 id="41-分层结构与正交组合">4.1 分层结构与正交组合<a class="headerlink" href="#41-分层结构与正交组合" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code>application.yml          所有环境共享：业务参数默认值、Jackson、日志格式、Actuator、线程模型
+  ├── application-local.yml   本地：H2 文件库(ddl-auto=update) · MQTT 关闭 · 模拟器开启 · 缓存 TTL 10s
+  └── application-prod.yml    生产：MySQL(ddl-auto=validate) · Redis 开 · MQTT 开 · 模拟器永久关闭
+</code></pre></div>
+
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>profile</th>
+<th>生效方式</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>local</code></td>
+<td>默认（<code>spring.profiles.default=local</code>）</td>
+<td>克隆即跑，零外部依赖</td>
+</tr>
+<tr>
+<td><code>prod</code></td>
+<td><code>--spring.profiles.active=prod</code></td>
+<td>生产参数终验与线上运行</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>设计取舍</strong>：「生产必须与开发不同」的项集中在 <code>prod</code>（密钥 fail-fast、<code>ddl-auto=validate</code>、
+日志落盘与轮转、虚拟线程、入口来源还原），与「能力开关」（数据库/缓存/MQTT）<strong>正交组合</strong>。
+之所以不拆成 <code>prod-mysql</code> / <code>prod-h2</code> 这类组合 profile，是因为每多一个组合就多一份需要同步维护的
+配置副本，而配置副本之间的漂移往往只在生产才暴露。</p>
+</blockquote>
+<h3 id="42-环境变量总表">4.2 环境变量总表<a class="headerlink" href="#42-环境变量总表" title="永久链接">#</a></h3>
+<p><strong>生产必填</strong>（<code>application-prod.yml</code> 中写为 <code>${VAR}</code>；缺失时<strong>启动即失败</strong>，这是刻意的 fail-fast）：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>变量</th>
+<th>示例</th>
+<th>用途</th>
+<th>缺失后果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DB_HOST</code></td>
+<td><code>mysql</code> / <code>10.0.0.12</code></td>
+<td>数据库地址</td>
+<td>有默认值 <code>127.0.0.1</code>。<strong>容器里写 <code>localhost</code> 会连到容器自己</strong>，表现为连不上库</td>
+</tr>
+<tr>
+<td><code>DB_PORT</code></td>
+<td><code>3306</code></td>
+<td>数据库端口</td>
+<td>默认 3306</td>
+</tr>
+<tr>
+<td><code>DB_NAME</code></td>
+<td><code>dssad_cloud</code></td>
+<td>库名</td>
+<td>默认 <code>dssad_cloud</code></td>
+</tr>
+<tr>
+<td><code>DB_USERNAME</code></td>
+<td><code>dssad</code></td>
+<td>库账号</td>
+<td><strong>启动失败</strong></td>
+</tr>
+<tr>
+<td><code>DB_PASSWORD</code></td>
+<td>（强随机）</td>
+<td>库口令</td>
+<td><strong>启动失败</strong></td>
+</tr>
+<tr>
+<td><code>REDIS_HOST</code> / <code>REDIS_PORT</code></td>
+<td><code>redis</code> / <code>6379</code></td>
+<td>缓存地址</td>
+<td>默认 <code>127.0.0.1:6379</code></td>
+</tr>
+<tr>
+<td><code>REDIS_PASSWORD</code></td>
+<td>（强随机）</td>
+<td>缓存口令</td>
+<td>默认空（本地 Redis 常见无口令）</td>
+</tr>
+<tr>
+<td><code>DSSAD_ENTERPRISE_ID</code></td>
+<td><code>DSSAD-ENT-0001</code></td>
+<td>准入平台分配的企业 ID，云云 Topic 身份标识</td>
+<td><strong>启动失败</strong></td>
+</tr>
+<tr>
+<td><code>DSSAD_MQTT_BROKER_URL</code></td>
+<td><code>tcp://broker:1883</code></td>
+<td>Broker 地址</td>
+<td><strong>启动失败</strong></td>
+</tr>
+<tr>
+<td><code>DSSAD_REGULATORY_BASE_URL</code></td>
+<td><code>https://reg.example.com</code></td>
+<td>监管平台地址</td>
+<td><strong>启动失败</strong></td>
+</tr>
+<tr>
+<td><code>DSSAD_STORAGE_PUBLIC_URL</code></td>
+<td><code>https://dssad.example.com/media</code></td>
+<td>媒体公网基址（下发给前端/监管方）</td>
+<td><strong>启动失败</strong></td>
+</tr>
+<tr>
+<td><code>DSSAD_SRS_URL</code></td>
+<td><code>https://dssad.example.com</code></td>
+<td>SRS 流媒体地址</td>
+<td><strong>启动失败</strong></td>
+</tr>
+<tr>
+<td><code>DSSAD_ADMIN_PASSWORD</code></td>
+<td>（强随机）</td>
+<td>管理端登录口令</td>
+<td><strong>静默回落到开发默认口令 <code>dssad@2026</code></strong>（不会报错，最危险）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>生产可选</strong>（有默认值，按需覆盖）：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>变量</th>
+<th>默认</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DSSAD_ENTERPRISE_NAME</code></td>
+<td>车路通DSSAD云平台</td>
+<td>上报给监管平台的企业名</td>
+</tr>
+<tr>
+<td><code>DSSAD_MQTT_USERNAME</code></td>
+<td>取 <code>DSSAD_ENTERPRISE_ID</code></td>
+<td>Broker 账号</td>
+</tr>
+<tr>
+<td><code>DSSAD_MQTT_PASSWORD</code></td>
+<td>空</td>
+<td><strong>留空会在启动时调监管平台换密</strong>（见 <code>E-02</code>）</td>
+</tr>
+<tr>
+<td><code>DSSAD_MQTT_SUBSCRIBE_CAR</code></td>
+<td><code>false</code></td>
+<td>通道 A（车端直连监管平台）保持 false；通道 B（企业自建网关）设 true</td>
+</tr>
+<tr>
+<td><code>DSSAD_STORAGE_TYPE</code></td>
+<td><code>local</code></td>
+<td>媒体存储类型</td>
+</tr>
+<tr>
+<td><code>DSSAD_STORAGE_ROOT</code></td>
+<td><code>/data/dssad/media</code></td>
+<td>媒体落盘目录</td>
+</tr>
+<tr>
+<td><code>DSSAD_LOG_DIR</code></td>
+<td><code>/var/log/dssad</code></td>
+<td>日志目录（该目录必须可写）</td>
+</tr>
+<tr>
+<td><code>DSSAD_AUDIT_MODE</code></td>
+<td><code>sampled</code></td>
+<td>报文留痕档位：<code>full</code> / <code>sampled</code> / <code>event-only</code></td>
+</tr>
+<tr>
+<td><code>DSSAD_AUDIT_SAMPLE_RATE</code></td>
+<td><code>0.05</code></td>
+<td>采样率（<code>sampled</code> 时生效）</td>
+</tr>
+<tr>
+<td><code>DSSAD_AUDIT_RETENTION_DAYS</code></td>
+<td><code>180</code></td>
+<td>留痕保留天数</td>
+</tr>
+<tr>
+<td><code>DSSAD_TRACK_RETENTION_DAYS</code></td>
+<td><code>90</code></td>
+<td>轨迹点保留天数（<strong>按磁盘容量核算，不要拍脑袋</strong>；<code>0</code> = 不清理）</td>
+</tr>
+<tr>
+<td><code>DSSAD_STATE_RETENTION_DAYS</code></td>
+<td><code>180</code></td>
+<td>状态流水保留天数</td>
+</tr>
+<tr>
+<td><code>DSSAD_RETENTION_BATCH_SIZE</code></td>
+<td><code>5000</code></td>
+<td>单批删除行数（调大加快清理但延长持锁时间）</td>
+</tr>
+<tr>
+<td><code>JAVA_OPTS</code></td>
+<td>见模板</td>
+<td>JVM 参数</td>
+</tr>
+</tbody>
+</table></div>
+<p>生成强随机口令：</p>
+<div class="highlight"><pre><span></span><code>bash<span class="w"> </span>scripts/check-env.sh<span class="w"> </span>--gen-secret<span class="w"> </span><span class="m">24</span>
+</code></pre></div>
+
+<h3 id="43-业务配置项参考dssad">4.3 业务配置项参考（<code>dssad.*</code>）<a class="headerlink" href="#43-业务配置项参考dssad" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>配置项</th>
+<th>默认</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dssad.enterprise-id</code></td>
+<td><code>DSSAD-ENT-0001</code></td>
+<td>企业身份标识</td>
+</tr>
+<tr>
+<td><code>dssad.mqtt.enabled</code></td>
+<td><code>false</code>（local）/ <code>true</code>（prod）</td>
+<td>MQTT 总开关</td>
+</tr>
+<tr>
+<td><code>dssad.mqtt.clean-session</code></td>
+<td><code>false</code></td>
+<td><strong>文档 5.1.1/6.1.1 明确要求持久会话</strong>，不要改为 true</td>
+</tr>
+<tr>
+<td><code>dssad.mqtt.consumer-threads</code></td>
+<td><code>4</code></td>
+<td>入站消费线程数</td>
+</tr>
+<tr>
+<td><code>dssad.mqtt.virtual-threads</code></td>
+<td><code>true</code></td>
+<td>消费线程用虚拟线程承载（Java 21）</td>
+</tr>
+<tr>
+<td><code>dssad.mqtt.offline-cache-size</code></td>
+<td><code>10000</code></td>
+<td>离线缓存条数上限</td>
+</tr>
+<tr>
+<td><code>dssad.mqtt.retry.confirm-interval-millis</code> / <code>confirm-max-attempts</code></td>
+<td><code>5000</code> / <code>3</code></td>
+<td>对端未确认（<code>res != 1</code>）时的重试节奏（文档 5.1.4.1）</td>
+</tr>
+<tr>
+<td><code>dssad.mqtt.retry.invalid-interval-millis</code> / <code>invalid-max-attempts</code></td>
+<td><code>3000</code> / <code>5</code></td>
+<td>对端回复异常（<code>res = 2/3</code>）时的重试节奏（文档 8.1）</td>
+</tr>
+<tr>
+<td><code>dssad.redis.enabled</code></td>
+<td><code>false</code>（local）/ <code>true</code>（prod）</td>
+<td>二级缓存 L2 开关</td>
+</tr>
+<tr>
+<td><code>dssad.cache.l1-max-size</code></td>
+<td><code>10000</code>（local）/ <code>50000</code>（prod）</td>
+<td>Caffeine 容量</td>
+</tr>
+<tr>
+<td><code>dssad.cache.l1-default-ttl-seconds</code></td>
+<td><code>10</code>（local）/ <code>30</code>（prod）</td>
+<td>L1 TTL</td>
+</tr>
+<tr>
+<td><code>dssad.cache.l2-default-ttl-seconds</code></td>
+<td><code>10</code>（local）/ <code>60</code>（prod）</td>
+<td>L2 TTL（多实例跨实例一致性靠它）</td>
+</tr>
+<tr>
+<td><code>dssad.rate-limit.enabled</code> / <code>http-per-minute</code> / <code>mqtt-per-second</code></td>
+<td><code>true</code> / <code>100</code> / <code>10</code></td>
+<td>限流参数。⚠️ <strong>当前实现未接入请求链路，配置不生效</strong>（<code>F-01</code>，见《性能优化与压测报告》）</td>
+</tr>
+<tr>
+<td><code>dssad.audit.mode</code> / <code>sample-rate</code> / <code>retention-days</code></td>
+<td><code>sampled</code> / <code>0.05</code> / <code>180</code></td>
+<td>报文留痕策略</td>
+</tr>
+<tr>
+<td><code>dssad.retention.track-point-days</code></td>
+<td><code>90</code></td>
+<td>轨迹保留天数（每天 03:30 清理）</td>
+</tr>
+<tr>
+<td><code>dssad.retention.state-snapshot-days</code></td>
+<td><code>180</code></td>
+<td>状态流水保留天数</td>
+</tr>
+<tr>
+<td><code>dssad.retention.batch-size</code></td>
+<td><code>5000</code></td>
+<td>每批删除行数</td>
+</tr>
+<tr>
+<td><code>dssad.api.max-page-size</code></td>
+<td><code>200</code></td>
+<td>分页上限（防大页拖垮数据库）</td>
+</tr>
+<tr>
+<td><code>dssad.api.track-simplify-tolerance</code></td>
+<td><code>8.0</code></td>
+<td>轨迹抽稀容差（米）</td>
+</tr>
+<tr>
+<td><code>dssad.api.history-video-max-span-hours</code></td>
+<td><code>168</code></td>
+<td>历史视频单次查询最大跨度（小时）</td>
+</tr>
+<tr>
+<td><code>dssad.simulator.enabled</code></td>
+<td><code>true</code>（local）/ <strong><code>false</code>（prod，永久）</strong></td>
+<td>报文注入模拟器。⚠️ 开启会凭空写入事故/故障，<strong>污染监管取证链路</strong></td>
+</tr>
+<tr>
+<td><code>dssad.storage.max-upload-bytes</code></td>
+<td><code>209715200</code></td>
+<td>单文件上限 200 MB（文档 9.2）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="44-密钥管理原则">4.4 密钥管理原则<a class="headerlink" href="#44-密钥管理原则" title="永久链接">#</a></h3>
+<ol>
+<li><strong>仓库内不存任何口令</strong>。<code>application-prod.yml</code> 中所有密钥类配置一律写成 <code>${VAR}</code> 且<strong>不给默认值</strong>，
+   靠环境变量注入；缺失时启动直接失败，而不是用空口令连库。</li>
+<li><strong><code>.gitignore</code> 已排除</strong> <code>.env</code>、<code>deploy/systemd/*.env</code>、<code>*.p12|*.jks|*.pem|*.key|*.jwt_secret</code>。</li>
+<li><strong><code>.dockerignore</code> 同步排除</strong> —— 镜像层是永久留存的，密钥一旦进过某一层，删掉文件也能被挖出来。</li>
+<li>服务器侧 <code>EnvironmentFile</code> 权限设 <code>600</code>，属主为运行账号。</li>
+<li>唯一有「静默回落」风险的项是 <code>DSSAD_ADMIN_PASSWORD</code>（不设就用开发默认口令），
+   上线验收清单把它列为必查项。</li>
+</ol>
+<hr>
+<h2 id="5-本地开发">5 本地开发<a class="headerlink" href="#5-本地开发" title="永久链接">#</a></h2>
+<h3 id="51-三步上手已验证">5.1 三步上手（已验证）<a class="headerlink" href="#51-三步上手已验证" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code>bash<span class="w"> </span>scripts/check-env.sh<span class="w">     </span><span class="c1"># 1. 自检：先确认环境，否则环境问题会伪装成代码问题</span>
+bash<span class="w"> </span>scripts/dev.sh<span class="w">           </span><span class="c1"># 2. 起后端(8080) + 前端(5173)</span>
+bash<span class="w"> </span>scripts/health.sh<span class="w">        </span><span class="c1"># 3. 全链路冒烟，14 条断言</span>
+</code></pre></div>
+
+<p>登录：<a href="http://127.0.0.1:5173">http://127.0.0.1:5173</a> → <code>admin</code> / <code>dssad@2026</code>（local profile 未设环境变量时的开发默认值）。</p>
+<p><strong>自检实测输出</strong>（<code>check-env.sh</code>，本机）：</p>
+<div class="highlight"><pre><span></span><code>== 1/6 基础工具 ==
+  ✓ JDK 21+ 可用：/c/Program Files/Java/jdk-21.0.10（major=21）
+  ✓ Maven 可用：C:\Program Files\apache-maven-3.9.9/bin/mvn.cmd
+  ✓ Node.js v22.22.2 / npm 10.9.7（Vite 6 要求 Node ≥ 18）
+[警告] Docker CLI 已装但守护进程未启动 —— 容器相关命令（build/up）不可用，其余流程不受影响
+== 3/6 端口占用 ==
+  ✓ 端口 8080 空闲   ✓ 端口 5173 空闲
+[警告] 端口 3306 已被占用   [警告] 端口 6379 已被占用   ✓ 端口 1883 空闲
+== 6/6 版本信息汇总 ==
+[通过] 环境自检通过，无阻塞项
+</code></pre></div>
+
+<blockquote>
+<p>自检对 Docker 守护进程未启动只给<strong>警告不给阻塞</strong>：容器只是两条部署路径之一，
+主机的 jar + systemd 路径完全不受影响。把可选依赖标成阻塞项，会让人误以为「环境没配好」。</p>
+</blockquote>
+<h3 id="52-脚本行为说明">5.2 脚本行为说明<a class="headerlink" href="#52-脚本行为说明" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>脚本</th>
+<th>行为要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dev.sh</code></td>
+<td>后端走 <code>mvn spring-boot:run</code>（改代码可热重启）；前端走 <code>npm run dev</code>（首次自动 <code>npm ci</code>）；两者都<strong>轮询就绪后才返回</strong>；<code>--logs</code> 跟随日志，<code>--stop</code> 停止</td>
+</tr>
+<tr>
+<td><code>run-local.sh</code></td>
+<td>用<strong>成品 jar</strong> 起服；<code>--bg</code> 后台 + 就绪轮询；<code>--stop</code> 优雅停止（SIGTERM → 等 15s → SIGKILL）；<code>--prod</code> 走生产 profile；<code>--port</code> 换端口</td>
+</tr>
+<tr>
+<td><code>build.sh</code></td>
+<td>默认 <code>mvn verify</code>（含测试 + <strong>覆盖率门槛</strong>）；<code>--web</code> 追加前端 type-check + build；<code>--docker</code> 构建镜像</td>
+</tr>
+<tr>
+<td><code>health.sh</code></td>
+<td>14 条断言（见第 10 章）；<code>--no-simulator</code> 用于生产态实例</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="53-常见开发任务">5.3 常见开发任务<a class="headerlink" href="#53-常见开发任务" title="永久链接">#</a></h3>
+<p><strong>切到本机 MySQL 联调</strong>（本机 3306 已有一个 MySQL 8.4.9）：</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 建库并灌入生产 DDL（脚本无 USE/CREATE DATABASE，必须先选库）</span>
+mysql<span class="w"> </span>-h<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>-u<span class="w"> </span>root<span class="w"> </span>-p<span class="w"> </span>-e<span class="w"> </span><span class="s2">"CREATE DATABASE dssad_cloud CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"</span>
+mysql<span class="w"> </span>-h<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>-u<span class="w"> </span>root<span class="w"> </span>-p<span class="w"> </span>dssad_cloud<span class="w"> </span>&lt;<span class="w"> </span>cloud-platform-server/db/schema-mysql.sql
+
+<span class="c1"># 用 prod profile 起服（会触发 ddl-auto=validate，正是我们想验的）</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">DB_HOST</span><span class="o">=</span><span class="m">127</span>.0.0.1<span class="w"> </span><span class="nv">DB_PORT</span><span class="o">=</span><span class="m">3306</span><span class="w"> </span><span class="nv">DB_NAME</span><span class="o">=</span>dssad_cloud<span class="w"> </span><span class="nv">DB_USERNAME</span><span class="o">=</span>root<span class="w"> </span><span class="nv">DB_PASSWORD</span><span class="o">=</span>你的口令
+<span class="nb">export</span><span class="w"> </span><span class="nv">REDIS_HOST</span><span class="o">=</span><span class="m">127</span>.0.0.1<span class="w"> </span><span class="nv">REDIS_PORT</span><span class="o">=</span><span class="m">6379</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">DSSAD_ENTERPRISE_ID</span><span class="o">=</span>DSSAD-ENT-0001
+<span class="nb">export</span><span class="w"> </span><span class="nv">DSSAD_MQTT_BROKER_URL</span><span class="o">=</span>tcp://127.0.0.1:1883
+<span class="nb">export</span><span class="w"> </span><span class="nv">DSSAD_REGULATORY_BASE_URL</span><span class="o">=</span>https://reg-platform.example.com
+<span class="nb">export</span><span class="w"> </span><span class="nv">DSSAD_STORAGE_PUBLIC_URL</span><span class="o">=</span>http://127.0.0.1:8080/media
+<span class="nb">export</span><span class="w"> </span><span class="nv">DSSAD_SRS_URL</span><span class="o">=</span>http://127.0.0.1:8080
+<span class="nb">export</span><span class="w"> </span><span class="nv">DSSAD_ADMIN_PASSWORD</span><span class="o">=</span>dev-only
+bash<span class="w"> </span>scripts/run-local.sh<span class="w"> </span>--prod<span class="w"> </span>--bg
+</code></pre></div>
+
+<p><strong>连真实 MQTT Broker</strong>：把 <code>dssad.mqtt.enabled=true</code> 与 <code>dssad.mqtt.broker-url</code> 覆盖即可
+（local profile 默认关闭，避免开发机必须装 Broker）。</p>
+<p><strong>看 H2 里的数据</strong>：<a href="http://127.0.0.1:8080/h2-console">http://127.0.0.1:8080/h2-console</a>（仅 <code>local</code> 开启）。
+JDBC URL 填 <code>jdbc:h2:file:./data/db/dssad;MODE=MySQL;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE</code>，用户 <code>sa</code>，口令空。</p>
+<p><strong>只用外部依赖、应用仍在 IDE 里跑</strong>：</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w">                 </span><span class="c1"># MySQL + Redis</span>
+docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>mqtt<span class="w"> </span>up<span class="w"> </span>-d<span class="w">  </span><span class="c1"># 需要 Broker 时</span>
+</code></pre></div>
+
+<h3 id="54-本地数据与清理">5.4 本地数据与清理<a class="headerlink" href="#54-本地数据与清理" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>路径</th>
+<th>内容</th>
+<th>清理方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cloud-platform-server/data/db/</code></td>
+<td>H2 文件库（local profile）</td>
+<td>停服后删除该目录（已在 <code>.gitignore</code>）</td>
+</tr>
+<tr>
+<td><code>cloud-platform-server/data/media/</code></td>
+<td>本地媒体文件</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><code>.run/</code></td>
+<td>脚本启动的 pid 与日志</td>
+<td>脚本自行维护；可直接删除</td>
+</tr>
+<tr>
+<td><code>target/site/jacoco/</code></td>
+<td>覆盖率报告</td>
+<td><code>mvn clean</code></td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="6-本地生产态验证不要跳过">6 本地生产态验证（不要跳过）<a class="headerlink" href="#6-本地生产态验证不要跳过" title="永久链接">#</a></h2>
+<h3 id="61-为什么不能跳过">6.1 为什么不能跳过<a class="headerlink" href="#61-为什么不能跳过" title="永久链接">#</a></h3>
+<p><code>prod</code> profile 打开了三件 <code>local</code> 下永远不会触发的事：</p>
+<ol>
+<li><strong><code>ddl-auto=validate</code></strong> —— 实体与真实表结构必须完全一致，否则拒绝启动。这是投产时最常见的启动失败原因，也是本次验证的重点。</li>
+<li><strong>密钥 fail-fast</strong> —— 必填环境变量缺失直接失败，而不是用默认值跑起来。</li>
+<li><strong>L2 缓存接入 Redis + 虚拟线程 + 日志落盘轮转</strong> —— 都只在 <code>prod</code> 生效。</li>
+</ol>
+<h3 id="62-用成品-jar-起服已验证ev-2-ev-4">6.2 用成品 jar 起服（已验证，EV-2 / EV-4）<a class="headerlink" href="#62-用成品-jar-起服已验证ev-2-ev-4" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code>bash<span class="w"> </span>scripts/build.sh<span class="w">                      </span><span class="c1"># or --web 连前端一起</span>
+bash<span class="w"> </span>scripts/run-local.sh<span class="w"> </span>--bg<span class="w"> </span>--port<span class="w"> </span><span class="m">18080</span>
+bash<span class="w"> </span>scripts/health.sh<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:18080
+bash<span class="w"> </span>scripts/run-local.sh<span class="w"> </span>--stop
+</code></pre></div>
+
+<p>实测输出摘要：</p>
+<div class="highlight"><pre><span></span><code>[通过] 服务已就绪：http://127.0.0.1:18080
+日志：Started DssadCloudApplication in 9.337 seconds
+      Tomcat started on port 18080 (http) with context path '/'
+（冒烟）通过 14 项，失败 0 项，跳过 0 项 → 全链路冒烟通过
+（停止）[信息] 向进程 241 发送 SIGTERM（应用配置了优雅停机...）→ [通过] 已停止
+      停止后探测 HTTP=000（端口已释放）
+</code></pre></div>
+
+<h3 id="63-生产建表脚本在真实-mysql-上执行已验证ev-5">6.3 生产建表脚本在真实 MySQL 上执行（已验证，EV-5）<a class="headerlink" href="#63-生产建表脚本在真实-mysql-上执行已验证ev-5" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code>mysql<span class="w"> </span>-h<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>-u<span class="w"> </span>root<span class="w"> </span>-e<span class="w"> </span><span class="s2">"CREATE DATABASE dssad_cloud_verify CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"</span>
+mysql<span class="w"> </span>-h<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>-u<span class="w"> </span>root<span class="w"> </span>dssad_cloud_verify<span class="w"> </span>&lt;<span class="w"> </span>cloud-platform-server/db/schema-mysql.sql
+</code></pre></div>
+
+<blockquote>
+<p><strong>注意</strong>：<code>db/schema-mysql.sql</code> <strong>不含</strong> <code>USE</code> 与 <code>CREATE DATABASE</code>，
+因此执行时必须显式指定库名（或不带库名执行会因「没有选中数据库」失败）。</p>
+</blockquote>
+<p>实测结果（MySQL 8.4.9）：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>实测值</th>
+<th>与《数据库设计说明书》是否一致</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>表数量</td>
+<td><strong>13</strong></td>
+<td>一致</td>
+</tr>
+<tr>
+<td>索引数量</td>
+<td><strong>47</strong></td>
+<td>一致</td>
+</tr>
+<tr>
+<td>报错</td>
+<td>0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>表清单</td>
+<td><code>t_accident_event</code> <code>t_fault_item</code> <code>t_fault_record</code> <code>t_map_barrier</code> <code>t_media_asset</code> <code>t_mqtt_message_log</code> <code>t_navigation_route</code> <code>t_remote_driving_record</code> <code>t_track_task</code> <code>t_vehicle</code> <code>t_vehicle_state_snapshot</code> <code>t_vehicle_static_param</code> <code>t_vehicle_track_point</code></td>
+<td>一致</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="64-prod-profile-真实-mysql-起服已验证ev-6-ev-7">6.4 prod profile + 真实 MySQL 起服（已验证，EV-6 / EV-7）<a class="headerlink" href="#64-prod-profile-真实-mysql-起服已验证ev-6-ev-7" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">DB_HOST</span><span class="o">=</span><span class="m">127</span>.0.0.1<span class="w"> </span><span class="nv">DB_PORT</span><span class="o">=</span><span class="m">3306</span><span class="w"> </span><span class="nv">DB_NAME</span><span class="o">=</span>dssad_cloud_verify<span class="w"> </span><span class="nv">DB_USERNAME</span><span class="o">=</span>root<span class="w"> </span><span class="nv">DB_PASSWORD</span><span class="o">=</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">REDIS_HOST</span><span class="o">=</span><span class="m">127</span>.0.0.1<span class="w"> </span><span class="nv">REDIS_PORT</span><span class="o">=</span><span class="m">6379</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">DSSAD_ENTERPRISE_ID</span><span class="o">=</span>DSSAD-VERIFY-0001<span class="w"> </span><span class="nv">DSSAD_MQTT_BROKER_URL</span><span class="o">=</span>tcp://127.0.0.1:1883
+<span class="nb">export</span><span class="w"> </span><span class="nv">DSSAD_REGULATORY_BASE_URL</span><span class="o">=</span>http://127.0.0.1:9/regulatory
+<span class="nb">export</span><span class="w"> </span><span class="nv">DSSAD_STORAGE_PUBLIC_URL</span><span class="o">=</span>http://127.0.0.1:18090/media<span class="w"> </span><span class="nv">DSSAD_SRS_URL</span><span class="o">=</span>http://127.0.0.1:18090
+<span class="nb">export</span><span class="w"> </span><span class="nv">DSSAD_ADMIN_PASSWORD</span><span class="o">=</span>verify-only-pass<span class="w"> </span><span class="nv">DSSAD_LOG_DIR</span><span class="o">=</span>./.run/prod-logs
+java<span class="w"> </span>-jar<span class="w"> </span>cloud-platform-server/target/dssad-cloud-platform.jar<span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>--spring.profiles.active<span class="o">=</span>prod<span class="w"> </span>--server.port<span class="o">=</span><span class="m">18090</span>
+</code></pre></div>
+
+<p>实测结果：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>检查点</th>
+<th>结果</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Started ... in 15.95 seconds</code></td>
+<td>通过</td>
+<td>生产参数可起服</td>
+</tr>
+<tr>
+<td><code>ddl-auto=validate</code></td>
+<td><strong>通过</strong></td>
+<td>13 张表与 JPA 实体完全一致 —— 这是生产 DDL 与实体一致性的<strong>强证明</strong></td>
+</tr>
+<tr>
+<td>L2 缓存</td>
+<td><code>L1=Caffeine(maxSize=50000)，L2=Redis</code></td>
+<td>Redis 已接管跨实例一致性</td>
+</tr>
+<tr>
+<td>入站消费线程</td>
+<td><code>已启动 4 个报文消费线程（虚拟线程）</code></td>
+<td>虚拟线程生效</td>
+</tr>
+<tr>
+<td>MQTT Broker 不可达</td>
+<td><strong>仍成功启动</strong>，退避重连（最多 60s）</td>
+<td>依赖不可用不阻断启动（合理降级）</td>
+</tr>
+<tr>
+<td>冒烟（<code>--no-simulator</code>）</td>
+<td><strong>10 通过 / 0 失败 / 4 跳过</strong></td>
+<td>生产态可用</td>
+</tr>
+<tr>
+<td><code>ERROR</code> 日志</td>
+<td>2 行（均为 MQTT 不可达）</td>
+<td>见 <code>E-01</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="65-反向探针证明门禁真的在拦已验证ev-8">6.5 反向探针：证明门禁真的在拦（已验证，EV-8）<a class="headerlink" href="#65-反向探针证明门禁真的在拦已验证ev-8" title="永久链接">#</a></h3>
+<p>只验证「正确配置能起服」是不够的 —— 那只证明「没报错」，不证明「该报错时会报错」。
+所以做一组反向探针：<strong>给一个空的库</strong>，看它是否会拒绝启动。</p>
+<div class="highlight"><pre><span></span><code>mysql<span class="w"> </span>-h<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>-u<span class="w"> </span>root<span class="w"> </span>-e<span class="w"> </span><span class="s2">"CREATE DATABASE dssad_empty_probe CHARACTER SET utf8mb4;"</span>
+<span class="nv">DB_NAME</span><span class="o">=</span>dssad_empty_probe<span class="w"> </span>java<span class="w"> </span>-jar<span class="w"> </span>...<span class="w"> </span>--spring.profiles.active<span class="o">=</span>prod<span class="w">   </span><span class="c1"># 其余变量同上</span>
+</code></pre></div>
+
+<p>实测结果：</p>
+<div class="highlight"><pre><span></span><code>进程退出码=1
+Failed to initialize JPA EntityManagerFactory: [PersistenceUnit: default] Unable to build Hibernate SessionFactory;
+nested exception is org.hibernate.tool.schema.spi.SchemaManagementException:
+  Schema-validation: missing table [t_accident_event]
+（Tomcat / Started 日志行数：0 —— 从未启动到能对外服务）
+</code></pre></div>
+
+<p><strong>结论</strong>：<code>ddl-auto=validate</code> 是<strong>真实生效的门禁</strong>，不是被静默关掉的配置。
+这条探针的价值在于：它把「schema 与实体漂移」这类问题<strong>锁死在启动阶段</strong>，
+而不是让它拖到运行期以「查不到数据 / 写不进去」的形式出现 —— 后者排查成本高一个数量级。</p>
+<hr>
+<h2 id="7-构建">7 构建<a class="headerlink" href="#7-构建" title="永久链接">#</a></h2>
+<h3 id="71-后端">7.1 后端<a class="headerlink" href="#71-后端" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code>bash<span class="w"> </span>scripts/build.sh<span class="w">            </span><span class="c1"># mvn verify（含测试 + 覆盖率门槛）</span>
+bash<span class="w"> </span>scripts/build.sh<span class="w"> </span>--clean<span class="w">    </span><span class="c1"># 先 mvn clean</span>
+bash<span class="w"> </span>scripts/build.sh<span class="w"> </span>--skip-tests<span class="w">   </span><span class="c1"># 仅本地试跑，产物不可发布</span>
+bash<span class="w"> </span>scripts/build.sh<span class="w"> </span>--docker<span class="w">   </span><span class="c1"># 追加构建容器镜像</span>
+</code></pre></div>
+
+<ul>
+<li>产物：<code>cloud-platform-server/target/dssad-cloud-platform.jar</code>（69 MB，<code>spring-boot:repackage</code> 可执行 jar）</li>
+<li>报告：<code>cloud-platform-server/target/site/jacoco/index.html</code></li>
+<li>构建前脚本会校验 <code>JAVA_HOME</code> 存在且 <strong>major ≥ 21</strong>，避免「选错 JDK」</li>
+</ul>
+<h3 id="72-前端">7.2 前端<a class="headerlink" href="#72-前端" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code>bash<span class="w"> </span>scripts/build.sh<span class="w"> </span>--web
+<span class="c1"># 等价于</span>
+<span class="nb">cd</span><span class="w"> </span>cloud-platform-web<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>type-check<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>build
+</code></pre></div>
+
+<ul>
+<li>产物：<code>cloud-platform-web/dist</code>（2.8 MB）</li>
+<li><code>npm run type-check</code> 走 <code>vue-tsc --noEmit</code>，<strong>零错误才继续构建</strong></li>
+<li>构建产物按 <code>manualChunks</code> 拆成 <code>vue</code> / <code>element</code> / <code>echarts</code> 三包，
+  避免「一个 3 MB 的 vendor chunk 阻塞首屏」；<code>chunkSizeWarningLimit: 1200</code></li>
+<li><code>sourcemap: false</code>：生产不暴露源码映射（需要线上排障时临时打开）</li>
+</ul>
+<blockquote>
+<p><strong>前端不需要任何 CORS 配置</strong>：开发期由 Vite <code>server.proxy</code> 把 <code>/api</code>、<code>/enterprise</code>、
+<code>/manager</code>、<code>/media</code> 转发到后端，生产由 Nginx 同源反代。
+这样「开发能跑、上线跨域」这类只在部署时才暴露的问题被结构性消除。</p>
+</blockquote>
+<h3 id="73-覆盖率门槛本次已修复接线">7.3 覆盖率门槛（本次已修复接线）<a class="headerlink" href="#73-覆盖率门槛本次已修复接线" title="永久链接">#</a></h3>
+<p><code>pom.xml</code> 中声明了 <code>jacoco.line.coverage.min=0.60</code>，但<strong>原版本只有 <code>prepare-agent</code> 与 <code>report</code> 两个执行，
+没有 <code>check</code></strong> —— 也就是说这个门槛是<strong>死配置</strong>：覆盖率即便降到 10%，构建照样成功。
+这与《性能优化与压测报告》中的 <code>F-01</code>（限流器未接入）属于<strong>同一族问题</strong>：配置/代码存在，但从未被调用。</p>
+<p>本次已接线：</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;execution&gt;</span>
+<span class="w">  </span><span class="nt">&lt;id&gt;</span>check-coverage<span class="nt">&lt;/id&gt;</span>
+<span class="w">  </span><span class="nt">&lt;phase&gt;</span>verify<span class="nt">&lt;/phase&gt;</span>
+<span class="w">  </span><span class="nt">&lt;goals&gt;&lt;goal&gt;</span>check<span class="nt">&lt;/goal&gt;&lt;/goals&gt;</span>
+<span class="w">  </span><span class="nt">&lt;configuration&gt;</span>
+<span class="w">    </span><span class="nt">&lt;rules&gt;&lt;rule&gt;&lt;element&gt;</span>BUNDLE<span class="nt">&lt;/element&gt;&lt;limits&gt;&lt;limit&gt;</span>
+<span class="w">      </span><span class="nt">&lt;counter&gt;</span>LINE<span class="nt">&lt;/counter&gt;&lt;value&gt;</span>COVEREDRATIO<span class="nt">&lt;/value&gt;</span>
+<span class="w">      </span><span class="nt">&lt;minimum&gt;</span>${jacoco.line.coverage.min}<span class="nt">&lt;/minimum&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/limit&gt;&lt;/limits&gt;&lt;/rule&gt;&lt;/rules&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/configuration&gt;</span>
+<span class="nt">&lt;/execution&gt;</span>
+</code></pre></div>
+
+<p>设计为绑定 <code>verify</code> 阶段：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>出报告</th>
+<th>校验门槛</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mvn test</code> / <code>mvn package</code></td>
+<td>是</td>
+<td>否</td>
+<td>本地快速迭代</td>
+</tr>
+<tr>
+<td><code>mvn verify</code></td>
+<td>是</td>
+<td><strong>是</strong></td>
+<td>CI 与发布（<code>build.sh</code> 默认走这条）</td>
+</tr>
+</tbody>
+</table></div>
+<p>实测（<code>mvn verify</code>）：</p>
+<div class="highlight"><pre><span></span><code>Tests run: 200, Failures: 0, Errors: 0, Skipped: 1
+jacoco:0.8.12:check (check-coverage) → Analyzed bundle 'dssad-cloud-platform' with 167 classes
+All coverage checks have been met.
+BUILD SUCCESS (33.308 s)
+</code></pre></div>
+
+<p>当前实际覆盖率（JaCoCo，167 类）：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>覆盖率</th>
+<th>分子/分母</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>行</td>
+<td><strong>73.39%</strong></td>
+<td>2383 / 3247</td>
+</tr>
+<tr>
+<td>指令</td>
+<td>74.99%</td>
+<td>12853 / 17140</td>
+</tr>
+<tr>
+<td>方法</td>
+<td>80.06%</td>
+<td>546 / 682</td>
+</tr>
+<tr>
+<td>分支</td>
+<td><strong>52.30%</strong></td>
+<td>579 / 1107</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>门槛设为 0.60 而当前为 0.73 —— 留出约 13 个百分点的缓冲，
+是为了让「新增一个纯 DTO / 未覆盖分支」不至于直接打断构建，
+同时又能拦住「整体覆盖断崖式下滑」。<strong>分支覆盖 52.30% 仍是下一阶段该提升的项</strong>
+（失败分支与边界条件集中在这里，详见《测试说明》）。
+本次新增的 Actuator 访问控制测试把分支覆盖从 50.55% 拉到 <strong>52.30%</strong> ——
+这也是它顺带的价值：白名单逻辑几乎全是「该拒的有没有拒」，行覆盖对这类语义不敏感。</p>
+</blockquote>
+<h3 id="74-版本与产物命名">7.4 版本与产物命名<a class="headerlink" href="#74-版本与产物命名" title="永久链接">#</a></h3>
+<ul>
+<li>版本号在 <code>cloud-platform-server/pom.xml</code> 的 <code>&lt;version&gt;</code>（当前 <code>1.0.0-SNAPSHOT</code>）</li>
+<li><code>&lt;finalName&gt;dssad-cloud-platform&lt;/finalName&gt;</code>：产物名<strong>不带版本号</strong>，
+  这样 systemd/容器/脚本里的路径不需要随版本变化，发版只换文件不改配置</li>
+<li>容器镜像用 <code>${APP_TAG}</code> 打标（默认 <code>latest</code>）；<strong>发布必须显式指定</strong>，例：<code>APP_TAG=1.0.0</code></li>
+</ul>
+<hr>
+<h2 id="8-部署方式一容器">8 部署方式一：容器<a class="headerlink" href="#8-部署方式一容器" title="永久链接">#</a></h2>
+<h3 id="81-dockerfile-要点逐条对应一类真实故障">8.1 Dockerfile 要点（逐条对应一类真实故障）<a class="headerlink" href="#81-dockerfile-要点逐条对应一类真实故障" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>做法</th>
+<th>不这么做会怎样</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>多阶段构建：先只 <code>COPY pom.xml</code> 跑 <code>dependency:go-offline</code>，再 <code>COPY src</code></td>
+<td>改一行业务代码就重新下载全部依赖，构建从秒级变分钟级</td>
+</tr>
+<tr>
+<td>运行镜像用 <strong>alpine</strong></td>
+<td>Temurin 的 ubuntu 基础镜像<strong>不含 curl/wget</strong>，<code>HEALTHCHECK</code> 会静默失效（容器永远 healthy 或永远 unhealthy，且不报错）</td>
+</tr>
+<tr>
+<td><code>apk add tzdata</code> + <code>ENV TZ=Asia/Shanghai</code></td>
+<td>镜像默认 UTC，日志与「按天统计」整体错位 8 小时</td>
+</tr>
+<tr>
+<td>建 <code>dssad</code> 用户并 <code>USER dssad</code></td>
+<td>应用被攻破即拿到容器内 root</td>
+</tr>
+<tr>
+<td><code>HEALTHCHECK</code> 打 <strong>liveness</strong> 而非整体 health</td>
+<td>整体 health 会算上 MySQL/Redis/MQTT，依赖抖动引发容器被反复重启</td>
+</tr>
+<tr>
+<td><code>ENTRYPOINT ["sh","-c","exec java ..."]</code></td>
+<td>少了 <code>exec</code>，<code>sh</code> 是 PID 1 且收不到 SIGTERM，<strong>优雅停机永不执行</strong>，只能等超时被 SIGKILL（表现为「每次重启丢几条在途报文」）</td>
+</tr>
+<tr>
+<td>构建阶段 <code>-DskipTests</code></td>
+<td>测试是 CI 门禁，与镜像构建耦合会让「只改配置的发版」被一个随机失败用例卡住。<strong>CI 应先跑 <code>mvn verify</code> 再 <code>docker build</code></strong></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><code>HEALTHCHECK</code> 依赖的 <code>/actuator/health/liveness</code> <strong>只在 K8s 环境默认开启</strong>，
+非 K8s（Compose / systemd）下会 404。本项目已在 <code>application.yml</code> 显式打开
+<code>management.endpoint.health.probes.enabled=true</code>，否则健康检查形同虚设。</p>
+</blockquote>
+<h3 id="82-生产编排要点">8.2 生产编排要点<a class="headerlink" href="#82-生产编排要点" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>设计</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>app</code> 只 <code>expose: 8080</code>，无 <code>ports</code></td>
+<td>唯一入口是 Nginx，杜绝绕过 TLS 直连后端</td>
+</tr>
+<tr>
+<td><code>frontend</code> + <code>backend(internal: true)</code> 双网络</td>
+<td>Nginx 不接数据网段；数据网段无法访问外网（防数据外带）</td>
+</tr>
+<tr>
+<td><code>depends_on: condition: service_healthy</code></td>
+<td>MySQL「进程起来」≠「能接受连接」</td>
+</tr>
+<tr>
+<td><code>${VAR:?}</code> 必填变量</td>
+<td>缺失时 compose 直接报错退出，而不是起一个「连不上库、静默降级」的容器</td>
+</tr>
+<tr>
+<td>各服务带 <code>healthcheck</code> + <code>TZ</code></td>
+<td>编排可判断可用性；时区一致</td>
+</tr>
+<tr>
+<td><code>mysql</code> 挂载 <code>db/schema-mysql.sql</code> 到 <code>docker-entrypoint-initdb.d</code></td>
+<td>首次启动自动建表（<strong>仅在数据卷为空时执行</strong>）</td>
+</tr>
+<tr>
+<td><code>redis-server --requirepass ... --appendonly yes --maxmemory-policy allkeys-lru</code></td>
+<td>口令 + 持久化 + 缓存逐出策略（<strong>不设 maxmemory 会被 OOM Killer 杀掉</strong>）</td>
+</tr>
+<tr>
+<td>证书目录 <code>./deploy/nginx/certs</code></td>
+<td>Nginx 启动即读证书，目录为空会<strong>直接退出</strong>，而 compose 已拉起应用 → 「进程都在跑但网站打不开」</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="83-首次上线步骤">8.3 首次上线步骤<a class="headerlink" href="#83-首次上线步骤" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1) 准备配置</span>
+cp<span class="w"> </span>deploy/systemd/dssad-cloud-platform.env.example<span class="w"> </span>.env
+bash<span class="w"> </span>scripts/check-env.sh<span class="w"> </span>--gen-secret<span class="w"> </span><span class="m">24</span><span class="w">      </span><span class="c1"># 生成强随机口令，填进 .env</span>
+vim<span class="w"> </span>.env<span class="w">                                       </span><span class="c1"># 逐项填全，特别是 DSSAD_ADMIN_PASSWORD</span>
+chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span>.env
+
+<span class="c1"># 2) 准备 TLS 证书（放到 deploy/nginx/certs/server.crt | server.key）</span>
+<span class="c1">#    联调可用自签证书，见 9.4</span>
+
+<span class="c1"># 3) 构建前端产物并同步到服务器（dist 由 Nginx 挂载）</span>
+bash<span class="w"> </span>scripts/build.sh<span class="w"> </span>--web
+
+<span class="c1"># 4) 起服</span>
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.prod.yml<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>--build
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.prod.yml<span class="w"> </span>ps
+
+<span class="c1"># 5) 上线验收</span>
+bash<span class="w"> </span>scripts/health.sh<span class="w"> </span>--base-url<span class="w"> </span>https://your-domain<span class="w"> </span>--no-simulator
+</code></pre></div>
+
+<h3 id="84-生产必查的三件事">8.4 生产必查的三件事<a class="headerlink" href="#84-生产必查的三件事" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># ① 容器健康状态（注意看 health 列，不看 State）</span>
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.prod.yml<span class="w"> </span>ps
+<span class="c1"># ② 应用日志（重点看是否有 ERROR）</span>
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.prod.yml<span class="w"> </span>logs<span class="w"> </span>--tail<span class="o">=</span><span class="m">100</span><span class="w"> </span>app
+<span class="c1"># ③ 确认 MQTT 通道真的连上了 —— 探活全绿不代表能收到数据（E-01）</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Token: </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span>https://your-domain/api/v1/monitor/mqtt<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-o<span class="w"> </span><span class="s1">'"connected":[a-z]*'</span>
+</code></pre></div>
+
+<hr>
+<h2 id="9-部署方式二jar-systemd-nginx">9 部署方式二：jar + systemd + Nginx<a class="headerlink" href="#9-部署方式二jar-systemd-nginx" title="永久链接">#</a></h2>
+<p>适用于没有容器运行时的服务器（或有意避免容器复杂度）。</p>
+<h3 id="91-初始化步骤">9.1 初始化步骤<a class="headerlink" href="#91-初始化步骤" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1) 专用低权账号</span>
+sudo<span class="w"> </span>useradd<span class="w"> </span>--system<span class="w"> </span>--no-create-home<span class="w"> </span>--shell<span class="w"> </span>/usr/sbin/nologin<span class="w"> </span>dssad
+
+<span class="c1"># 2) 目录</span>
+sudo<span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span>/opt/dssad<span class="w"> </span>/etc/dssad<span class="w"> </span>/var/log/dssad<span class="w"> </span>/data/dssad/media
+sudo<span class="w"> </span>chown<span class="w"> </span>-R<span class="w"> </span>dssad:dssad<span class="w"> </span>/opt/dssad<span class="w"> </span>/var/log/dssad<span class="w"> </span>/data/dssad
+
+<span class="c1"># 3) 上传 jar（在构建机上 scp）</span>
+scp<span class="w"> </span>cloud-platform-server/target/dssad-cloud-platform.jar<span class="w"> </span>server:/tmp/
+sudo<span class="w"> </span>mv<span class="w"> </span>/tmp/dssad-cloud-platform.jar<span class="w"> </span>/opt/dssad/
+
+<span class="c1"># 4) 环境变量文件（含口令，权限 600）</span>
+sudo<span class="w"> </span>cp<span class="w"> </span>deploy/systemd/dssad-cloud-platform.env.example<span class="w"> </span>/etc/dssad/dssad-cloud-platform.env
+sudo<span class="w"> </span>vim<span class="w"> </span>/etc/dssad/dssad-cloud-platform.env
+sudo<span class="w"> </span>chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span>/etc/dssad/dssad-cloud-platform.env
+
+<span class="c1"># 5) 建库灌表</span>
+mysql<span class="w"> </span>-h<span class="w"> </span><span class="nv">$DB_HOST</span><span class="w"> </span>-u<span class="w"> </span><span class="nv">$DB_USERNAME</span><span class="w"> </span>-p<span class="w"> </span>-e<span class="w"> </span><span class="s2">"CREATE DATABASE dssad_cloud CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"</span>
+mysql<span class="w"> </span>-h<span class="w"> </span><span class="nv">$DB_HOST</span><span class="w"> </span>-u<span class="w"> </span><span class="nv">$DB_USERNAME</span><span class="w"> </span>-p<span class="w"> </span>dssad_cloud<span class="w"> </span>&lt;<span class="w"> </span>cloud-platform-server/db/schema-mysql.sql
+
+<span class="c1"># 6) systemd</span>
+sudo<span class="w"> </span>cp<span class="w"> </span>deploy/systemd/dssad-cloud-platform.service<span class="w"> </span>/etc/systemd/system/
+sudo<span class="w"> </span>systemctl<span class="w"> </span>daemon-reload
+sudo<span class="w"> </span>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>--now<span class="w"> </span>dssad-cloud-platform
+systemctl<span class="w"> </span>status<span class="w"> </span>dssad-cloud-platform
+journalctl<span class="w"> </span>-u<span class="w"> </span>dssad-cloud-platform<span class="w"> </span>-f
+
+<span class="c1"># 7) Nginx + 前端产物</span>
+bash<span class="w"> </span>scripts/build.sh<span class="w"> </span>--web
+sudo<span class="w"> </span>rsync<span class="w"> </span>-a<span class="w"> </span>--delete<span class="w"> </span>cloud-platform-web/dist/<span class="w"> </span>/usr/share/nginx/html/
+sudo<span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span>/var/www/media
+sudo<span class="w"> </span>cp<span class="w"> </span>deploy/nginx/dssad-cloud.conf<span class="w"> </span>/etc/nginx/conf.d/
+sudo<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">'s/^    server app:8080/    server 127.0.0.1:8080/'</span><span class="w"> </span>/etc/nginx/conf.d/dssad-cloud.conf
+sudo<span class="w"> </span>nginx<span class="w"> </span>-t<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>nginx<span class="w"> </span>-s<span class="w"> </span>reload
+</code></pre></div>
+
+<blockquote>
+<p>⚠️ <strong>上传前确认脚本是 LF 换行</strong>。仓库已用 <code>.gitattributes</code> 锁定（<code>*.sh text eol=lf</code>、<code>*.service text eol=lf</code>）。
+若从 Windows 直接拷文件过去，CRLF 会让 systemd 报
+<code>Failed to parse ... Invalid argument</code>、让 shell 报 <code>/bin/bash^M: bad interpreter</code> ——
+两者都<strong>不指向换行符</strong>这个真实原因。</p>
+</blockquote>
+<h3 id="92-systemd-单元要点">9.2 systemd 单元要点<a class="headerlink" href="#92-systemd-单元要点" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>指令</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>User=dssad</code> + 专用账号</td>
+<td>最小权限，不与应用共用登录账号</td>
+</tr>
+<tr>
+<td><code>EnvironmentFile=/etc/dssad/dssad-cloud-platform.env</code></td>
+<td>密钥不进命令行（<code>ps</code> 可见）也不进单元文件（可被任意用户读）</td>
+</tr>
+<tr>
+<td><code>KillSignal=SIGTERM</code> + <code>TimeoutStopSec=60</code></td>
+<td>让 Spring 的 shutdown hook 跑完（关 MQTT、提交在途批量写、释放连接池）。<strong>超时必须大于应用侧优雅停机超时</strong>，否则又变成 SIGKILL</td>
+</tr>
+<tr>
+<td><code>Restart=on-failure</code> + <code>StartLimitIntervalSec=300</code> / <code>StartLimitBurst=5</code></td>
+<td>配置写错时不进入无限重启风暴，5 分钟内失败 5 次即停下等人处理</td>
+</tr>
+<tr>
+<td><code>NoNewPrivileges</code> / <code>ProtectSystem=full</code> / <code>ProtectHome</code></td>
+<td>系统目录只读、家目录不可见</td>
+</tr>
+<tr>
+<td><code>ReadWritePaths=/var/log/dssad /data/dssad</code></td>
+<td><code>ProtectSystem=full</code> 会让 <code>/usr</code>、<code>/boot</code>、<code>/etc</code> 只读，<strong>应用需要写的目录必须显式开放</strong>，否则表现为「启动时莫名其妙无权限」</td>
+</tr>
+<tr>
+<td><code>MemoryMax=6G</code> + <code>LimitNOFILE=65535</code></td>
+<td>内存上限防拖垮宿主；连接/文件句柄上限要大于连接池 + 线程数</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="93-nginx-必写项漏了会出事">9.3 Nginx 必写项（漏了会出事）<a class="headerlink" href="#93-nginx-必写项漏了会出事" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>配置</th>
+<th>不写的后果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>proxy_set_header X-Forwarded-Proto $scheme;</code></td>
+<td>应用侧 <code>forward-headers-strategy=framework</code> 会把所有请求判为非安全通道；未来开启 <code>require-https</code> 后会与入口的 301 形成<strong>无限重定向循环</strong></td>
+</tr>
+<tr>
+<td><code>client_max_body_size 210m;</code></td>
+<td>200 MB 事故视频上传被 413 拒绝（文档 9.2 约定单文件 ≤ 200 MB）</td>
+</tr>
+<tr>
+<td><code>proxy_read_timeout 120s;</code></td>
+<td>长事务请求超时</td>
+</tr>
+<tr>
+<td><code>location /actuator/ { return 404; }</code></td>
+<td><code>/actuator/metrics</code>、<code>/actuator/prometheus</code> 会暴露 JVM 堆、连接池等待数、接口耗时分布 —— 等于一份系统说明书。<strong>用 404 而非 403</strong>，让外部无法枚举端点是否存在。⚠️ 这只是<strong>第一道</strong>：应用层还有 <code>ActuatorIpWhitelistFilter</code> 的<strong>来源 IP 白名单（fail-closed）</strong>，二者叠加才能挡住「绕过 Nginx 的容器内/同宿主机直连」</td>
+</tr>
+<tr>
+<td>登录接口单独 <code>limit_req zone=login_zone</code></td>
+<td>可被撞库。⚠️ 应用层限流当前未生效（<code>F-01</code>），<strong>入口层限流是目前唯一真实生效的一道</strong></td>
+</tr>
+<tr>
+<td><code>try_files $uri $uri/ /index.html;</code>（SPA 兜底）</td>
+<td>前端 history 路由（<code>/monitor</code>、<code>/events</code>）直接刷新会 404</td>
+</tr>
+<tr>
+<td><code>location = /index.html</code> 不缓存 + <code>/assets/</code> 长缓存</td>
+<td>不加会导致发版后用户拿到旧壳；加错会导致用户拿到旧 JS</td>
+</tr>
+<tr>
+<td><code>gzip off;</code></td>
+<td>应用已开 <code>server.compression</code>，Nginx 再压是重复劳动</td>
+</tr>
+<tr>
+<td>TLS <code>ssl_protocols TLSv1.2 TLSv1.3</code> + <code>ssl_ciphers</code></td>
+<td>弱套件可被协商上</td>
+</tr>
+<tr>
+<td><code>ssl_certificate</code> 指向的文件<strong>必须先存在</strong></td>
+<td>目录为空时 Nginx 直接退出，而编排已把应用拉起 → 「进程都在跑但网站打不开」</td>
+</tr>
+<tr>
+<td><code>/media/</code> 由 Nginx 直接读盘（<code>alias</code> + <code>autoindex off</code>）</td>
+<td>事故视频是 GB 级流量，经应用转发会白占 Tomcat 线程与连接</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="94-tls-与证书">9.4 TLS 与证书<a class="headerlink" href="#94-tls-与证书" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># 联调用自签证书（必须显式声明 SAN，否则浏览器/客户端按 IP 访问会校验失败）</span>
+sudo<span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span>deploy/nginx/certs
+openssl<span class="w"> </span>req<span class="w"> </span>-x509<span class="w"> </span>-nodes<span class="w"> </span>-days<span class="w"> </span><span class="m">365</span><span class="w"> </span>-newkey<span class="w"> </span>rsa:2048<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-keyout<span class="w"> </span>deploy/nginx/certs/server.key<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-out<span class="w">    </span>deploy/nginx/certs/server.crt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-subj<span class="w"> </span><span class="s2">"/C=CN/ST=Sichuan/L=Chengdu/O=Genvict/CN=dssad.example.com"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-addext<span class="w"> </span><span class="s2">"subjectAltName=DNS:dssad.example.com,DNS:localhost,IP:127.0.0.1"</span>
+sudo<span class="w"> </span>chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span>deploy/nginx/certs/server.key
+</code></pre></div>
+
+<p>生产务必使用受信 CA 签发的证书（内网可自建 CA 并下发根证书到客户端）。
+证书续期后 <code>nginx -s reload</code> 即可，无需重启应用。</p>
+<hr>
+<h2 id="10-上线验收清单">10 上线验收清单<a class="headerlink" href="#10-上线验收清单" title="永久链接">#</a></h2>
+<p><strong>每项都给出验证方法</strong>，不写「配置正确」这类不可执行的项。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>验收项</th>
+<th>验证方法</th>
+<th>通过标准</th>
+<th>本次是否已验证</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>环境无阻塞项</td>
+<td><code>bash scripts/check-env.sh</code></td>
+<td>退出码 0</td>
+<td>✅ EV-1</td>
+</tr>
+<tr>
+<td>2</td>
+<td>库表与实体一致</td>
+<td>空库起服应<strong>失败</strong>；正确库起服应成功</td>
+<td>空库退出码 1 且报 <code>missing table</code></td>
+<td>✅ EV-5/6/8</td>
+</tr>
+<tr>
+<td>3</td>
+<td>生产参数可起服</td>
+<td><code>java -jar ... --spring.profiles.active=prod</code></td>
+<td>日志出现 <code>Started ... in N seconds</code></td>
+<td>✅ EV-6</td>
+</tr>
+<tr>
+<td>4</td>
+<td>鉴权不可绕过</td>
+<td><code>bash scripts/health.sh --no-simulator</code> 第 2 条</td>
+<td>无令牌访问返 <code>2001</code></td>
+<td>✅ EV-7</td>
+</tr>
+<tr>
+<td>5</td>
+<td>令牌可主动吊销</td>
+<td>同上第 14 条</td>
+<td>登出后旧令牌返 <code>2001</code></td>
+<td>✅ EV-7</td>
+</tr>
+<tr>
+<td>6</td>
+<td>业务写后即可读</td>
+<td>本地用模拟器注入事故后查详情</td>
+<td>返 <code>0000</code> 且归属车辆正确</td>
+<td>✅ EV-3（local）</td>
+</tr>
+<tr>
+<td>7</td>
+<td>缓存层就绪</td>
+<td>启动日志 + <code>/api/v1/monitor/cache</code></td>
+<td><code>L2=Redis</code> 且接口返 <code>0000</code></td>
+<td>✅ EV-6/7</td>
+</tr>
+<tr>
+<td>8</td>
+<td>虚拟线程生效</td>
+<td>启动日志</td>
+<td><code>已启动 4 个报文消费线程（虚拟线程）</code></td>
+<td>✅ EV-6</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>MQTT 通道已连接</strong></td>
+<td><code>curl -s -o /dev/null -w '%{http_code}' 本机:8080/api/v1/monitor/mqtt-health</code></td>
+<td><strong>200</strong>（503 = 通道断）</td>
+<td>✅ 端点已就绪（v1.1）；线上需逐台核实</td>
+</tr>
+<tr>
+<td>10</td>
+<td>MQTT 通道有告警</td>
+<td>挂好 <code>scripts/mqtt-watch.sh</code> 且已触发过一次</td>
+<td>可收到告警</td>
+<td>⚠️ <strong>工具已就绪，需运维挂到监控平台</strong>（<code>E-01</code> → 运维手册 4.4）</td>
+</tr>
+<tr>
+<td>11</td>
+<td>管理端口令已覆盖</td>
+<td>登录响应中 <code>usingDefaultCredential</code></td>
+<td><code>false</code></td>
+<td>⚠️ 代码有该字段，本次未做生产级核对</td>
+</tr>
+<tr>
+<td>12</td>
+<td>HTTPS 生效</td>
+<td><code>curl -sI https://域名</code></td>
+<td>200，且 <code>http://</code> 跳 <code>https://</code></td>
+<td>❌ 未验证（附录 C）</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>/actuator</code> 已<strong>双层收敛</strong></td>
+<td>① <code>curl https://域名/actuator/metrics</code> → 404（Nginx）；② 从<strong>非白名单 IP</strong> 直连 8080 打 <code>/actuator/health</code> → 404（应用层白名单）；③ 从白名单 IP → 200</td>
+<td>❌ Nginx 侧未验证（需真实环境）；应用层白名单已有 28 个单测覆盖</td>
+<td></td>
+</tr>
+<tr>
+<td>14</td>
+<td>数据保留期已核算</td>
+<td>核对 <code>.env</code> 中 <code>DSSAD_TRACK_RETENTION_DAYS</code> ≠ 0</td>
+<td>与磁盘容量匹配</td>
+<td>⚠️ 配置项存在，取值需按现场定</td>
+</tr>
+<tr>
+<td>15</td>
+<td>模拟器已关闭</td>
+<td><code>/api/v1/simulator/**</code> 应不可用</td>
+<td>注入失败</td>
+<td>✅ prod 启动日志确认（未显式验证接口）</td>
+</tr>
+<tr>
+<td>16</td>
+<td>日志目录可写且轮转配置生效</td>
+<td>启动后 <code>ls -la /var/log/dssad</code></td>
+<td>有 <code>dssad-cloud-platform.log</code></td>
+<td>⚠️ 本地已用 <code>DSSAD_LOG_DIR</code> 验证可写</td>
+</tr>
+<tr>
+<td>17</td>
+<td>覆盖率门槛已接线</td>
+<td><code>mvn verify</code></td>
+<td><code>All coverage checks have been met</code></td>
+<td>✅ EV-10</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>未通过项 = 阻塞上线</strong>。第 9/10 项是本清单里最容易被漏掉、后果最严重的一条。</p>
+<hr>
+<h2 id="11-运维手册">11 运维手册<a class="headerlink" href="#11-运维手册" title="永久链接">#</a></h2>
+<h3 id="111-日志">11.1 日志<a class="headerlink" href="#111-日志" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>位置</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/var/log/dssad/dssad-cloud-platform.log</code></td>
+<td>应用主日志；单文件 200 MB 轮转，保留 30 份，总上限 10 GB</td>
+</tr>
+<tr>
+<td><code>/var/log/dssad/stdout.log</code> / <code>stderr.log</code></td>
+<td>systemd 捕获的标准输出</td>
+</tr>
+<tr>
+<td><code>docker compose logs app</code></td>
+<td>容器方式</td>
+</tr>
+<tr>
+<td><code>/var/log/nginx/dssad-access.log</code> / <code>dssad-error.log</code></td>
+<td>入口访问与错误</td>
+</tr>
+</tbody>
+</table></div>
+<p>日志格式（单行结构化，便于 Filebeat/Loki 采集）：</p>
+<div class="highlight"><pre><span></span><code>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n
+</code></pre></div>
+
+<ul>
+<li>生产 <code>root: WARN</code>、<code>com.genvict.dssad.cloud: INFO</code> —— 业务日志完整，框架噪音压掉</li>
+<li>Paho 默认压到 <code>WARN</code>（它断线重连时会刷大量 DEBUG）</li>
+<li>常见排查入口：<code>grep -E "ERROR|WARN" 日志 | tail -50</code></li>
+</ul>
+<h3 id="112-监控指标与告警">11.2 监控指标与告警<a class="headerlink" href="#112-监控指标与告警" title="永久链接">#</a></h3>
+<p><strong>必须采集的指标</strong>（<code>/api/v1/monitor/mqtt</code> 全部为已实现字段）：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>指标字段</th>
+<th>含义</th>
+<th>告警建议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>connected</code></td>
+<td>MQTT 是否已连接</td>
+<td><strong><code>false</code> 持续 &gt; 2 分钟即告警</strong>（★ 最重要，见 <code>E-01</code>）</td>
+</tr>
+<tr>
+<td><code>reconnectAttempts</code></td>
+<td>累计重连次数</td>
+<td>持续增长即告警（退避最长 60 s）</td>
+</tr>
+<tr>
+<td><code>state</code></td>
+<td>通道状态</td>
+<td>非 <code>CONNECTED</code> 告警</td>
+</tr>
+<tr>
+<td><code>inboundDropped</code></td>
+<td>入站队列丢弃报文数</td>
+<td><strong>&gt; 0 即告警</strong>（说明消费跟不上，正在丢数据）</td>
+</tr>
+<tr>
+<td><code>offlineDroppedByPressure</code> / <code>offlineDroppedLowPriority</code></td>
+<td>离线队列按压力/低优先级丢弃数</td>
+<td>&gt; 0 告警（原本要补发的数据被丢了）</td>
+</tr>
+<tr>
+<td><code>pendingAck</code> / <code>pendingRetry</code></td>
+<td>待确认 / 待重试数量</td>
+<td>持续高位说明对端异常</td>
+</tr>
+<tr>
+<td><code>telemetryDropped</code></td>
+<td>遥测缓冲丢弃数</td>
+<td>&gt; 0 告警</td>
+</tr>
+<tr>
+<td><code>inboundQueueSize</code></td>
+<td>入站队列积压</td>
+<td>接近容量（20000）告警</td>
+</tr>
+<tr>
+<td><code>cache</code> 命中率</td>
+<td><code>/api/v1/monitor/cache</code></td>
+<td>命中率骤降说明缓存失效或数据分布突变</td>
+</tr>
+<tr>
+<td><code>/actuator/health/liveness</code></td>
+<td>进程存活</td>
+<td>编排探活（<strong>不含依赖</strong>）</td>
+</tr>
+<tr>
+<td><code>/api/v1/monitor/mqtt-health</code></td>
+<td><strong>数据通道是否通</strong></td>
+<td><strong>DOWN 即告警</strong>（这是唯一能发现「探活全绿但收不到数据」的信号，见 E-01）</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>通道为什么不用 actuator 健康组</strong>（实测结论）：<code>/actuator/health</code> 聚合端点<strong>始终</strong>包含所有已注册的
+<code>HealthIndicator</code>，健康组的 <code>include</code> 无法把它从聚合里摘出去 —— 一旦 Broker 断开，聚合端点也会 503，
+用 <code>/actuator/health</code> 判活的编排就会摘流/重启应用，而重启对 Broker 故障毫无用处。
+因此通道信号走业务端点 <code>/api/v1/monitor/mqtt-health</code>：不动聚合端点，且天然被 Nginx 的 <code>/api/</code> 规则代理，
+无需为此在 <code>/actuator/</code> 上开洞。</p>
+</blockquote>
+<p><code>/actuator/prometheus</code>（实测返回 <strong>78 个 HELP 指标</strong>：JVM、HTTP、HikariCP、GC）<strong>默认已被 Nginx 收敛为 404</strong>，
+只能在<strong>内网直连 8080</strong> 抓取。⚠️ <strong>注意</strong>：该端点曾因 <code>pom.xml</code> 缺少
+<code>micrometer-registry-prometheus</code> 而实际不存在（暴露列表里写了 <code>prometheus</code> 只是「声明」，
+端点照样 404、抓取端全空且不报错）—— 属已修复缺陷，详见运维手册 O-02。
+另外<strong>应用层对 <code>/actuator/**</code> 已有访问控制</strong>：<code>ActuatorIpWhitelistFilter</code> 执行<strong>来源 IP 白名单</strong>
+（fail-closed，配置项 <code>dssad.security.actuator.allowed-cidrs</code> / 环境变量 <code>DSSAD_ACTUATOR_ALLOWED_CIDRS</code>）。
+白名单外一律返回 <strong>404</strong>；判定基于 <strong>TCP 对端地址</strong>，<strong>不采信 <code>X-Forwarded-For</code></strong> ——
+因为 <code>forward-headers-strategy=framework</code> 会把 XFF 还原进 <code>getRemoteAddr()</code>，直接读该方法会留下
+「伪造 <code>X-Forwarded-For: 127.0.0.1</code> 即绕过」的口子（该场景有专门的回归用例）。
+默认白名单仅回环；<strong>容器 / K8s 部署必须补上 Docker 网段或节点网段</strong>，否则网关侧探活会拿到 404；
+配成空值 = 拒绝所有来源；配非法 CIDR = <strong>启动失败</strong>（刻意如此，不允许「静默不生效」）。
+详见运维手册 O-03。</p>
+<h3 id="113-备份与恢复">11.3 备份与恢复<a class="headerlink" href="#113-备份与恢复" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># ✅ 正确：逻辑备份 + 单事务一致性快照</span>
+mysqldump<span class="w"> </span>-h<span class="w"> </span><span class="nv">$DB_HOST</span><span class="w"> </span>-u<span class="w"> </span><span class="nv">$DB_USERNAME</span><span class="w"> </span>-p<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--single-transaction<span class="w"> </span>--routines<span class="w"> </span>--triggers<span class="w"> </span>--default-character-set<span class="o">=</span>utf8mb4<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>dssad_cloud<span class="w"> </span><span class="p">|</span><span class="w"> </span>gzip<span class="w"> </span>&gt;<span class="w"> </span>/backup/dssad_cloud_<span class="k">$(</span>date<span class="w"> </span>+%Y%m%d_%H%M<span class="k">)</span>.sql.gz
+
+<span class="c1"># ❌ 错误：直接拷贝数据目录</span>
+<span class="c1">#    拿到的是半个事务的快照，恢复后会出现「主表在、从表缺」的静默数据错误</span>
+</code></pre></div>
+
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>对象</th>
+<th>方式</th>
+<th>频率建议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MySQL</td>
+<td><code>mysqldump --single-transaction</code></td>
+<td>每日全量 + binlog 增量</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td>AOF（<code>--appendonly yes</code>，已配置）</td>
+<td>无需单独备份（缓存可重建）；令牌丢失仅需重新登录</td>
+</tr>
+<tr>
+<td>媒体文件</td>
+<td><code>/data/dssad/media</code> 目录同步</td>
+<td>按取证要求定；建议异地留存</td>
+</tr>
+<tr>
+<td>配置</td>
+<td><code>/etc/dssad/*.env</code> 加密备份</td>
+<td>每次变更后</td>
+</tr>
+</tbody>
+</table></div>
+<p>恢复：先建空库 → <code>gunzip -c x.sql.gz | mysql -h ... dssad_cloud</code> → 起服（<code>ddl-auto=validate</code> 会用表结构反向校验恢复结果）。</p>
+<h3 id="114-升级与回滚">11.4 升级与回滚<a class="headerlink" href="#114-升级与回滚" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># ---- 容器方式 ----</span>
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.prod.yml<span class="w"> </span>pull<span class="w">          </span><span class="c1"># 或 --build</span>
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.prod.yml<span class="w"> </span>up<span class="w"> </span>-d
+bash<span class="w"> </span>scripts/health.sh<span class="w"> </span>--base-url<span class="w"> </span>https://域名<span class="w"> </span>--no-simulator
+
+<span class="c1"># ---- 主机方式 ----</span>
+sudo<span class="w"> </span>systemctl<span class="w"> </span>stop<span class="w"> </span>dssad-cloud-platform
+sudo<span class="w"> </span>cp<span class="w"> </span>/opt/dssad/dssad-cloud-platform.jar<span class="w"> </span>/opt/dssad/backup/dssad-cloud-platform-<span class="k">$(</span>date<span class="w"> </span>+%Y%m%d<span class="k">)</span>.jar
+sudo<span class="w"> </span>cp<span class="w"> </span>新包<span class="w"> </span>/opt/dssad/dssad-cloud-platform.jar
+sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>dssad-cloud-platform
+journalctl<span class="w"> </span>-u<span class="w"> </span>dssad-cloud-platform<span class="w"> </span>-n<span class="w"> </span><span class="m">50</span>
+</code></pre></div>
+
+<p><strong>升级纪律</strong>：</p>
+<ol>
+<li><strong>先备份数据库</strong>。<code>ddl-auto=validate</code> 只校验、<strong>不会自动改表</strong> —— 这是刻意的，
+   意味着任何列变更都必须走人工 DDL 发布流程。</li>
+<li><strong>改过实体就必须同步 <code>db/schema-mysql.sql</code></strong>。改法见下方命令。
+   不同步的后果是<strong>启动阶段直接失败</strong>（EV-8 已证明门禁有效）—— 这比带着错表结构跑起来好，但发版前必须处理。</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1) 从 Hibernate 元数据导出「生成基线」</span>
+mvn<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-Dtest<span class="o">=</span>SchemaDdlGeneratorTest<span class="w"> </span>-Dddl.gen<span class="o">=</span><span class="nb">true</span>
+<span class="c1">#    产出 db/schema-mysql.generated.sql</span>
+
+<span class="c1"># 2) 与手写脚本比对，确认差异都是有意为之后再提交</span>
+diff<span class="w"> </span>db/schema-mysql.generated.sql<span class="w"> </span>db/schema-mysql.sql
+</code></pre></div>
+
+<ol>
+<li><strong>回滚顺序</strong>：先回滚应用，再评估是否回滚表结构。
+   若新版本新增了列而旧版本 <code>ddl-auto=validate</code> 不认识该列，<strong>Hibernate 校验不会因「多出列」失败</strong>
+   （只校验缺列/类型不符），所以回滚应用通常是安全的；但删列类变更无法自动回滚。</li>
+<li>单实例部署可直接重启；<strong>多实例部署前必须先解决 <code>P-01</code>（<code>@Scheduled</code> 无分布式锁）</strong>，
+   否则滚动重启期间清理任务会在多个实例上同时执行。</li>
+</ol>
+<h3 id="115-数据清理">11.5 数据清理<a class="headerlink" href="#115-数据清理" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>表</th>
+<th>增长速率（1000 台车）</th>
+<th>清理任务</th>
+<th>触发时间</th>
+<th>配置项</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>t_vehicle_track_point</code></td>
+<td>≈ 8640 万行/天</td>
+<td><code>TelemetryRetentionService</code></td>
+<td>每天 03:30</td>
+<td><code>DSSAD_TRACK_RETENTION_DAYS</code></td>
+</tr>
+<tr>
+<td><code>t_vehicle_state_snapshot</code></td>
+<td>≈ 144 万行/天</td>
+<td>同上</td>
+<td>每天 03:30</td>
+<td><code>DSSAD_STATE_RETENTION_DAYS</code></td>
+</tr>
+<tr>
+<td><code>t_mqtt_message_log</code></td>
+<td>报文量 × 采样率</td>
+<td><code>MqttAuditService.purge</code></td>
+<td>每天 03:00</td>
+<td><code>DSSAD_AUDIT_RETENTION_DAYS</code></td>
+</tr>
+<tr>
+<td><code>t_map_barrier</code></td>
+<td>按天拉取</td>
+<td>地图拉取任务</td>
+<td>每天 00:05</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p>三张表的清理时间<strong>刻意错开</strong>（00:05 / 03:00 / 03:30），避免同时争抢 IO。</p>
+<p>手动核对清理是否生效：</p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">t_vehicle_track_point</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">ts</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">UNIX_TIMESTAMP</span><span class="p">(</span><span class="n">DATE_SUB</span><span class="p">(</span><span class="n">NOW</span><span class="p">(),</span><span class="w"> </span><span class="nb">INTERVAL</span><span class="w"> </span><span class="mi">90</span><span class="w"> </span><span class="k">DAY</span><span class="p">))</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span>
+<span class="c1">-- 正常应远小于总行数；若接近总量，说明清理任务没跑（检查日志中的「保留期清理」记录）</span>
+</code></pre></div>
+
+<h3 id="116-扩容建议按瓶颈顺序">11.6 扩容建议（按瓶颈顺序）<a class="headerlink" href="#116-扩容建议按瓶颈顺序" title="永久链接">#</a></h3>
+<ol>
+<li><strong>数据库先行</strong>。连接池（<code>maximum-pool-size: 20</code>）是当前单实例的<strong>唯一硬上限</strong>：
+   <code>prod</code> 开启了虚拟线程，Tomcat 的 <code>max-threads=200</code> 不再限制并发，真正的排队点变成连接池。
+   因此扩容第一步是调连接池与 MySQL 规格，而不是加应用实例。</li>
+<li><strong>单实例 → 多实例</strong>前必须先修 <code>P-01</code>（<code>@Scheduled</code> 无分布式锁，多实例会重复清理/重复拉取）。
+   同时确认 <code>dssad.redis.enabled=true</code>（跨实例缓存一致性、去重、令牌共享都依赖它）。</li>
+<li><strong>轨迹表分区</strong>：当前用「保留期分批 DELETE + <code>idx_track_ts</code>」。数据涨到十亿级时按
+   <code>db/schema-mysql.sql</code> 文末附录 A 迁移为按月 RANGE 分区（需先把主键改为复合主键 <code>(ts, id)</code>，
+   属一次结构性改造）。</li>
+<li><strong>媒体文件外置</strong>：把 <code>DSSAD_STORAGE_TYPE</code> 从 <code>local</code> 切到对象存储，避免与应用争抢磁盘。</li>
+</ol>
+<hr>
+<h2 id="12-安全清单投产前逐条确认">12 安全清单（投产前逐条确认）<a class="headerlink" href="#12-安全清单投产前逐条确认" title="永久链接">#</a></h2>
+<ul>
+<li class="task"><span class="cb"></span><code>DSSAD_ADMIN_USER</code> / <code>DSSAD_ADMIN_PASSWORD</code> 已覆盖开发默认口令（不覆盖 = 平台无鉴权）</li>
+<li class="task"><span class="cb"></span>所有口令通过环境变量注入；仓库内 <code>grep -rn "password" --include=*.yml</code> 无明文</li>
+<li class="task"><span class="cb"></span><code>.env</code> / <code>deploy/systemd/*.env</code> 权限为 600，属主为运行账号</li>
+<li class="task"><span class="cb"></span><code>.dockerignore</code> 与 <code>.gitignore</code> 均已排除密钥文件（防止密钥进入镜像层或提交历史）</li>
+<li class="task"><span class="cb"></span>已启用 HTTPS（TLS 1.2+），<code>X-Token</code> 不经明文链路传输（令牌有效期 12 小时）</li>
+<li class="task"><span class="cb"></span><code>/actuator/**</code> <strong>双层收敛</strong>已就位：① Nginx 层只放行 <code>health</code>/<code>liveness</code>/<code>readiness</code>、其余返 404；② 应用层 <code>ActuatorIpWhitelistFilter</code> <strong>来源 IP 白名单</strong>（fail-closed，<code>DSSAD_ACTUATOR_ALLOWED_CIDRS</code>）。⚠️ <strong>容器 / K8s 部署必须把 Docker 网段或节点网段加入白名单</strong>，否则网关侧探活会拿到 404（<code>docker-compose.prod.yml</code> 已按此默认配置）</li>
+<li class="task"><span class="cb"></span>已配置<strong>通道告警</strong>：<code>scripts/mqtt-watch.sh</code> 挂 cron 或监控平台，退出码 20/40 触发 P0（见 E-01）</li>
+<li class="task"><span class="cb"></span>MySQL / Redis 不对公网暴露（container 编排中二者仅接 <code>internal</code> 网络）</li>
+<li class="task"><span class="cb"></span><code>dssad.simulator.enabled=false</code>（模拟器会凭空写入事故/故障，<strong>污染监管取证链路</strong>）</li>
+<li class="task"><span class="cb"></span>数据保留期已按磁盘容量核算，非 0</li>
+<li class="task"><span class="cb"></span>云云接口 HMAC 签名校验为强制（<code>EnterpriseSignatureFilter</code>），未被条件跳过</li>
+</ul>
+<hr>
+<h2 id="13-排障-faq">13 排障 FAQ<a class="headerlink" href="#13-排障-faq" title="永久链接">#</a></h2>
+<p>每条都对应一类<strong>会静默失效</strong>的问题 —— 它们的共同特征是「不报错，只是没生效」，比直接失败更危险。</p>
+<h3 id="q1-端口指定了却不生效">Q1 端口指定了却不生效<a class="headerlink" href="#q1-端口指定了却不生效" title="永久链接">#</a></h3>
+<p><strong>现象</strong>：<code>--server.port=18080</code> 写了，实际仍监听 8080。
+<strong>根因</strong>：环境里存在 <code>SERVER__PORT</code>。Spring 的 relaxed binding 会把 <code>SERVER__PORT</code> 直接绑定到 <code>server.port</code>。
+<strong>处置</strong>：<code>scripts/run-local.sh</code> 已内置 <code>env -u SERVER__PORT</code>；手工起服时同样要先 <code>unset</code>。</p>
+<h3 id="q2-健康探测返回-502但服务其实活着">Q2 健康探测返回 502，但服务其实活着<a class="headerlink" href="#q2-健康探测返回-502但服务其实活着" title="永久链接">#</a></h3>
+<p><strong>现象</strong>：<code>curl http://127.0.0.1:8080/api/v1/monitor/health-check</code> 得到 502。
+<strong>根因</strong>：环境注入了 <code>http_proxy</code>，连回环地址的请求也被转发。
+<strong>处置</strong>：curl 加 <code>--noproxy '*'</code>；脚本已统一加上，并把 <code>NO_PROXY</code> 默认设为 <code>127.0.0.1,localhost</code>。</p>
+<h3 id="q3-构建报不支持发行版本-21">Q3 构建报「不支持发行版本 21」<a class="headerlink" href="#q3-构建报不支持发行版本-21" title="永久链接">#</a></h3>
+<p><strong>根因</strong>：选中了低版本 JDK（本机同时装了 18 与 21，按字母序 glob 会先命中 18）。
+<strong>处置</strong>：<code>bash scripts/check-env.sh</code> 确认 <code>major=21</code>；脚本已按版本号排序选最高版本。</p>
+<h3 id="q4-上传到-linux-的脚本报-bad-interpreter-no-such-file-or-directory">Q4 上传到 Linux 的脚本报 <code>bad interpreter: No such file or directory</code><a class="headerlink" href="#q4-上传到-linux-的脚本报-bad-interpreter-no-such-file-or-directory" title="永久链接">#</a></h3>
+<p><strong>根因</strong>：CRLF 换行（Git for Windows 默认 <code>core.autocrlf=true</code>）。
+<strong>处置</strong>：仓库 <code>.gitattributes</code> 已锁 LF（<code>*.sh text eol=lf</code>、<code>*.service text eol=lf</code>）。
+已污染的本地文件：<code>dos2unix 文件</code> 或 <code>sed -i 's/\r$//' 文件</code>。</p>
+<h3 id="q5-systemd-报-failed-to-parse-invalid-argument">Q5 systemd 报 <code>Failed to parse ... Invalid argument</code><a class="headerlink" href="#q5-systemd-报-failed-to-parse-invalid-argument" title="永久链接">#</a></h3>
+<p><strong>根因</strong>：同上，<code>.service</code> 文件是 CRLF。
+<strong>处置</strong>：<code>sudo sed -i 's/\r$//' /etc/systemd/system/dssad-cloud-platform.service &amp;&amp; sudo systemctl daemon-reload</code></p>
+<h3 id="q6-容器起来了但连不上数据库">Q6 容器起来了，但连不上数据库<a class="headerlink" href="#q6-容器起来了但连不上数据库" title="永久链接">#</a></h3>
+<p><strong>根因</strong>：<code>DB_HOST</code> 写成了 <code>localhost</code> —— 容器里 <code>localhost</code> 指容器自己。
+<strong>处置</strong>：写服务名（<code>mysql</code>）或真实 IP；本机连宿主数据库用 <code>host.docker.internal</code>。</p>
+<h3 id="q7-应用启动成功但一条车端数据都收不到">Q7 应用启动成功，但一条车端数据都收不到<a class="headerlink" href="#q7-应用启动成功但一条车端数据都收不到" title="永久链接">#</a></h3>
+<p><strong>根因</strong>：<strong>这是最需要警惕的一种</strong>。MQTT 连接失败不会阻断启动（设计如此，避免依赖抖动导致应用不可用）。
+<strong>识别</strong>：启动日志有 <code>[MQTT] 连接 Broker 失败</code>，且探活返回 <code>mqttConnected:false</code>，但 HTTP 状态码仍是 200。
+<strong>处置</strong>：按 <code>E-01</code> 配置通道告警；核对 <code>DSSAD_MQTT_BROKER_URL</code>、账号口令、网络连通性。</p>
+<h3 id="q8-启动耗时异常长十几秒到一两分钟">Q8 启动耗时异常长（十几秒到一两分钟）<a class="headerlink" href="#q8-启动耗时异常长十几秒到一两分钟" title="永久链接">#</a></h3>
+<p><strong>根因</strong>：<code>DSSAD_MQTT_PASSWORD</code> 为空时，启动阶段会<strong>在 <code>[main]</code> 线程上</strong>调监管平台换密，重试 4 次（1 s + 2 s + 4 s）。
+<strong>处置</strong>：生产显式配置 <code>DSSAD_MQTT_PASSWORD</code> 跳过换密；或调小 <code>dssad.regulatory.timeout-millis</code>。详见 <code>E-02</code>。</p>
+<h3 id="q9-容器反复重启">Q9 容器反复重启<a class="headerlink" href="#q9-容器反复重启" title="永久链接">#</a></h3>
+<p><strong>排查顺序</strong>：</p>
+<ol>
+<li><code>docker compose logs --tail=200 app</code> 看是否有 <code>APPLICATION FAILED TO START</code></li>
+<li>是否必填环境变量缺失（<code>${VAR:?}</code> 会在 compose 阶段就报错）</li>
+<li>是否 <code>ddl-auto=validate</code> 失败（<code>Schema-validation: missing table/column</code>）→ 执行 <code>db/schema-mysql.sql</code></li>
+<li>是否健康检查 <code>start-period</code> 不足（见 <code>E-02</code>：换密阻塞可能超过 90 s）</li>
+</ol>
+<h3 id="q10-nginx-报-cannot-load-certificate-而容器编排把应用也拉起来了">Q10 <code>Nginx</code> 报 <code>cannot load certificate</code> 而容器编排把应用也拉起来了<a class="headerlink" href="#q10-nginx-报-cannot-load-certificate-而容器编排把应用也拉起来了" title="永久链接">#</a></h3>
+<p><strong>现象</strong>：进程都在跑，网站打不开。
+<strong>根因</strong>：<code>deploy/nginx/certs/</code> 目录为空（Nginx 启动即读证书，缺失直接退出）。
+<strong>处置</strong>：先放证书（见 9.4），再 <code>up -d</code>。部署顺序上<strong>证书应早于编排</strong>。</p>
+<h3 id="q11-前端刷新页面-404">Q11 前端刷新页面 404<a class="headerlink" href="#q11-前端刷新页面-404" title="永久链接">#</a></h3>
+<p><strong>根因</strong>：SPA history 路由缺少兜底。
+<strong>处置</strong>：确认 Nginx 有 <code>location / { try_files $uri $uri/ /index.html; }</code> 且位于所有 API location <strong>之后</strong>。</p>
+<h3 id="q12-大文件上传被拒413">Q12 大文件上传被拒（413）<a class="headerlink" href="#q12-大文件上传被拒413" title="永久链接">#</a></h3>
+<p><strong>根因</strong>：<code>client_max_body_size</code> 未放宽。
+<strong>处置</strong>：<code>/manager/</code> 与 <code>/api/</code> 需 ≥ 210 MB（文档 9.2 约定单文件 ≤ 200 MB）。</p>
+<h3 id="q13-中文查询参数返回-400-invalid-character-found-in-the-request-target">Q13 中文查询参数返回 400 <code>Invalid character found in the request target</code><a class="headerlink" href="#q13-中文查询参数返回-400-invalid-character-found-in-the-request-target" title="永久链接">#</a></h3>
+<p><strong>根因</strong>：URL 中的中文未编码。
+<strong>处置</strong>：<code>curl -G --data-urlencode "keyword=测试"</code>。</p>
+<h3 id="q14-覆盖率门槛没有拦住低覆盖率的构建">Q14 覆盖率门槛没有拦住低覆盖率的构建<a class="headerlink" href="#q14-覆盖率门槛没有拦住低覆盖率的构建" title="永久链接">#</a></h3>
+<p><strong>根因</strong>：原 <code>pom.xml</code> 只声明了 <code>jacoco.line.coverage.min</code> 但<strong>没有 <code>check</code> 执行</strong>，属于死配置。
+<strong>处置</strong>：已在 7.3 节接线；发布流程统一用 <code>bash scripts/build.sh</code>（走 <code>mvn verify</code>）。</p>
+<hr>
+<h2 id="14-部署风险与缺陷清单">14 部署风险与缺陷清单<a class="headerlink" href="#14-部署风险与缺陷清单" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>编号</th>
+<th>级别</th>
+<th>问题</th>
+<th>证据</th>
+<th>影响</th>
+<th>建议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>E-01</strong></td>
+<td><strong>高</strong></td>
+<td><strong>编排探活不覆盖 MQTT 通道</strong>：<code>/actuator/health/liveness</code> 与 <code>/api/v1/monitor/health-check</code> 在 Broker 断开时<strong>仍返回成功</strong>（后者如实给出 <code>mqttConnected:false</code>，但探针不消费它）</td>
+<td>prod 实测：Broker 不可达时应用正常启动、探活 <code>0000</code>、14/10 条冒烟断言全绿；日志仅 2 行 <code>ERROR</code></td>
+<td>出现「所有探针全绿、监控面板 100% 可用，但平台一条车端数据都收不到」，且只能靠人翻日志发现</td>
+<td>✅ <strong>已修复</strong>：新增业务探针端点 <code>GET /api/v1/monitor/mqtt-health</code>（DOWN → <strong>HTTP 503</strong>）+ <code>MqttChannelProbe</code>（8 个单测）+ <code>scripts/mqtt-watch.sh</code>（退出码 20/30/40 分级）。<strong>实测</strong>：Broker 不可达时该端点 503、<code>/actuator/health</code> 与 liveness 仍 200（不误摘流）。<strong>不做成 actuator 健康组</strong>的原因见第 11.2 节</td>
+</tr>
+<tr>
+<td><strong>E-02</strong></td>
+<td>中</td>
+<td><strong>启动被监管平台换密阻塞</strong>：<code>DSSAD_MQTT_PASSWORD</code> 为空时在 <code>[main]</code> 线程上换密，重试 4 次</td>
+<td>prod 实测日志：09:53:43 启动 → 09:53:49 第 1 次失败 → 09:53:50 / 09:53:52 / 09:53:56 依次重试，<strong>纯等待 7.02 s</strong>，全部在 <code>[main]</code> 线程</td>
+<td>① 每次启动白等 7 s；② 若监管平台「黑洞」（连接挂起而非拒绝），单次尝试可达 <code>timeout-millis=30 s</code>，最坏 ≈ 4×30+7 = <strong>127 s</strong>，<strong>超过 Dockerfile 的 <code>start-period=90s</code></strong>，容器会被判定不健康并重启，形成「启动即被重启」的循环</td>
+<td>① 生产显式配置 <code>DSSAD_MQTT_PASSWORD</code>（跳过换密）；② 或把换密改为异步/懒加载，不阻塞启动；③ 或把 <code>start-period</code> 提到 180 s</td>
+</tr>
+<tr>
+<td><strong>E-03</strong></td>
+<td>中</td>
+<td><strong><code>jacoco.line.coverage.min=0.60</code> 为死配置</strong>：属性已声明但无 <code>check</code> 执行，覆盖率再低也不拦构建</td>
+<td>原 <code>pom.xml</code> 仅 <code>prepare-agent</code> + <code>report</code>；<code>mvn package</code> 无任何覆盖率校验</td>
+<td>质量门槛形同不存在，覆盖率会随时间无声下滑</td>
+<td><strong>本次已修复</strong>：新增 <code>check-coverage</code>（绑 <code>verify</code>），<code>build.sh</code> 改走 <code>mvn verify</code>；实测 <code>All coverage checks have been met</code></td>
+</tr>
+<tr>
+<td><strong>E-04</strong></td>
+<td>低</td>
+<td><strong>项目未纳入版本控制</strong>：<code>git rev-parse</code> 报 <code>not a git repository</code>，无 <code>.gitignore</code> / <code>.gitattributes</code></td>
+<td><code>ls -la</code> 无 <code>.git</code>、无 <code>.gitignore</code>、无 <code>.gitattributes</code></td>
+<td>① 无历史可回溯，回滚只能靠人工备份 jar；② CRLF 问题无仓库级防线；③ 密钥误提交无防护</td>
+<td><strong>本次已补</strong> <code>.gitignore</code> + <code>.gitattributes</code>；<strong>建议尽快 <code>git init</code> + 首次提交</strong>（本次未执行 <code>git init</code>，避免擅自改变你的工作流）</td>
+</tr>
+<tr>
+<td><strong>E-05</strong></td>
+<td>低</td>
+<td><strong>图像/浏览器类验证依赖沙箱外环境</strong>，本机 Edge 被沙箱拦截</td>
+<td>截图改走 Playwright 的 chromium 内核</td>
+<td>不影响部署，但影响文档产出的可复现性</td>
+<td>已在《性能优化与压测报告》与技能中记录绕行方案</td>
+</tr>
+<tr>
+<td><strong>E-06</strong></td>
+<td>信息</td>
+<td><strong>容器路径整体未验证</strong>：Docker 守护进程未启动，<code>docker build</code> / <code>compose up</code> / <code>nginx -t</code> / <code>systemd-analyze verify</code> 均未执行</td>
+<td><code>docker info</code> 失败</td>
+<td>第 8、9 章的容器与 systemd 部分<strong>只有静态核对，没有运行验证</strong></td>
+<td>上线前在有 Docker 的环境执行一次 <code>docker compose -f docker-compose.prod.yml config</code>（校验变量插值）与实际起服</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="与既有缺陷清单的交叉引用">与既有缺陷清单的交叉引用<a class="headerlink" href="#与既有缺陷清单的交叉引用" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>编号</th>
+<th>所属文档</th>
+<th>与本文的关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>F-01</code></td>
+<td>性能报告</td>
+<td><strong>限流器未接入请求链路</strong>。本文 9.3 因此强调「Nginx 入口限流是当前唯一真实生效的一道」</td>
+</tr>
+<tr>
+<td><code>P-01</code></td>
+<td>详细设计</td>
+<td>多实例 <code>@Scheduled</code> 无分布式锁。本文 11.4 / 11.6 因此要求「多实例部署前必须先修」</td>
+</tr>
+<tr>
+<td><code>P-02</code></td>
+<td>详细设计</td>
+<td><code>markOfflineVehicles</code> 无调用方 → 车辆 <code>online</code> 永不回落。与 <code>E-01</code> 同属「探活/状态字段不可信」的运维盲区</td>
+</tr>
+<tr>
+<td><code>D-01</code></td>
+<td>数据库设计</td>
+<td>遥测流水缺保留策略（已修复）。本文 11.5 的清理任务即其落地方案</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>一个值得注意的规律</strong>：本项目已发现 6 例同类问题 —— <code>F-01</code>（限流未接线）、<code>E-03</code>（覆盖率门槛未接线）、
+<code>P-02</code>（方法无调用方）、<code>E-01</code>（状态字段无人消费）、<code>O-02</code>（Prometheus 端点缺依赖）、<code>O-08</code>（优雅停机未配置）。
+共同特征是<strong>「写了、有注释、有配置，但没有任何调用方或消费者」</strong>。
+这类问题不会报错、不会被测试抓到，只能靠「逐条追问：它被谁调用？生效的证据是什么？」来发现。
+其中 4 例已在本次迭代中接线并实测（<code>E-03</code> / <code>E-01</code> / <code>O-02</code> / <code>O-08</code>）。
+建议在 CI 中增加一条检查：对关键能力（限流、覆盖率门槛、状态字段）做<strong>端到端行为断言</strong>，
+而不是只断言「类存在」。</p>
+</blockquote>
+<hr>
+<h2 id="附录-a-脚本速查">附录 A 脚本速查<a class="headerlink" href="#附录-a-脚本速查" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>脚本</th>
+<th>常用命令</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>check-env.sh</code></td>
+<td><code>bash scripts/check-env.sh</code></td>
+<td>环境自检，输出「缺什么、怎么补」</td>
+</tr>
+<tr>
+<td></td>
+<td><code>bash scripts/check-env.sh --gen-secret 24</code></td>
+<td>生成强随机口令</td>
+</tr>
+<tr>
+<td><code>dev.sh</code></td>
+<td><code>bash scripts/dev.sh</code></td>
+<td>后端 + 前端</td>
+</tr>
+<tr>
+<td></td>
+<td><code>bash scripts/dev.sh --api</code> / <code>--web</code></td>
+<td>单独启动</td>
+</tr>
+<tr>
+<td></td>
+<td><code>bash scripts/dev.sh --logs</code> / <code>--stop</code></td>
+<td>看日志 / 停止</td>
+</tr>
+<tr>
+<td><code>build.sh</code></td>
+<td><code>bash scripts/build.sh</code></td>
+<td><code>mvn verify</code>（含测试 + 覆盖率门槛）</td>
+</tr>
+<tr>
+<td></td>
+<td><code>bash scripts/build.sh --web</code></td>
+<td>追加前端构建</td>
+</tr>
+<tr>
+<td></td>
+<td><code>bash scripts/build.sh --docker</code></td>
+<td>追加镜像构建</td>
+</tr>
+<tr>
+<td></td>
+<td><code>bash scripts/build.sh --clean --skip-tests</code></td>
+<td>快速试跑（产物不可发布）</td>
+</tr>
+<tr>
+<td><code>run-local.sh</code></td>
+<td><code>bash scripts/run-local.sh</code></td>
+<td>前台，local profile</td>
+</tr>
+<tr>
+<td></td>
+<td><code>bash scripts/run-local.sh --bg --port 18080</code></td>
+<td>后台 + 换端口</td>
+</tr>
+<tr>
+<td></td>
+<td><code>bash scripts/run-local.sh --prod</code></td>
+<td>生产参数终验</td>
+</tr>
+<tr>
+<td></td>
+<td><code>bash scripts/run-local.sh --stop</code></td>
+<td>优雅停止</td>
+</tr>
+<tr>
+<td><code>health.sh</code></td>
+<td><code>bash scripts/health.sh</code></td>
+<td>14 条断言（默认 8080）</td>
+</tr>
+<tr>
+<td></td>
+<td><code>bash scripts/health.sh --base-url https://域名 --no-simulator</code></td>
+<td>生产态验收</td>
+</tr>
+<tr>
+<td><code>perf/load_test.py</code></td>
+<td><code>python perf/load_test.py --base-url http://127.0.0.1:18080 --token $T</code></td>
+<td>只读接口压测</td>
+</tr>
+<tr>
+<td><code>perf/rate_limit_probe.py</code></td>
+<td><code>python perf/rate_limit_probe.py --base-url ... --vin $VIN --count 130 --token $T</code></td>
+<td>限流行为探针</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="附录-b-配置项与文件对照">附录 B 配置项与文件对照<a class="headerlink" href="#附录-b-配置项与文件对照" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>文件</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>application.yml</code></td>
+<td>公共配置：线程模型、Jackson、Actuator、日志格式、<code>dssad.*</code> 默认值</td>
+</tr>
+<tr>
+<td><code>application-local.yml</code></td>
+<td>H2 文件库（<code>ddl-auto=update</code>）、MQTT 关、Redis 关、缓存 TTL 10 s、模拟器开、留痕全量</td>
+</tr>
+<tr>
+<td><code>application-prod.yml</code></td>
+<td>MySQL（<code>ddl-auto=validate</code>）、Redis 开、MQTT 开、虚拟线程、日志落盘轮转、密钥 <code>${VAR}</code> fail-fast</td>
+</tr>
+<tr>
+<td><code>src/test/resources/application-test.yml</code></td>
+<td>H2 内存库（<code>create-drop</code>）、<strong>缓存关闭</strong>（避免幽灵用例）、保留策略清理关闭</td>
+</tr>
+<tr>
+<td><code>.env</code>（未提交）</td>
+<td>本地/服务器环境变量，脚本与 compose 读取</td>
+</tr>
+<tr>
+<td><code>deploy/systemd/dssad-cloud-platform.env.example</code></td>
+<td>服务器环境变量模板（已提交）</td>
+</tr>
+<tr>
+<td><code>db/schema-mysql.sql</code></td>
+<td>生产建表（13 表 / 47 索引）</td>
+</tr>
+<tr>
+<td><code>db/schema-mysql.generated.sql</code></td>
+<td>由 Hibernate 元数据导出的比对基线（改实体后 diff 用）</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="附录-c-本次验证的证据与未验证项">附录 C 本次验证的证据与未验证项<a class="headerlink" href="#附录-c-本次验证的证据与未验证项" title="永久链接">#</a></h2>
+<h3 id="c1-已验证命令可复现">C.1 已验证（命令可复现）<a class="headerlink" href="#c1-已验证命令可复现" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>编号</th>
+<th>命令</th>
+<th>关键输出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EV-1</td>
+<td><code>bash scripts/check-env.sh</code></td>
+<td><code>[通过] 环境自检通过，无阻塞项</code></td>
+</tr>
+<tr>
+<td>EV-2</td>
+<td><code>bash scripts/run-local.sh --bg --port 18080</code></td>
+<td><code>服务已就绪</code> / <code>Started in 9.337 seconds</code></td>
+</tr>
+<tr>
+<td>EV-3</td>
+<td><code>bash scripts/health.sh</code></td>
+<td><code>通过 14 项，失败 0 项，跳过 0 项</code></td>
+</tr>
+<tr>
+<td>EV-4</td>
+<td><code>bash scripts/run-local.sh --stop</code></td>
+<td><code>已停止</code>；停止后探测 <code>HTTP=000</code></td>
+</tr>
+<tr>
+<td>EV-5</td>
+<td><code>mysql ... dssad_cloud_verify &lt; db/schema-mysql.sql</code></td>
+<td>13 表 / 47 索引 / 0 报错（MySQL 8.4.9）</td>
+</tr>
+<tr>
+<td>EV-6</td>
+<td><code>java -jar ... --spring.profiles.active=prod</code></td>
+<td><code>Started in 15.95 seconds</code>；<code>L1=Caffeine(maxSize=50000)，L2=Redis</code>；<code>4 个报文消费线程（虚拟线程）</code></td>
+</tr>
+<tr>
+<td>EV-7</td>
+<td><code>bash scripts/health.sh --no-simulator</code></td>
+<td><code>通过 10 项，失败 0 项，跳过 4 项</code></td>
+</tr>
+<tr>
+<td>EV-8</td>
+<td>空库 + prod profile 启动</td>
+<td>退出码 1；<code>Schema-validation: missing table [t_accident_event]</code>；Tomcat 未启动</td>
+</tr>
+<tr>
+<td>EV-9</td>
+<td>YAML 解析 + Nginx 8 项必写项核对</td>
+<td>全部通过；<code>backend</code> 网络 <code>internal=True</code></td>
+</tr>
+<tr>
+<td>EV-10</td>
+<td><code>mvn verify</code></td>
+<td><code>Tests run: 164, Failures: 0</code>；<code>All coverage checks have been met</code>；<code>BUILD SUCCESS (24.376 s)</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c2-未验证不要当作已验证">C.2 未验证（<strong>不要当作已验证</strong>）<a class="headerlink" href="#c2-未验证不要当作已验证" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项</th>
+<th>原因</th>
+<th>影响面</th>
+<th>上线前建议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docker build</code> / <code>docker compose up</code></td>
+<td>本机 Docker 守护进程未启动</td>
+<td>第 8 章全部运行行为</td>
+<td>在有 Docker 的环境执行 <code>compose config</code> 与一次实际起服</td>
+</tr>
+<tr>
+<td><code>nginx -t</code> 语法校验</td>
+<td>本机无 nginx 二进制</td>
+<td>Nginx 配置的语法正确性</td>
+<td>服务器上 <code>nginx -t</code> 后再 <code>reload</code></td>
+</tr>
+<tr>
+<td>HTTPS 端到端、证书链、301 跳转</td>
+<td>无证书、无域名、无公网入口</td>
+<td>TLS 行为、<code>X-Forwarded-Proto</code> 联动</td>
+<td>用自签证书先跑一次（9.4）</td>
+</tr>
+<tr>
+<td>systemd 单元实际生效</td>
+<td>开发机为 Windows</td>
+<td>9.2 全部内容</td>
+<td>服务器 <code>systemctl daemon-reload</code> + 一次启停</td>
+</tr>
+<tr>
+<td>多实例部署</td>
+<td>本次全部单实例</td>
+<td>缓存一致性、分布式锁</td>
+<td><strong>先修 <code>P-01</code></strong></td>
+</tr>
+<tr>
+<td>真实 MQTT 吞吐与补发链路</td>
+<td>无 Broker</td>
+<td>报文链路性能</td>
+<td>有 Broker 的环境压测</td>
+</tr>
+<tr>
+<td>千车级数据量下的表现</td>
+<td>本机数据量极小</td>
+<td>容量、索引有效性</td>
+<td>压测环境灌入生产量级数据</td>
+</tr>
+<tr>
+<td>前端在真实浏览器中的渲染</td>
+<td>未做浏览器侧测量</td>
+<td>首屏、地图渲染</td>
+<td>Lighthouse / Performance API</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c3-本次在用户机器上留下的痕迹">C.3 本次在用户机器上留下的痕迹<a class="headerlink" href="#c3-本次在用户机器上留下的痕迹" title="永久链接">#</a></h3>
+<p>为避免「悄悄改了环境」，如实列出：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>痕迹</th>
+<th>说明</th>
+<th>是否已清理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MySQL 库 <code>dssad_cloud_verify</code></td>
+<td>本次用于验证生产 DDL 与 <code>ddl-auto=validate</code> 的临时库</td>
+<td><strong>已清理</strong>（重新验证见 6.3/6.4）</td>
+</tr>
+<tr>
+<td>MySQL 库 <code>dssad_empty_probe</code></td>
+<td>反向探针用的空库</td>
+<td>已清理</td>
+</tr>
+<tr>
+<td><code>.run/</code> 目录</td>
+<td>脚本启动的 pid 与日志（已在 <code>.gitignore</code>）</td>
+<td>保留（运行期目录）</td>
+</tr>
+<tr>
+<td><code>cloud-platform-server/data/db/</code></td>
+<td>local profile 的 H2 文件库（本次冒烟写入了 1 台车 + 1 起事故）</td>
+<td>保留（可随时删）</td>
+</tr>
+<tr>
+<td><code>cloud-platform-server/perf/*.txt</code>、<code>*.json</code></td>
+<td>压测与探针原始输出</td>
+<td>保留（报告中引用）</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="附录-d-本次新增修改的文件清单">附录 D 本次新增/修改的文件清单<a class="headerlink" href="#附录-d-本次新增修改的文件清单" title="永久链接">#</a></h2>
+<h3 id="新增">新增<a class="headerlink" href="#新增" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>文件</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>scripts/_common.sh</code></td>
+<td>脚本公共库：JDK 版本化选择、Maven 解析、端口探测、HTTP 探测、原生路径转换</td>
+</tr>
+<tr>
+<td><code>scripts/check-env.sh</code></td>
+<td>环境自检（6 组检查项）</td>
+</tr>
+<tr>
+<td><code>scripts/dev.sh</code></td>
+<td>本地开发启动（后端 + 前端，就绪轮询）</td>
+</tr>
+<tr>
+<td><code>scripts/build.sh</code></td>
+<td>统一构建（<code>mvn verify</code> + 前端 + 镜像）</td>
+</tr>
+<tr>
+<td><code>scripts/run-local.sh</code></td>
+<td>成品 jar 起服（后台 / 优雅停止 / prod 终验）</td>
+</tr>
+<tr>
+<td><code>scripts/health.sh</code></td>
+<td>全链路冒烟（14 条断言，含 2 条钉子用例）</td>
+</tr>
+<tr>
+<td><code>Dockerfile</code> / <code>.dockerignore</code></td>
+<td>后端镜像（多阶段、非 root、liveness 探活、<code>exec java</code>）</td>
+</tr>
+<tr>
+<td><code>docker-compose.yml</code></td>
+<td>本地依赖编排（MySQL + Redis + 可选 Mosquitto）</td>
+</tr>
+<tr>
+<td><code>docker-compose.prod.yml</code></td>
+<td>生产编排（Nginx + app + MySQL + Redis，双网络隔离）</td>
+</tr>
+<tr>
+<td><code>deploy/nginx/dssad-cloud.conf</code></td>
+<td>Nginx 站点配置（TLS、限流、Actuator 收敛、SPA 回落）</td>
+</tr>
+<tr>
+<td><code>deploy/systemd/dssad-cloud-platform.service</code></td>
+<td>systemd 单元（最小权限、优雅停机、防重启风暴）</td>
+</tr>
+<tr>
+<td><code>deploy/systemd/dssad-cloud-platform.env.example</code></td>
+<td>服务器环境变量模板</td>
+</tr>
+<tr>
+<td><code>deploy/mosquitto/mosquitto.conf</code></td>
+<td>本地联调 Broker 配置</td>
+</tr>
+<tr>
+<td><code>.gitignore</code> / <code>.gitattributes</code></td>
+<td>排除构建产物与密钥；锁定 LF 换行</td>
+</tr>
+<tr>
+<td><code>README.md</code></td>
+<td>项目说明与快速开始</td>
+</tr>
+<tr>
+<td><code>docs/devops/DSSAD云平台开发与部署说明.md</code>（本文）</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="修改">修改<a class="headerlink" href="#修改" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>文件</th>
+<th>修改内容</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cloud-platform-server/pom.xml</code></td>
+<td>新增 <code>check-coverage</code> 执行（绑 <code>verify</code>）</td>
+<td>原覆盖率门槛是死配置（<code>E-03</code>）</td>
+</tr>
+<tr>
+<td><code>scripts/build.sh</code></td>
+<td>默认构建目标由 <code>package</code> 改为 <code>verify</code></td>
+<td>让覆盖率门槛真正参与发布流程</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="版本记录">版本记录<a class="headerlink" href="#版本记录" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>版本</th>
+<th>日期</th>
+<th>变更说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>v1.0</td>
+<td>2026-09-23</td>
+<td>首次发布。覆盖三条路径、拓扑、环境要求、配置体系、脚本、构建、容器与 systemd 两种部署方式、上线验收清单、运维手册、安全清单、排障 FAQ，并交付一套可直接执行的脚本与部署资产。本次实跑验证 10 项（EV-1~EV-10），发现部署级风险 6 项（<code>E-01</code>~<code>E-06</code>，其中 <code>E-03</code> 已修复、<code>E-04</code> 部分补齐），未验证项 8 项集中列于附录 C。</td>
+</tr>
+<tr>
+<td>v1.1</td>
+<td>2026-09-23</td>
+<td>修复 <code>E-01</code>：新增 <code>GET /api/v1/monitor/mqtt-health</code>（DOWN → 503）、<code>MqttChannelProbe</code>（8 个单测）、<code>scripts/mqtt-watch.sh</code>；接口权限表与通道告警章节同步更新。更正两处与实际不符的表述：①「应用层 IP 白名单 fail-closed」—— 仓库内<strong>不存在</strong>该实现，实为仅靠 Nginx 收敛（登记为 O-03）；②「<code>/actuator/prometheus</code> 可被抓取」—— 修复前因缺 <code>micrometer-registry-prometheus</code> 实际 404（登记为 O-02，已修复）。完整运维方案见《DSSAD 云平台运维手册与告警预案》。</td>
+</tr>
+<tr>
+<td>v1.2</td>
+<td>2026-09-23</td>
+<td>修复 <code>O-03</code>：<code>/actuator/**</code> 加装应用层<strong>来源 IP 白名单</strong>（<code>ActuatorIpWhitelistFilter</code> + <code>IpCidrMatcher</code>，fail-closed，判定基于 TCP 对端地址、不采信 XFF），接口权限表 / Nginx 收敛表 / 安全清单三处口径同步为「双层收敛」。新增 <code>scripts/backup.sh</code>（修复 <code>O-05</code>：一致性备份 + 三重校验 + 轮转 + <code>--restore-check</code>）。新增测试 28 例（<code>ActuatorAccessControlTest</code>），全套 <strong>200 用例 / 0 失败</strong>、行覆盖 73.39%。</td>
+</tr>
+</tbody>
+</table></div>
+  </main>
+</div>
+<button id="to-top" type="button" title="回到顶部" aria-label="回到顶部">&#8593;</button>
+<script>
+
+(function () {
+  'use strict';
+
+  /* --- 1. 侧边栏滚动高亮当前章节 --- */
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  var targets = links
+    .map(function (a) {
+      var id = decodeURIComponent(a.getAttribute('href').slice(1));
+      var el = document.getElementById(id);
+      return el ? { link: a, el: el } : null;
+    })
+    .filter(Boolean);
+
+  function setActive(link) {
+    links.forEach(function (a) { a.classList.remove('active'); });
+    if (!link) return;
+    link.classList.add('active');
+    // 让高亮项始终留在侧边栏可视区内
+    var bar = document.querySelector('.sidebar');
+    if (!bar) return;
+    var r = link.getBoundingClientRect(), b = bar.getBoundingClientRect();
+    if (r.top < b.top + 60 || r.bottom > b.bottom - 40) {
+      bar.scrollTop += r.top - b.top - bar.clientHeight / 3;
+    }
+  }
+
+  var ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      ticking = false;
+      var best = null;
+      for (var i = 0; i < targets.length; i++) {
+        if (targets[i].el.getBoundingClientRect().top <= 120) best = targets[i];
+        else break;
+      }
+      if (best) setActive(best.link);
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* --- 2. 代码块复制按钮 --- */
+  document.querySelectorAll('.highlight').forEach(function (block) {
+    var code = block.querySelector('code');
+    if (!code) return;
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.addEventListener('click', function () {
+      var text = code.innerText;
+      var done = function () {
+        btn.textContent = '已复制';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = '复制';
+          btn.classList.remove('done');
+        }, 1400);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    block.appendChild(btn);
+  });
+
+  // file:// 下 navigator.clipboard 不可用时的兜底
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* 忽略 */ }
+    document.body.removeChild(ta);
+  }
+
+  /* --- 3. 回到顶部 --- */
+  var top = document.getElementById('to-top');
+  if (top) {
+    top.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    window.addEventListener('scroll', function () {
+      top.classList.toggle('show', window.scrollY > 500);
+    }, { passive: true });
+  }
+
+  /* --- 4. 窄屏侧边栏 --- */
+  var menuBtn = document.getElementById('menu-btn');
+  var sidebar = document.querySelector('.sidebar');
+  if (menuBtn && sidebar) {
+    menuBtn.addEventListener('click', function () { sidebar.classList.toggle('open'); });
+    sidebar.addEventListener('click', function (e) {
+      if (e.target.tagName === 'A') sidebar.classList.remove('open');
+    });
+  }
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+# ============================================================================
+# 单元测试配置：H2 内存库 + MQTT/Redis 全关
+#
+# 目标：任何一台机器上 `mvn test` 都能在 30 秒内跑完，不依赖 Docker、Broker、
+# 外部服务器；测试之间数据互不干扰（内存库 + create-drop）。
+# ============================================================================
+spring:
+  datasource:
+    url: jdbc:h2:mem:dssad_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 100
+  # 单测彻底关闭缓存：@Cacheable 走 NoOpCacheManager（永不命中）。
+  # 否则 A 用例注入报文、B 用例从缓存读到 A 时刻的旧统计值，会得到随机失败的「幽灵用例」。
+  # 缓存行为本身由 CacheTest（直接 new TwoLevelCache）覆盖，不需要在集成测试里掺进来。
+  cache:
+    type: none
+  h2:
+    console:
+      enabled: false
+
+dssad:
+  enterprise-id: DSSAD-TEST-0001
+  enterprise-name: 单测企业
+  mqtt:
+    enabled: false
+    broker-url: tcp://127.0.0.1:1883
+  regulatory:
+    base-url: http://127.0.0.1:9/regulatory
+    timeout-millis: 500
+    retry-delays-millis: 10,20
+  storage:
+    type: local
+    local-root: ./target/test-media
+    public-base-url: http://127.0.0.1:8080/media
+  srs:
+    http-base-url: http://127.0.0.1:8080
+    app: live
+  api:
+    max-page-size: 200
+    track-simplify-tolerance: 8.0
+    history-video-max-span-hours: 168
+  rate-limit:
+    enabled: true
+    http-per-minute: 100
+    mqtt-per-second: 10
+  audit:
+    # 单测需要断言每一条留痕，用全量
+    mode: full
+    retention-days: 1
+  # 单测**关闭**自动清理：定时任务在测试上下文里跑起来会删掉其他用例插入的数据，
+  # 造成随机失败（「幽灵用例」）。清理逻辑由 TelemetryRetentionServiceTest
+  # 用自建配置显式调用 purgeExpired() 覆盖，不依赖调度。
+  retention:
+    track-point-days: 0
+    state-snapshot-days: 0
+    batch-size: 100
+  redis:
+    enabled: false
+  # 同上：单测让 CacheConfig 整体不生效（不装配 CacheManager Bean）
+  cache:
+    enabled: false
+  # 模拟器在测试中启用，便于用 MockMvc 覆盖「注入报文 → 业务落库」的端到端路径
+  simulator:
+    enabled: true
+  remote-driving:
+    cockpits:
+      - cockpit-id: YK-TEST-01
+        driver: 测试驾驶员A
+        identity-number: "510100199001011234"
+        driver-license-number: "510100199001011"
+        mobile: "13800000001"
+      - cockpit-id: YK-TEST-02
+        driver: 测试驾驶员B
+        identity-number: "510100199002022345"
+        driver-license-number: "510100199002022"
+        mobile: "13800000002"
+
+logging:
+  level:
+    root: WARN
+    com.genvict.dssad.cloud: INFO

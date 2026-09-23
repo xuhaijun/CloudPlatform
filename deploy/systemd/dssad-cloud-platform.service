@@ -1,0 +1,90 @@
+# ============================================================================
+#  systemd 单元 —— 主机部署（jar + systemd，不依赖容器运行时）
+#
+#  安装：
+#    sudo useradd --system --no-create-home --shell /usr/sbin/nologin dssad
+#    sudo mkdir -p /opt/dssad /etc/dssad /var/log/dssad /data/dssad/media
+#    sudo cp cloud-platform-server/target/dssad-cloud-platform.jar /opt/dssad/
+#    sudo cp deploy/systemd/dssad-cloud-platform.env.example /etc/dssad/dssad-cloud-platform.env
+#    sudo chmod 600 /etc/dssad/dssad-cloud-platform.env      # 里面是口令，必须收紧
+#    sudo chown -R dssad:dssad /opt/dssad /var/log/dssad /data/dssad
+#    sudo cp deploy/systemd/dssad-cloud-platform.service /etc/systemd/system/
+#    sudo systemctl daemon-reload
+#    sudo systemctl enable --now dssad-cloud-platform
+#    systemctl status dssad-cloud-platform
+#    journalctl -u dssad-cloud-platform -f
+#
+#  注意：本文件是 **LF 换行**（见仓库 .gitattributes）。
+#  若从 Windows 直接拷过去，CRLF 会让 systemd 报
+#  "Failed to parse ... Invalid argument"，且不指向换行符这个真实原因。
+# ============================================================================
+
+[Unit]
+Description=车路通 DSSAD 产品云平台后端服务
+Documentation=file:/opt/dssad/README-deploy.md
+# 数据库与缓存通常在别的机器/容器里，这里只等待网络就绪
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=dssad
+Group=dssad
+WorkingDirectory=/opt/dssad
+
+# ---------------------------------------------------------------------------
+# 环境变量文件（含数据库口令、准入平台企业 ID 等），权限必须 600
+# ---------------------------------------------------------------------------
+EnvironmentFile=/etc/dssad/dssad-cloud-platform.env
+
+# ---------------------------------------------------------------------------
+# JVM 参数
+#   - 固定堆上限：容器/主机上「不设上限」等于把 OOM 风险留给操作系统
+#   - MaxRAMPercentage 与 Xmx 同时给时以显式 Xmx 为准，二选一即可，这里保留 Xmx
+#   - 时区与编码显式指定：容器与 systemd 环境的默认值都不一定是 Asia/Shanghai
+# ---------------------------------------------------------------------------
+Environment="JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64"
+Environment="JAVA_OPTS=-Xms1g -Xmx4g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/dssad/heapdump.hprof -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai"
+
+ExecStart=/bin/sh -c 'exec "$JAVA_HOME/bin/java" $JAVA_OPTS -jar /opt/dssad/dssad-cloud-platform.jar --spring.profiles.active=prod'
+
+# ---------------------------------------------------------------------------
+# 优雅停机：KillSignal=SIGTERM 让 Spring 的 shutdown hook 执行完
+# （关闭 MQTT 连接、提交在途批量写、释放 Hikari 连接池）。
+# TimeoutStopSec 必须**大于**应用侧的优雅停机超时，否则 systemd 会先 SIGKILL，
+# 表现为「每次重启日志里都有几条报文丢失」。
+# ---------------------------------------------------------------------------
+KillSignal=SIGTERM
+KillMode=mixed
+TimeoutStopSec=60
+
+Restart=on-failure
+RestartSec=10
+# 配置写错时避免无限重启风暴：5 分钟内超过 5 次就停下来，等人处理
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+# ---------------------------------------------------------------------------
+# 安全加固（最小权限）
+# ---------------------------------------------------------------------------
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+# ProtectSystem=full 会把 /usr、/boot、/etc 挂成只读，
+# 因此应用需要写的目录必须显式开放，否则表现为「启动时莫名其妙无权限」
+ReadWritePaths=/var/log/dssad /data/dssad
+MemoryMax=6G
+TasksMax=4096
+LimitNOFILE=65535
+
+StandardOutput=append:/var/log/dssad/stdout.log
+StandardError=append:/var/log/dssad/stderr.log
+
+[Install]
+WantedBy=multi-user.target

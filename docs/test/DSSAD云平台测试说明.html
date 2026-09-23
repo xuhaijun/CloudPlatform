@@ -1,0 +1,2084 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>车路通 DSSAD 产品云平台 — 测试说明</title>
+<meta name="generator" content="scripts/md2html.py">
+<style>
+
+:root{
+  --bg:#0d1117;
+  --bg-side:#090c11;
+  --bg-elev:#161b22;
+  --bg-code:#161b22;
+  --border:#21262d;
+  --border-soft:#1a1f27;
+  --text:#c9d1d9;
+  --text-strong:#e6edf3;
+  --text-dim:#8b949e;
+  --accent:#58a6ff;
+  --accent-soft:rgba(88,166,255,.12);
+  --green:#3fb950;
+  --orange:#d29922;
+  --red:#f85149;
+  --purple:#bc8cff;
+  --sidebar-w:308px;
+  --radius:8px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+              "Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15.5px;line-height:1.78;
+  -webkit-font-smoothing:antialiased;
+}
+code,pre,kbd,.mono{
+  font-family:"JetBrains Mono","Cascadia Code",Consolas,"Courier New",monospace;
+  font-variant-ligatures:none;
+}
+
+/* ---------- 布局：左固定 TOC / 右正文 ---------- */
+.layout{display:flex;align-items:flex-start;min-height:100vh}
+
+.sidebar{
+  width:var(--sidebar-w);flex:0 0 var(--sidebar-w);
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  background:var(--bg-side);border-right:1px solid var(--border);
+  padding:22px 0 60px;
+}
+.sidebar-brand{
+  padding:0 20px 16px;margin-bottom:14px;border-bottom:1px solid var(--border-soft);
+}
+.sidebar-brand .t{font-size:14px;font-weight:600;color:var(--text-strong);letter-spacing:.2px}
+.sidebar-brand .s{font-size:12px;color:var(--text-dim);margin-top:4px}
+
+.toc{padding:0 10px}
+.toc ul{list-style:none;margin:0;padding:0}
+.toc > ul > li{margin:2px 0}
+.toc a{
+  display:block;padding:6px 10px;border-radius:6px;
+  color:var(--text-dim);text-decoration:none;font-size:13.5px;
+  border-left:2px solid transparent;transition:all .15s ease;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.toc > ul > li > a{color:var(--text);font-weight:500}
+.toc a:hover{background:var(--bg-elev);color:var(--text-strong)}
+.toc a.active{
+  color:var(--accent);background:var(--accent-soft);
+  border-left-color:var(--accent);font-weight:600;
+}
+.toc ul ul{margin-left:12px}
+.toc ul ul a{font-size:12.8px;padding:4px 10px}
+
+/* ---------- 正文 ---------- */
+.content{
+  flex:1 1 auto;min-width:0;max-width:1000px;
+  padding:44px 56px 120px;
+}
+.content > *:first-child{margin-top:0}
+
+/* 页头 */
+.doc-header{margin-bottom:34px;padding-bottom:22px;border-bottom:1px solid var(--border)}
+h1{
+  font-size:30px;line-height:1.35;margin:0 0 16px;color:var(--text-strong);
+  font-weight:700;letter-spacing:-.3px;
+}
+.doc-meta{font-size:12.5px;color:var(--text-dim);display:flex;gap:14px;flex-wrap:wrap}
+.doc-meta span{display:inline-flex;align-items:center;gap:5px}
+.doc-meta code{font-size:12px;color:var(--text-dim);background:transparent;padding:0}
+
+/* 「定位说明」摘要卡（md 中紧跟 h1 的引用块） */
+.doc-lead{
+  background:linear-gradient(180deg,rgba(88,166,255,.07),rgba(88,166,255,.02));
+  border:1px solid rgba(88,166,255,.22);border-left:3px solid var(--accent);
+  border-radius:var(--radius);padding:14px 18px;margin:0 0 30px;
+  font-size:14px;color:var(--text-dim);line-height:1.8;
+}
+.doc-lead p{margin:0 0 8px}
+.doc-lead p:last-child{margin-bottom:0}
+.doc-lead strong{color:var(--text-strong)}
+.doc-lead code{font-size:12.5px;color:var(--accent);background:rgba(88,166,255,.1);padding:1px 5px;border-radius:4px}
+
+/* 标题层级 */
+h2{
+  font-size:23px;font-weight:650;color:var(--text-strong);
+  margin:56px 0 18px;padding:0 0 10px 0;
+  border-bottom:1px solid var(--border);position:relative;
+}
+h2::before{
+  content:"";position:absolute;left:-56px;top:6px;width:3px;height:20px;
+  background:var(--accent);border-radius:2px;
+}
+h3{
+  font-size:18px;font-weight:600;color:var(--accent);
+  margin:34px 0 12px;padding-left:0;
+}
+h4{font-size:15.5px;font-weight:600;color:var(--text-strong);margin:24px 0 10px}
+h5,h6{font-size:14.5px;font-weight:600;color:var(--text-dim);margin:20px 0 8px}
+
+/* 标题锚点链接（hover 显现） */
+.headerlink{
+  color:var(--text-dim);text-decoration:none;opacity:0;
+  margin-left:8px;font-size:.75em;transition:opacity .15s ease;
+}
+h2:hover .headerlink,h3:hover .headerlink,h4:hover .headerlink{opacity:.7}
+.headerlink:hover{opacity:1;color:var(--accent)}
+
+p{margin:0 0 15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+
+strong{color:var(--text-strong);font-weight:650}
+em{color:var(--text-strong)}
+hr{border:0;border-top:1px solid var(--border);margin:38px 0}
+
+ul,ol{margin:0 0 15px;padding-left:26px}
+li{margin:5px 0}
+li > ul,li > ol{margin:5px 0}
+ul li::marker{color:var(--text-dim)}
+ol li::marker{color:var(--accent);font-weight:600}
+
+/* 引用块（除 .doc-lead 外的） */
+blockquote{
+  margin:0 0 16px;padding:12px 18px;
+  background:var(--bg-elev);border-left:3px solid var(--border);
+  border-radius:0 var(--radius) var(--radius) 0;color:var(--text-dim);
+}
+blockquote p:last-child{margin-bottom:0}
+
+/* 行内代码 */
+code{
+  font-size:13px;background:rgba(110,118,129,.18);color:#79c0ff;
+  padding:2px 6px;border-radius:5px;white-space:nowrap;
+}
+pre code{background:none;padding:0;color:inherit;white-space:pre;font-size:13.2px}
+pre{
+  margin:0;padding:16px 18px;overflow-x:auto;
+  background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);
+  line-height:1.62;
+}
+
+/* 代码块容器 + 复制按钮 */
+.highlight{
+  position:relative;margin:0 0 18px;
+  background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;
+}
+.highlight pre{border:0;border-radius:0;background:transparent}
+.copy-btn{
+  position:absolute;top:8px;right:8px;z-index:2;
+  background:rgba(110,118,129,.22);color:var(--text-dim);
+  border:1px solid var(--border);border-radius:6px;
+  padding:3px 9px;font-size:11.5px;cursor:pointer;
+  font-family:inherit;opacity:0;transition:opacity .15s ease,background .15s ease;
+}
+.highlight:hover .copy-btn{opacity:1}
+.copy-btn:hover{background:rgba(88,166,255,.22);color:var(--accent);border-color:rgba(88,166,255,.4)}
+.copy-btn.done{color:var(--green);border-color:rgba(63,185,80,.45)}
+
+/* 任务列表（- [ ] / - [x]）*/
+li.task{list-style:none;margin-left:-22px;display:flex;align-items:flex-start;gap:9px}
+li.task > p{display:contents}
+li.task .cb{
+  flex:0 0 auto;width:14px;height:14px;margin-top:6px;
+  border:1.5px solid var(--text-dim);border-radius:3px;
+}
+li.task.done .cb{background:var(--green);border-color:var(--green)}
+li.task.done{color:var(--text-dim)}
+
+/* 表格 */
+.table-wrap{overflow-x:auto;margin:0 0 18px}
+table{
+  border-collapse:collapse;width:100%;font-size:14px;
+  border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;
+}
+thead th{
+  background:var(--bg-elev);color:var(--text-strong);font-weight:600;
+  text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+tbody td{padding:9px 14px;border-bottom:1px solid var(--border-soft);vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:rgba(255,255,255,.014)}
+tbody tr:hover{background:rgba(88,166,255,.05)}
+td code,th code{font-size:12.5px}
+
+/* 回到顶部 */
+#to-top{
+  position:fixed;right:26px;bottom:26px;z-index:10;
+  width:40px;height:40px;border-radius:50%;
+  background:var(--bg-elev);color:var(--text-dim);
+  border:1px solid var(--border);cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:all .2s ease;
+}
+#to-top.show{opacity:1;pointer-events:auto}
+#to-top:hover{color:var(--accent);border-color:var(--accent);transform:translateY(-2px)}
+
+/* 窄屏：侧边栏收起 */
+#menu-btn{
+  display:none;position:fixed;top:14px;left:14px;z-index:20;
+  width:38px;height:38px;border-radius:8px;
+  background:var(--bg-elev);border:1px solid var(--border);
+  color:var(--text);cursor:pointer;font-size:17px;
+}
+@media (max-width:960px){
+  #menu-btn{display:block}
+  .sidebar{
+    position:fixed;left:0;top:0;z-index:15;height:100vh;
+    transform:translateX(-100%);transition:transform .22s ease;
+    box-shadow:0 0 40px rgba(0,0,0,.5);
+  }
+  .sidebar.open{transform:translateX(0)}
+  .content{padding:70px 22px 100px}
+  h2::before{display:none}
+}
+@media print{
+  .sidebar,#to-top,#menu-btn,.copy-btn{display:none}
+  body{background:#fff;color:#111}
+  .content{max-width:none;padding:0}
+}
+
+/* ---------- pygments 语法高亮（github-dark） ---------- */
+pre { line-height: 125%; }
+td.linenos .normal { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+.highlight .hll { background-color: #6e7681 }
+.highlight { background: transparent; }
+.highlight .c { color: #8B949E; font-style: italic } /* Comment */
+.highlight .err { color: #F85149 } /* Error */
+.highlight .esc { color: #E6EDF3 } /* Escape */
+.highlight .g { color: #E6EDF3 } /* Generic */
+.highlight .k { color: #FF7B72 } /* Keyword */
+.highlight .l { color: #A5D6FF } /* Literal */
+.highlight .n { color: #E6EDF3 } /* Name */
+.highlight .o { color: #FF7B72; font-weight: bold } /* Operator */
+.highlight .x { color: #E6EDF3 } /* Other */
+.highlight .p { color: #E6EDF3 } /* Punctuation */
+.highlight .ch { color: #8B949E; font-style: italic } /* Comment.Hashbang */
+.highlight .cm { color: #8B949E; font-style: italic } /* Comment.Multiline */
+.highlight .cp { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Preproc */
+.highlight .cpf { color: #8B949E; font-style: italic } /* Comment.PreprocFile */
+.highlight .c1 { color: #8B949E; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Special */
+.highlight .gd { color: #FFA198; background-color: #490202 } /* Generic.Deleted */
+.highlight .ge { color: #E6EDF3; font-style: italic } /* Generic.Emph */
+.highlight .ges { color: #E6EDF3; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.highlight .gr { color: #FFA198 } /* Generic.Error */
+.highlight .gh { color: #79C0FF; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #56D364; background-color: #0F5323 } /* Generic.Inserted */
+.highlight .go { color: #8B949E } /* Generic.Output */
+.highlight .gp { color: #8B949E } /* Generic.Prompt */
+.highlight .gs { color: #E6EDF3; font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #79C0FF } /* Generic.Subheading */
+.highlight .gt { color: #FF7B72 } /* Generic.Traceback */
+.highlight .g-Underline { color: #E6EDF3; text-decoration: underline } /* Generic.Underline */
+.highlight .kc { color: #79C0FF } /* Keyword.Constant */
+.highlight .kd { color: #FF7B72 } /* Keyword.Declaration */
+.highlight .kn { color: #FF7B72 } /* Keyword.Namespace */
+.highlight .kp { color: #79C0FF } /* Keyword.Pseudo */
+.highlight .kr { color: #FF7B72 } /* Keyword.Reserved */
+.highlight .kt { color: #FF7B72 } /* Keyword.Type */
+.highlight .ld { color: #79C0FF } /* Literal.Date */
+.highlight .m { color: #A5D6FF } /* Literal.Number */
+.highlight .s { color: #A5D6FF } /* Literal.String */
+.highlight .na { color: #E6EDF3 } /* Name.Attribute */
+.highlight .nb { color: #E6EDF3 } /* Name.Builtin */
+.highlight .nc { color: #F0883E; font-weight: bold } /* Name.Class */
+.highlight .no { color: #79C0FF; font-weight: bold } /* Name.Constant */
+.highlight .nd { color: #D2A8FF; font-weight: bold } /* Name.Decorator */
+.highlight .ni { color: #FFA657 } /* Name.Entity */
+.highlight .ne { color: #F0883E; font-weight: bold } /* Name.Exception */
+.highlight .nf { color: #D2A8FF; font-weight: bold } /* Name.Function */
+.highlight .nl { color: #79C0FF; font-weight: bold } /* Name.Label */
+.highlight .nn { color: #FF7B72 } /* Name.Namespace */
+.highlight .nx { color: #E6EDF3 } /* Name.Other */
+.highlight .py { color: #79C0FF } /* Name.Property */
+.highlight .nt { color: #7EE787 } /* Name.Tag */
+.highlight .nv { color: #79C0FF } /* Name.Variable */
+.highlight .ow { color: #FF7B72; font-weight: bold } /* Operator.Word */
+.highlight .pm { color: #E6EDF3 } /* Punctuation.Marker */
+.highlight .w { color: #6E7681 } /* Text.Whitespace */
+.highlight .mb { color: #A5D6FF } /* Literal.Number.Bin */
+.highlight .mf { color: #A5D6FF } /* Literal.Number.Float */
+.highlight .mh { color: #A5D6FF } /* Literal.Number.Hex */
+.highlight .mi { color: #A5D6FF } /* Literal.Number.Integer */
+.highlight .mo { color: #A5D6FF } /* Literal.Number.Oct */
+.highlight .sa { color: #79C0FF } /* Literal.String.Affix */
+.highlight .sb { color: #A5D6FF } /* Literal.String.Backtick */
+.highlight .sc { color: #A5D6FF } /* Literal.String.Char */
+.highlight .dl { color: #79C0FF } /* Literal.String.Delimiter */
+.highlight .sd { color: #A5D6FF } /* Literal.String.Doc */
+.highlight .s2 { color: #A5D6FF } /* Literal.String.Double */
+.highlight .se { color: #79C0FF } /* Literal.String.Escape */
+.highlight .sh { color: #79C0FF } /* Literal.String.Heredoc */
+.highlight .si { color: #A5D6FF } /* Literal.String.Interpol */
+.highlight .sx { color: #A5D6FF } /* Literal.String.Other */
+.highlight .sr { color: #79C0FF } /* Literal.String.Regex */
+.highlight .s1 { color: #A5D6FF } /* Literal.String.Single */
+.highlight .ss { color: #A5D6FF } /* Literal.String.Symbol */
+.highlight .bp { color: #E6EDF3 } /* Name.Builtin.Pseudo */
+.highlight .fm { color: #D2A8FF; font-weight: bold } /* Name.Function.Magic */
+.highlight .vc { color: #79C0FF } /* Name.Variable.Class */
+.highlight .vg { color: #79C0FF } /* Name.Variable.Global */
+.highlight .vi { color: #79C0FF } /* Name.Variable.Instance */
+.highlight .vm { color: #79C0FF } /* Name.Variable.Magic */
+.highlight .il { color: #A5D6FF } /* Literal.Number.Integer.Long */
+.highlight .l-Scalar, .highlight .l-Scalar-Plain { color:#A5D6FF }
+.highlight .p-Indicator { color:#E6EDF3 }
+.highlight .highlight { background: transparent; }
+</style>
+</head>
+<body>
+<button id="menu-btn" type="button" aria-label="目录">&#9776;</button>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="t">车路通 DSSAD 产品云平台 — 测试说明</div>
+      <div class="s">docs/test/DSSAD云平台测试说明.md</div>
+    </div>
+    <nav class="toc">
+<div class="toc">
+<ul>
+<li><a href="#0-文档说明">0 文档说明</a><ul>
+<li><a href="#01-本文回答什么">0.1 本文回答什么</a></li>
+<li><a href="#02-指标口径读数字前必看">0.2 指标口径（读数字前必看）</a></li>
+<li><a href="#03-测试运行环境">0.3 测试运行环境</a></li>
+</ul>
+</li>
+<li><a href="#1-测试策略">1 测试策略</a><ul>
+<li><a href="#11-分层的理由">1.1 分层的理由</a></li>
+<li><a href="#12-三条设计原则">1.2 三条设计原则</a></li>
+<li><a href="#13-不做什么">1.3 不做什么</a></li>
+</ul>
+</li>
+<li><a href="#2-测试资产总览">2 测试资产总览</a></li>
+<li><a href="#3-逐类详述">3 逐类详述</a><ul>
+<li><a href="#31-topicparserandbuildertest23-用例-3-组">3.1 TopicParserAndBuilderTest（23 用例 / 3 组）</a></li>
+<li><a href="#32-mqtttypeandackcodetest19-用例">3.2 MqttTypeAndAckCodeTest（19 用例）</a></li>
+<li><a href="#33-faultcodedictionarytest6-用例">3.3 FaultCodeDictionaryTest（6 用例）</a></li>
+<li><a href="#34-slidingwindowratelimitertest5-用例-securityandratelimittest-的限流分组">3.4 SlidingWindowRateLimiterTest（5 用例）+ SecurityAndRateLimitTest 的限流分组</a></li>
+<li><a href="#35-securityandratelimittest11-用例-3-组">3.5 SecurityAndRateLimitTest（11 用例 / 3 组）</a></li>
+<li><a href="#36-enterprisesignaturefiltertest10-用例">3.6 EnterpriseSignatureFilterTest（10 用例）</a></li>
+<li><a href="#37-twolevelcachetest10-用例-3-组">3.7 TwoLevelCacheTest（10 用例 / 3 组）</a></li>
+<li><a href="#38-commonutilstest19-用例-4-组">3.8 CommonUtilsTest（19 用例 / 4 组）</a></li>
+<li><a href="#39-mqttreliabilitytest17-用例-3-组">3.9 MqttReliabilityTest（17 用例 / 3 组）</a></li>
+<li><a href="#310-dashboardcacheintegrationtest3-用例-装配类">3.10 DashboardCacheIntegrationTest（3 用例）★ 装配类</a></li>
+<li><a href="#311-telemetryretentionservicetest4-用例-装配类">3.11 TelemetryRetentionServiceTest（4 用例）★ 装配类</a></li>
+<li><a href="#312-platformendtoendtest18-用例-8-组-端到端">3.12 PlatformEndToEndTest（18 用例 / 8 组）★ 端到端</a></li>
+<li><a href="#313-enterpriseapicontrollertest18-用例-4-组-对外契约">3.13 EnterpriseApiControllerTest（18 用例 / 4 组）★ 对外契约</a></li>
+<li><a href="#314-schemaddlgeneratortest1-用例默认跳过">3.14 SchemaDdlGeneratorTest（1 用例，默认跳过）</a></li>
+</ul>
+</li>
+<li><a href="#4-覆盖范围与盲区">4 覆盖范围与盲区</a><ul>
+<li><a href="#41-覆盖率实测jacoco167-类">4.1 覆盖率实测（JaCoCo，167 类）</a></li>
+<li><a href="#42-行覆盖为-0-的类13-个">4.2 行覆盖为 0 的类（13 个）</a></li>
+<li><a href="#43-分支覆盖-5055-意味着什么">4.3 分支覆盖 50.55% 意味着什么</a></li>
+<li><a href="#44-功能维度的覆盖矩阵">4.4 功能维度的覆盖矩阵</a></li>
+</ul>
+</li>
+<li><a href="#5-覆盖率门槛">5 覆盖率门槛</a><ul>
+<li><a href="#51-本次发现并修复门槛曾是死配置t-01-交叉引用-e-03">5.1 本次发现并修复：门槛曾是死配置（T-01 / 交叉引用 E-03）</a></li>
+<li><a href="#52-修复方案已实施并验证">5.2 修复方案（已实施并验证）</a></li>
+<li><a href="#53-门槛策略">5.3 门槛策略</a></li>
+</ul>
+</li>
+<li><a href="#6-测试隔离与幽灵用例防治">6 测试隔离与「幽灵用例」防治</a><ul>
+<li><a href="#61-数据隔离">6.1 数据隔离</a></li>
+<li><a href="#62-缓存必须彻底关闭-最容易踩的一条">6.2 缓存必须彻底关闭（★ 最容易踩的一条）</a></li>
+<li><a href="#63-定时任务必须关闭">6.3 定时任务必须关闭</a></li>
+<li><a href="#64-时间必须可控">6.4 时间必须可控</a></li>
+<li><a href="#65-外部依赖必须指向确定不可达的地址">6.5 外部依赖必须指向「确定不可达」的地址</a></li>
+</ul>
+</li>
+<li><a href="#7-测试工具与可复现性">7 测试工具与可复现性</a><ul>
+<li><a href="#71-运行命令">7.1 运行命令</a></li>
+<li><a href="#72-报告位置">7.2 报告位置</a></li>
+<li><a href="#73-测试配置的公共入口">7.3 测试配置的公共入口</a></li>
+</ul>
+</li>
+<li><a href="#8-未纳入自动化测试的部分务必知情">8 未纳入自动化测试的部分（务必知情）</a></li>
+<li><a href="#9-测试体系缺陷与改进项">9 测试体系缺陷与改进项</a><ul>
+<li><a href="#缺陷族谱四例同类问题">缺陷族谱：四例同类问题</a></li>
+</ul>
+</li>
+<li><a href="#10-后续测试计划按优先级">10 后续测试计划（按优先级）</a></li>
+<li><a href="#附录-a-命令与产物速查">附录 A 命令与产物速查</a></li>
+<li><a href="#附录-b-断言口径约定">附录 B 断言口径约定</a></li>
+<li><a href="#版本记录">版本记录</a></li>
+</ul>
+</div>
+
+    </nav>
+  </aside>
+  <main class="content">
+    <header class="doc-header">
+      <h1>车路通 DSSAD 产品云平台 — 测试说明</h1>
+      <div class="doc-meta">
+        <span>源文件 <code>docs/test/DSSAD云平台测试说明.md</code></span>
+        <span>由 scripts/md2html.py 生成</span>
+      </div>
+    </header>
+    <div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文档版本</td>
+<td>v1.0</td>
+</tr>
+<tr>
+<td>编制日期</td>
+<td>2026-09-23</td>
+</tr>
+<tr>
+<td>被测版本</td>
+<td><code>dssad-cloud-platform</code> 1.0.0-SNAPSHOT</td>
+</tr>
+<tr>
+<td>测试框架</td>
+<td>JUnit 5 · Mockito · Spring Boot Test（MockMvc）· AssertJ</td>
+</tr>
+<tr>
+<td>覆盖率工具</td>
+<td>JaCoCo 0.8.12（行覆盖门槛 <strong>0.60</strong>，已绑定 <code>verify</code> 阶段强制校验）</td>
+</tr>
+<tr>
+<td>测试规模</td>
+<td><strong>16 个测试类 · 200 个用例 · 0 失败 · 1 跳过</strong>（用例分布在 39 个测试类与分组中：16 个顶层测试类 + 23 个 <code>@Nested</code> 内层分组）</td>
+</tr>
+<tr>
+<td>执行耗时</td>
+<td>全量 <strong>18.13 s</strong>（<code>mvn verify</code> 总墙钟 24.4 s）</td>
+</tr>
+<tr>
+<td>覆盖率实测</td>
+<td>行 <strong>73.39%</strong> · 指令 74.99% · 方法 80.06% · 分支 52.30%（167 个类；门槛 0.60 已绑定 <code>verify</code>）</td>
+</tr>
+<tr>
+<td>运行环境</td>
+<td>JDK 21.0.10 · H2 2.x（<code>MODE=MySQL</code>，内存库）· 无 Docker / 无 Broker / 无外部服务</td>
+</tr>
+<tr>
+<td>原始产物</td>
+<td><code>cloud-platform-server/target/surefire-reports/</code>（XML+txt）· <code>target/site/jacoco/index.html</code></td>
+</tr>
+<tr>
+<td>关联文档</td>
+<td>《详细设计说明书》《数据库设计说明书》《性能优化与压测报告》《开发与部署说明》</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>本文的定位</strong>：这份说明不只罗列「有哪些测试」，而是逐类回答<strong>「这组用例在保护什么」</strong>
+—— 每条测试背后都对应一类具体的、曾经踩过或极易踩到的故障。
+第 4 章与第 9 章同样重要：<strong>明确列出没有被测到的部分</strong>，以及本次发现的测试体系缺陷
+（编号 <code>T-xx</code>）。其中 <code>T-02</code> 解释了为什么一个 P0 缺陷（<code>F-01</code> 限流未接入）
+能在 200 个用例全绿的情况下潜伏至今。</p>
+</blockquote>
+<hr>
+<h2 id="0-文档说明">0 文档说明<a class="headerlink" href="#0-文档说明" title="永久链接">#</a></h2>
+<h3 id="01-本文回答什么">0.1 本文回答什么<a class="headerlink" href="#01-本文回答什么" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>问题</th>
+<th>对应章节</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>测试怎么分层？为什么这么分？</td>
+<td>第 1 章</td>
+</tr>
+<tr>
+<td>一共有多少测试？分别测什么？</td>
+<td>第 2、3 章</td>
+</tr>
+<tr>
+<td>覆盖率是多少？门槛是什么？能拦住什么？</td>
+<td>第 5 章</td>
+</tr>
+<tr>
+<td>测试之间怎么隔离？为什么不会「随机失败」？</td>
+<td>第 6 章</td>
+</tr>
+<tr>
+<td>怎么跑？怎么看报告？怎么只跑一组？</td>
+<td>第 7、附录 A</td>
+</tr>
+<tr>
+<td><strong>有哪些东西根本没被测到？</strong></td>
+<td>第 4、8、9 章</td>
+</tr>
+<tr>
+<td>下一步该补哪些测试？</td>
+<td>第 9、10 章</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="02-指标口径读数字前必看">0.2 指标口径（读数字前必看）<a class="headerlink" href="#02-指标口径读数字前必看" title="永久链接">#</a></h3>
+<p><strong>口径 1：用例总数以 surefire 的执行计数为准，不以源码里的 <code>@Test</code> 数量为准。</strong></p>
+<p>源码里 <code>@Test</code> 共 <strong>173</strong> 处、<code>@ParameterizedTest</code> 共 <strong>5</strong> 处，实际执行 <strong>200</strong> 个用例。
+差额来自 <code>@ParameterizedTest</code> 的多组参数：同一段代码被多组输入各跑一次，就是多个用例
+（本次新增的 <code>ActuatorAccessControlTest</code> 里，单个 <code>@ParameterizedTest</code> 就展开出 9 个用例）。
+因此「200」才是防线宽度。</p>
+<p><strong>口径 2：「跳过 1 个」是</strong>刻意设计<strong>，不是遗漏。</strong></p>
+<p>跳过的唯一用例是 <code>SchemaDdlGeneratorTest</code>，它用
+<code>@EnabledIfSystemProperty(named = "ddl.gen", matches = "true")</code> 关闭 ——
+它是一个<strong>代码生成工具</strong>（从 Hibernate 元数据导出建表脚本），不是功能测试，
+默认执行会覆盖 <code>db/schema-mysql.sql</code>，污染日常构建。详见 <code>T-03</code>。</p>
+<p><strong>口径 3：覆盖率门槛是 0.60，实测 0.73 —— 看的是「有没有下滑」，不是「是否达标」。</strong></p>
+<p>门槛的作用是拦住<strong>断崖式下滑</strong>，不是逼着把数字刷到某个值。
+真正需要关注的是第 4 章的「未覆盖清单」和第 4.3 节的分支覆盖（50.55%）。</p>
+<p><strong>口径 4：<code>Skipped</code> 与 <code>Disabled</code> 必须能解释来源。</strong></p>
+<p>任何一个「跳过」都要能说清「为什么跳、什么条件下会跑」。说不清的跳过等于删除测试。</p>
+<h3 id="03-测试运行环境">0.3 测试运行环境<a class="headerlink" href="#03-测试运行环境" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项</th>
+<th>值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JDK</td>
+<td>21.0.10</td>
+<td>用到虚拟线程，不可降级</td>
+</tr>
+<tr>
+<td>数据库</td>
+<td>H2 内存库 <code>jdbc:h2:mem:dssad_test;MODE=MySQL</code></td>
+<td><code>create-drop</code>，用例之间零残留</td>
+</tr>
+<tr>
+<td>缓存</td>
+<td><strong>彻底关闭</strong>（<code>spring.cache.type=none</code> + <code>dssad.cache.enabled=false</code>）</td>
+<td>防治「幽灵用例」，见 6.2</td>
+</tr>
+<tr>
+<td>MQTT</td>
+<td>关闭（<code>dssad.mqtt.enabled=false</code>）</td>
+<td>报文经模拟器直接走生产路由链路</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td>关闭</td>
+<td>缓存行为由 <code>TwoLevelCacheTest</code> 用 Mockito 假造 Redis 覆盖</td>
+</tr>
+<tr>
+<td>模拟器</td>
+<td><strong>开启</strong></td>
+<td>让 E2E 用例能注入真实报文</td>
+</tr>
+<tr>
+<td>外部依赖</td>
+<td>无</td>
+<td>监管平台地址指向 <code>http://127.0.0.1:9/</code>（必然不可达，用于覆盖失败分支）</td>
+</tr>
+<tr>
+<td>保留策略清理</td>
+<td>关闭</td>
+<td>定时删除会删掉其他用例的数据，见 6.2</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="1-测试策略">1 测试策略<a class="headerlink" href="#1-测试策略" title="永久链接">#</a></h2>
+<h3 id="11-分层的理由">1.1 分层的理由<a class="headerlink" href="#11-分层的理由" title="永久链接">#</a></h3>
+<p>测试分层不是为了「看起来规范」，而是因为<strong>不同层次的测试能发现的问题类型完全不同</strong>。
+本项目按「能被哪一层发现」来设计分层：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>层次</th>
+<th>数量</th>
+<th>能发现的问题</th>
+<th>发现不了的问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>① 字典 / 常量契约</td>
+<td>3 类 / 48 用例</td>
+<td>协议字面量被改、码表被增删</td>
+<td>逻辑错误、装配错误</td>
+</tr>
+<tr>
+<td>② 纯逻辑单元</td>
+<td>5 类 / 59 用例</td>
+<td>算法错、边界条件错、编解码错、健康判定错</td>
+<td>装配错误、SQL 错误</td>
+</tr>
+<tr>
+<td>③ 安全契约</td>
+<td>4 类 / 67 用例</td>
+<td>签名算错、防重放被削弱、令牌可伪造、<strong>Actuator 可被越权访问</strong></td>
+<td>业务逻辑错</td>
+</tr>
+<tr>
+<td>④ 装配集成</td>
+<td>2 类 / 7 用例</td>
+<td><code>@Cacheable</code> 失效、native SQL 语法错、事务边界错</td>
+<td>端到端链路断点</td>
+</tr>
+<tr>
+<td>⑤ 端到端</td>
+<td>1 类 / 18 用例</td>
+<td>Handler 未注册、DTO 字段名不符、事务里写外部看不到</td>
+<td>环境与部署问题</td>
+</tr>
+<tr>
+<td>⑥ 环境与部署</td>
+<td>0（脚本）</td>
+<td>环境缺失、配置漂移、库表与实体不一致</td>
+<td>见《开发与部署说明》的 14 条断言</td>
+</tr>
+<tr>
+<td>⑦ 手工 / 需真实环境</td>
+<td>0</td>
+<td>真实 Broker 链路、容器、TLS、浏览器渲染</td>
+<td>—（见第 8 章）</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>表中「类」为一个测试类整体归入某层（少数类横跨安全与契约，按<strong>主要保护目标</strong>归类）；
+用例数按 surefire 实际执行计数。合计 16 类 / 200 用例，与第 2 章明细一致。</p>
+<p>注意 ③ 安全契约一层已占全部用例的 <strong>1/3</strong>（67/200）—— 这是刻意的：本项目最贵的故障
+不是「功能算错」，而是「<strong>该拦的没拦住</strong>」（令牌可伪造、签名可重放、Actuator 可越权读）。</p>
+</blockquote>
+<h3 id="12-三条设计原则">1.2 三条设计原则<a class="headerlink" href="#12-三条设计原则" title="永久链接">#</a></h3>
+<p><strong>原则一：能被 E2E 发现的，不重复写在单元层。</strong>
+例如「同一 <code>msgId</code> 重发不产生重复轨迹点」只在 E2E 里断言一次（需要仓储与去重表一起工作），
+单元层不写「mock 仓储返回已存在 → 断言不插入」这种只能证明 mock 按自己期望工作的用例。</p>
+<p><strong>原则二：期望值用</strong>独立实现<strong>计算，不抄生产实现的常量。</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// ✅ 正确：测试内用 JDK 原生 MessageDigest 独立算一遍</span>
+<span class="n">String</span><span class="w"> </span><span class="n">expected</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sha256</span><span class="p">(</span><span class="n">clientId</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"CMAT"</span><span class="p">);</span>
+<span class="n">assertEquals</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span><span class="w"> </span><span class="n">signer</span><span class="p">.</span><span class="na">deriveSecret</span><span class="p">(</span><span class="n">clientId</span><span class="p">));</span>
+
+<span class="c1">// ❌ 错误：把实现里的常量复制过来</span>
+<span class="n">assertEquals</span><span class="p">(</span><span class="s">"a3f5..."</span><span class="p">,</span><span class="w"> </span><span class="n">signer</span><span class="p">.</span><span class="na">deriveSecret</span><span class="p">(</span><span class="n">clientId</span><span class="p">));</span><span class="w">   </span><span class="c1">// 实现算错，测试照抄 → 校验意义为零</span>
+</code></pre></div>
+
+<p>这条规则写在 <code>SecurityAndRateLimitTest</code> 与 <code>EnterpriseSignatureFilterTest</code> 的类注释里。
+<code>EnterpriseSignatureFilterTest</code> 甚至手写 SHA-256/HMAC，<strong>不复用</strong> <code>RegulatorySigner</code> 的实现 —— 否则签名过滤器与签名器一起改错时，测试仍会通过。</p>
+<p><strong>原则三：把「文档里的枚举」钉死在代码里。</strong>
+<code>MqttTypeAndAckCodeTest</code>、<code>FaultCodeDictionaryTest</code>、<code>EnterpriseApiControllerTest</code> 的断言对象是
+<strong>接口文档的字段名、枚举值、错误码</strong>，而不是 Java 类。
+理由：这些字面量一旦上线就不可改 —— 车端按 Topic 字面量订阅、监管平台按字段名硬编码解析。
+改坏了代码不会编译失败，只会静默断链。</p>
+<h3 id="13-不做什么">1.3 不做什么<a class="headerlink" href="#13-不做什么" title="永久链接">#</a></h3>
+<ul>
+<li><strong>不追覆盖率数字</strong>。目标是「关键路径与失败分支有断言」，不是「每个 getter 都被覆盖」。</li>
+<li><strong>不为 mock 写测试</strong>。凡是「断言 mock 返回自己设定的值」的用例一律不加。</li>
+<li><strong>不依赖真实时间</strong>。需要跨窗口/超时的用例注入可控时钟（见 3.4）。</li>
+<li><strong>不在单测里连外部服务</strong>。监管平台地址刻意指向不可达端口，把「失败分支」变成确定性的可测路径。</li>
+</ul>
+<hr>
+<h2 id="2-测试资产总览">2 测试资产总览<a class="headerlink" href="#2-测试资产总览" title="永久链接">#</a></h2>
+<p><strong>实测结果</strong>（surefire XML 解析 + maven 汇总）：</p>
+<div class="highlight"><pre><span></span><code>Tests run: 200, Failures: 0, Errors: 0, Skipped: 1
+Total time: 18.29 s
+（16 个测试类，用例分布在 39 个类/分组中，其中 23 个为 @Nested 内层分组）
+</code></pre></div>
+
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>测试类</th>
+<th>层次</th>
+<th>用例</th>
+<th>类/分组</th>
+<th>耗时(s)</th>
+<th>保护的核心风险</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>ActuatorAccessControlTest</code></td>
+<td>③</td>
+<td><strong>28</strong></td>
+<td>2</td>
+<td>0.05</td>
+<td><strong>Actuator 被越权读/改</strong>（<code>/metrics</code>、<code>/configprops</code>、<code>/loggers</code>）；<strong>伪造 <code>X-Forwarded-For</code> 绕过 IP 白名单</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>TopicParserAndBuilderTest</code></td>
+<td>①</td>
+<td><strong>23</strong></td>
+<td>3</td>
+<td>0.04</td>
+<td>Topic 拼错 → 消息<strong>静默丢失</strong></td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>CommonUtilsTest</code></td>
+<td>②</td>
+<td>19</td>
+<td>4</td>
+<td>0.41</td>
+<td>时间/JSON/雪花 ID/抽稀算错</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>MqttTypeAndAckCodeTest</code></td>
+<td>①</td>
+<td>19</td>
+<td>1</td>
+<td>0.04</td>
+<td>协议枚举被改 → 对端解析失败</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>PlatformEndToEndTest</code></td>
+<td>⑤</td>
+<td>18</td>
+<td>8</td>
+<td><strong>10.70</strong></td>
+<td>装配错误、字段名不符、事务边界</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>EnterpriseApiControllerTest</code></td>
+<td>③</td>
+<td>18</td>
+<td>4</td>
+<td>0.48</td>
+<td>对外契约被悄悄改坏</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>MqttReliabilityTest</code></td>
+<td>②</td>
+<td>17</td>
+<td>3</td>
+<td>0.12</td>
+<td>重发次数/间隔/放弃条件偏离文档</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>SecurityAndRateLimitTest</code></td>
+<td>③</td>
+<td>11</td>
+<td>3</td>
+<td>0.57</td>
+<td>签名算错、限流算法错、令牌可伪造</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>TwoLevelCacheTest</code></td>
+<td>②</td>
+<td>10</td>
+<td>3</td>
+<td>2.94</td>
+<td>缓存编解码错、降级逻辑错</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>EnterpriseSignatureFilterTest</code></td>
+<td>③</td>
+<td>10</td>
+<td>1</td>
+<td>0.27</td>
+<td>防重放被削弱 → 开放接口可被重放</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>MqttChannelProbeTest</code></td>
+<td>②</td>
+<td>8</td>
+<td>2</td>
+<td>0.26</td>
+<td><strong>通道断链被误判为健康</strong>（<code>O-01</code> 的回归防护）</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>FaultCodeDictionaryTest</code></td>
+<td>①</td>
+<td>6</td>
+<td>1</td>
+<td>0.01</td>
+<td>故障码写错 → 前端显示「未知故障码」</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>SlidingWindowRateLimiterTest</code></td>
+<td>②</td>
+<td>5</td>
+<td>1</td>
+<td>0.03</td>
+<td>窗口边界突刺（2 倍超发）</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>TelemetryRetentionServiceTest</code></td>
+<td>④</td>
+<td>4</td>
+<td>1</td>
+<td>1.06</td>
+<td>清理 SQL 语法错 → 磁盘数周后告警</td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>DashboardCacheIntegrationTest</code></td>
+<td>④</td>
+<td>3</td>
+<td>1</td>
+<td>1.30</td>
+<td><code>@Cacheable</code> 静默失效、命中率恒为 0</td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>SchemaDdlGeneratorTest</code></td>
+<td>工具</td>
+<td>1（<strong>跳过</strong>）</td>
+<td>1</td>
+<td>0.00</td>
+<td>实体与 DDL 漂移</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>合计</strong></td>
+<td></td>
+<td><strong>200</strong></td>
+<td><strong>39</strong></td>
+<td><strong>18.29</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>耗时分布值得注意</strong>：<code>PlatformEndToEndTest</code> 一类占了 10.70 s（58.5%），
+其余 15 类合计 7.59 s。这是合理的 —— 它要启动完整 Spring 上下文 8 次
+（每个 <code>@Nested</code> 分组都会构建上下文）。<strong>「测试很慢」的抱怨应先看这一层能不能拆</strong>，
+而不是去砍单元测试。</p>
+<p><strong>新增两类的定位</strong>（本次随缺陷修复补上）：</p>
+<ul>
+<li><code>MqttChannelProbeTest</code>（8 例）：对应 <code>O-01</code>（探活不覆盖数据通道）。
+  它断言的不是「探针类存在」，而是<strong>「连通→UP / 断链→DOWN / 未启用→UP」这三种映射行为</strong>，
+  正是「声明了但没人消费」这类缺陷唯一有效的防线。</li>
+<li><code>ActuatorAccessControlTest</code>（28 例，含 1 组参数化 9 例）：对应 <code>O-03</code>（<code>/actuator/**</code> 无鉴权）。
+  除常规白名单命中外，它钉死三条容易被写错的安全语义：<strong>空白名单必须全拒</strong>（而非退化成放行）、
+  <strong>非法 CIDR 必须启动失败</strong>（而非静默忽略）、<strong>伪造 <code>X-Forwarded-For: 127.0.0.1</code> 不得绕过</strong>
+  （因为 <code>forward-headers-strategy=framework</code> 会把 XFF 还原进 <code>getRemoteAddr()</code>，
+  直接读该方法就留下绕过口子）。</li>
+</ul>
+<hr>
+<h2 id="3-逐类详述">3 逐类详述<a class="headerlink" href="#3-逐类详述" title="永久链接">#</a></h2>
+<h3 id="31-topicparserandbuildertest23-用例-3-组">3.1 TopicParserAndBuilderTest（23 用例 / 3 组）<a class="headerlink" href="#31-topicparserandbuildertest23-用例-3-组" title="永久链接">#</a></h3>
+<p><strong>保护目标：管道里最危险的一类故障 —— 消息静默丢失。</strong></p>
+<p>Topic 是 MQTT 的寻址层。它写错时<strong>不会有任何报错</strong>：消息被 Broker 收下，
+只是没有任何订阅方匹配，于是凭空消失。生产上的表现是「某些车的某些数据永远不来」，
+排查一次要数小时。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>分组</th>
+<th>覆盖内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>解析（Parser）</td>
+<td>5 段正文下行 + 6 段附录 B（带版本号）下行的解析</td>
+</tr>
+<tr>
+<td>构造（Builder）</td>
+<td>上行/下行 Topic 的拼装，含企业 ID、车型、VIN 的占位规则</td>
+</tr>
+<tr>
+<td>往返一致性</td>
+<td>「构造 → 解析」必须还原出相同语义（锁死读写对称性）</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>为什么把附录 B 的 Topic 也测了</strong>：正文只用到 5 段，但附录 B 定义了 11 段（含版本号变体）。
+只测用到的那 5 段，等于把「将来要用的 6 段」的正确性押在「以后再说」上。</p>
+</blockquote>
+<h3 id="32-mqtttypeandackcodetest19-用例">3.2 MqttTypeAndAckCodeTest（19 用例）<a class="headerlink" href="#32-mqtttypeandackcodetest19-用例" title="永久链接">#</a></h3>
+<p><strong>保护目标：报文类型与 ACK 标志的字面量。</strong></p>
+<p>断言的是<strong>文档里的数字</strong>，不是 Java 枚举名。例如 <code>mqttType=14</code>、<code>res=1</code> 表示成功受理。
+这类字面量一旦上线即冻结（车端与监管平台按它订阅与判断），
+因此严格程度高于普通业务测试：<strong>增删一个类型必须是有意识的行为</strong>，
+并同步更新用例 —— 否则测试失败会强制你停下来确认。</p>
+<h3 id="33-faultcodedictionarytest6-用例">3.3 FaultCodeDictionaryTest（6 用例）<a class="headerlink" href="#33-faultcodedictionarytest6-用例" title="永久链接">#</a></h3>
+<p><strong>保护目标：故障码字典（接口文档附录 A.1）。</strong></p>
+<p>字典是告警、统计、报表三处的公共维度。码值写错的表现既不像错误也难以察觉：
+前端会显示成「未知故障码(4356)」这类既不报错、也没人会去追查的样子。</p>
+<p>用例把<strong>码值集合整体钉死</strong> —— 增删码值必须同步更新用例，杜绝「悄悄少了一个码」。</p>
+<h3 id="34-slidingwindowratelimitertest5-用例-securityandratelimittest-的限流分组">3.4 SlidingWindowRateLimiterTest（5 用例）+ SecurityAndRateLimitTest 的限流分组<a class="headerlink" href="#34-slidingwindowratelimitertest5-用例-securityandratelimittest-的限流分组" title="永久链接">#</a></h3>
+<p><strong>保护目标：限流算法的正确性，尤其是窗口边界。</strong></p>
+<p>本项目的限流实现是<strong>双窗口加权</strong>（sliding window counter）：</p>
+<div class="highlight"><pre><span></span><code>bucket       = now / W
+elapsedRatio = (now % W) / W
+estimated    = previousCount × (1 − elapsedRatio) + currentCount
+allow ⟺ estimated &lt; limit
+</code></pre></div>
+
+<p>之所以不用最简单的固定窗口：固定窗口在边界处会出现「前半窗末尾 + 后半窗开头」
+各打满一次 → <strong>瞬时最高可达 2 倍阈值</strong>，文档承诺的「100 次/分钟」会被突破到 200 次。</p>
+<p><strong>测试的关键设计：不依赖真实时间。</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// ❌ 反例：Thread.sleep(1000) 等窗口过去</span>
+<span class="c1">//    在 CI 上必然抖动 —— 进程被调度暂停 200ms 就会得到不同结论</span>
+<span class="c1">// ✅ 正解：给 StateStore 注入可控时钟，跨窗口能精确地「一步跨过去」</span>
+</code></pre></div>
+
+<p>窗口边界的正确性体现在「跨窗前后的几毫秒」，用真实时钟测等于把结论交给调度器。
+因此本类给 <code>StateStore</code> 注入可控时钟，每次跨窗都精确可控、100% 确定性。</p>
+<blockquote>
+<p>⚠️ <strong>但这两组用例都只证明了「限流器算得对」，没有证明「限流器被调用过」</strong>。
+这正是 <code>F-01</code> 能潜伏的原因，见第 9 章 <code>T-02</code>。</p>
+</blockquote>
+<h3 id="35-securityandratelimittest11-用例-3-组">3.5 SecurityAndRateLimitTest（11 用例 / 3 组）<a class="headerlink" href="#35-securityandratelimittest11-用例-3-组" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>分组</th>
+<th>覆盖内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RegulatorySigner</code>：密钥派生与 HMAC</td>
+<td><code>secret = SHA256(clientId + "CMAT")</code> 的派生与签名</td>
+</tr>
+<tr>
+<td><code>RateLimiter</code>：固定窗口限流（文档 9.1）</td>
+<td>阈值判定、拒绝不计入计数、存储异常时<strong>放行</strong>（降级）</td>
+</tr>
+<tr>
+<td><code>TokenService</code>：平台访问令牌</td>
+<td>签发、校验、注销；UUID v4 不可猜测</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>降级方向是要测的</strong>：限流存储异常时<strong>宁可放行也不误杀</strong>，这个方向必须被断言钉住 ——
+否则某次「优化」把它改成 fail-closed，结果会是「Redis 抖动 → 全部车辆被限流」。</p>
+<h3 id="36-enterprisesignaturefiltertest10-用例">3.6 EnterpriseSignatureFilterTest（10 用例）<a class="headerlink" href="#36-enterprisesignaturefiltertest10-用例" title="永久链接">#</a></h3>
+<p><strong>保护目标：对外开放接口的防重放能力。</strong></p>
+<p>接口文档 6.3.1 把认证方式留给各企业自定，意味着<strong>没有任何外部规范兜底</strong>。
+一旦这里的防重放逻辑被改坏（去掉 nonce 去重、放宽时间窗），
+后果是这个开放接口可以被任意重放调用，而且<strong>不会有任何编译期报错</strong>。</p>
+<p>因此把每条安全约束都写成可执行断言：签名缺失 / 签名错 / 时间戳超窗 / nonce 重放 / 正常放行。
+测试<strong>手写 SHA-256 与 HMAC 独立计算签名</strong>，不复用生产实现。</p>
+<h3 id="37-twolevelcachetest10-用例-3-组">3.7 TwoLevelCacheTest（10 用例 / 3 组）<a class="headerlink" href="#37-twolevelcachetest10-用例-3-组" title="永久链接">#</a></h3>
+<p><strong>保护目标：两级缓存的编解码与降级语义。</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>分组</th>
+<th>覆盖内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>读路径</td>
+<td>L1 命中 → 不走 L2；L1 未命中 → 查 L2 并回填 L1</td>
+</tr>
+<tr>
+<td>L2 编解码</td>
+<td>对象 → JSON → 对象 的类型能否还原（含 <code>Instant</code> / <code>LocalDate</code> / 泛型容器）</td>
+</tr>
+<tr>
+<td>降级与语义</td>
+<td>L2 不可用时的行为、脏数据（反序列化失败）必须安全丢弃而不是抛异常</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>为什么用 Mockito 假造 Redis 而不是起真 Redis</strong>：本类要验证的是编解码与降级逻辑
+（哪一级命中、类型能否还原、脏数据是否安全），这些<strong>与 Redis 本身无关</strong>。
+用假实现可以 100% 确定性地断言调用次数（「L1 命中时 L2 必须零调用」），
+起真 Redis 反而引入不确定性且拖慢 18 秒 → 数分钟。</p>
+<h3 id="38-commonutilstest19-用例-4-组">3.8 CommonUtilsTest（19 用例 / 4 组）<a class="headerlink" href="#38-commonutilstest19-用例-4-组" title="永久链接">#</a></h3>
+<p><strong>保护目标：四个「被全平台高频复用、出错后果隐蔽」的基础设施。</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>工具</th>
+<th>出错的后果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>时间处理</td>
+<td>格式错 1 秒 → 超时判定误报/漏报</td>
+</tr>
+<tr>
+<td>JSON 解析</td>
+<td>不宽容 → 对端升版（多/少字段）即断链</td>
+</tr>
+<tr>
+<td>雪花 ID</td>
+<td>重复 → 主键冲突<strong>丢数据</strong></td>
+</tr>
+<tr>
+<td>轨迹抽稀</td>
+<td>算错 → 轨迹图变形，但<strong>没人能一眼看出来</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="39-mqttreliabilitytest17-用例-3-组">3.9 MqttReliabilityTest（17 用例 / 3 组）<a class="headerlink" href="#39-mqttreliabilitytest17-用例-3-组" title="永久链接">#</a></h3>
+<p><strong>保护目标：MQTT QoS 之上的可靠性补丁。</strong></p>
+<p>QoS 1 只保证报文到达 Broker，<strong>不保证对端业务处理成功</strong>。文档 5.1.4.1 / 8.1 要求：
+对端未确认或明确报错时必须重发。因此这组用例直接对应监管考核项：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>机制</th>
+<th>断言内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>应用层 ACK 重发登记表</td>
+<td>重发次数上限、重发间隔、放弃条件（与文档数字逐条对齐）</td>
+</tr>
+<tr>
+<td>离线优先级队列</td>
+<td>高优先级不被低优先级挤掉；压力下的丢弃顺序符合设计</td>
+</tr>
+<tr>
+<td>内存状态存储</td>
+<td>TTL 语义、并发安全、过期回收</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="310-dashboardcacheintegrationtest3-用例-装配类">3.10 DashboardCacheIntegrationTest（3 用例）★ 装配类<a class="headerlink" href="#310-dashboardcacheintegrationtest3-用例-装配类" title="永久链接">#</a></h3>
+<p><strong>保护目标：<code>@Cacheable</code> 是否真的生效。</strong></p>
+<p>这组测试存在的唯一理由是：<strong><code>@Cacheable</code> 失效有整整三类「代码看起来完全正确」的原因</strong>。</p>
+<ol>
+<li>忘了 <code>@EnableCaching</code> → 注解<strong>被静默忽略</strong>，无任何日志；</li>
+<li>同类内部方法自调用 → 绕过代理，注解形同不存在；</li>
+<li><code>CacheManager</code> 没被装配成自研实现 → 退化成 <code>NoOpCacheManager</code>，<strong>命中率恒为 0</strong>。</li>
+</ol>
+<p>这三种都不报错、不影响功能、单测全绿 —— 只是缓存完全没用，
+而性能报告里 <code>dashboardOverview</code> <strong>99.86%</strong> 的命中率会被无声地归零。
+因此本类必须<strong>启动真实 Spring 上下文</strong>，断言缓存统计确实在增长。</p>
+<blockquote>
+<p>与 <code>TwoLevelCacheTest</code> 的分工：那个测「缓存组件对不对」，这个测「缓存装上了没有」。</p>
+</blockquote>
+<h3 id="311-telemetryretentionservicetest4-用例-装配类">3.11 TelemetryRetentionServiceTest（4 用例）★ 装配类<a class="headerlink" href="#311-telemetryretentionservicetest4-用例-装配类" title="永久链接">#</a></h3>
+<p><strong>保护目标：每天 03:30 执行一次的 native SQL 清理语句。</strong></p>
+<p><strong>为什么必须是集成测试而不是 Mockito 单测</strong>：</p>
+<div class="highlight"><pre><span></span><code><span class="k">delete</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t_vehicle_track_point</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">ts</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="mi">2000</span>
+</code></pre></div>
+
+<p><code>LIMIT</code> 在 JPQL 里根本不存在，只能走 native SQL。把仓储 mock 掉的写法能轻松通过，
+却<strong>完全无法证明这条 SQL 在真实数据库上语法正确</strong>。而它只在每天 03:30 执行一次，
+写错的代价是「清理任务静默失败数周后磁盘告警」。</p>
+<p>因此在 H2（<code>MODE=MySQL</code>）上真跑一遍，同时覆盖：
+① SQL 语法；② <code>@Modifying</code> + <code>@Transactional</code> 的事务边界；
+③ 分批循环与安全阀（<code>MAX_BATCHES_PER_RUN</code>）；④ <code>retention-days=0</code> 时必须<strong>不清理</strong>。</p>
+<h3 id="312-platformendtoendtest18-用例-8-组-端到端">3.12 PlatformEndToEndTest（18 用例 / 8 组）★ 端到端<a class="headerlink" href="#312-platformendtoendtest18-用例-8-组-端到端" title="永久链接">#</a></h3>
+<p><strong>保护目标：装配错误与链路断点。</strong> 这是全套测试里最有价值的一层。</p>
+<blockquote>
+<p><strong>为什么必须有这一层</strong>：单元测试把每个类单独钉死后，仍然会漏掉「装配错误」——
+Handler 没注册到路由表、Repository 查询方法名写错（启动期才报错）、
+事务边界不对导致落库后查不到、DTO 字段名与报文体不一致导致静默取到 <code>null</code>。
+这类问题只有把整条链路跑起来才会暴露。</p>
+</blockquote>
+<p>链路：<strong>报文注入 → 业务处理 → 落库 → HTTP 查询</strong>。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>分组</th>
+<th>代表性断言</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>车端低频基础信息（5.1.4.3.2）</td>
+<td>1Hz 位置上报后：车辆自动建档、当前位置可查、轨迹可回放</td>
+</tr>
+<tr>
+<td>2</td>
+<td></td>
+<td>同一 <code>msgId</code> 重发不产生重复轨迹点（<strong>幂等去重</strong>）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>准静态参数与低频状态（5.1.4.2.1 / 5.1.4.3.1）</td>
+<td><code>inh</code> 上报后进入变更历史；<code>low-state</code> 上报后可从状态接口读到</td>
+</tr>
+<tr>
+<td>4</td>
+<td>事故上报 → 取证请求 → 视频上传 → 归档</td>
+<td>四方向视频全部上传后，取证材料判定为齐备</td>
+</tr>
+<tr>
+<td>5</td>
+<td></td>
+<td>同一方向重复上传<strong>不重复建档</strong>，且不会被误判为收齐</td>
+</tr>
+<tr>
+<td>6</td>
+<td></td>
+<td><code>ackMsgId</code> 与平台下发的请求不匹配时<strong>拒绝建档</strong>（越权上传防护）</td>
+</tr>
+<tr>
+<td>7</td>
+<td>故障上报（5.1.4.4.2）</td>
+<td>变长故障明细逐条落库，故障码按附录 A.1 翻译</td>
+</tr>
+<tr>
+<td>8</td>
+<td>地图增强信息（6.1.5.2.1）</td>
+<td>禁行区域与限速区域均落库，可按日期与汇总查询</td>
+</tr>
+<tr>
+<td>9</td>
+<td>远驾接管与任务调度（第 6 章）</td>
+<td>接管发起/结束、任务状态流转</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>为什么不用真实 Broker</strong>：模拟器接口内部<strong>直接调用生产的 <code>MqttMessageRouter</code></strong>，
+即报文走的是「解析 → 校验 → 去重 → 业务 → ACK → 留痕」同一条生产链路，
+只是跳过了网络传输。这样既覆盖了全部业务逻辑，又让测试在无 Broker 的机器上能跑。
+真正没有覆盖到的是「Broker 与 Paho 客户端」这一段，见第 8 章。</p>
+<p><strong>第 5、6 组的两条断言值得特别注意</strong> —— 它们防的是<strong>越权与误判</strong>，属于安全属性：
+「重复上传同一方向不被误判为收齐」防的是「用一段视频冒充四路」；
+「<code>ackMsgId</code> 不匹配拒绝建档」防的是「任意 VIN 都能往别人事故里塞视频」。</p>
+<h3 id="313-enterpriseapicontrollertest18-用例-4-组-对外契约">3.13 EnterpriseApiControllerTest（18 用例 / 4 组）★ 对外契约<a class="headerlink" href="#313-enterpriseapicontrollertest18-用例-4-组-对外契约" title="永久链接">#</a></h3>
+<p><strong>保护目标：不是「代码有没有写错」，而是「对外契约有没有被悄悄改坏」。</strong></p>
+<p>监管平台是按文档字段名<strong>硬编码解析</strong>的。一旦 <code>cameraDirection</code> 被改成
+<code>camera_direction</code>、或成功码从 <code>0000</code> 变成 <code>200</code>：</p>
+<ul>
+<li>本平台单测全绿；</li>
+<li>自测全绿；</li>
+<li><strong>联调现场直接失败，且极难定位</strong>（对端只会说「解析不到字段」）。</li>
+</ul>
+<p>因此这组用例对「<strong>路径 + 方法 + 字段名 + 错误码</strong>」逐条钉死：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>分组</th>
+<th>覆盖</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>6.3.2.1.1 实时视频地址获取</td>
+<td>多方向入参、非法方向拒绝、<code>msgId</code> 回传</td>
+</tr>
+<tr>
+<td>6.3.2.1.2 历史视频获取</td>
+<td>时间格式校验、<strong>跨度上限 168 小时</strong>、正常返回</td>
+</tr>
+<tr>
+<td>6.3.2.2.1 远程驾驶接管发起</td>
+<td><code>starter</code> 取值约束（1 发起 / 2 结束）、重复发起</td>
+</tr>
+<tr>
+<td>结束远程驾驶接管（企业侧补充接口）</td>
+<td>状态流转与错误码</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="314-schemaddlgeneratortest1-用例默认跳过">3.14 SchemaDdlGeneratorTest（1 用例，<strong>默认跳过</strong>）<a class="headerlink" href="#314-schemaddlgeneratortest1-用例默认跳过" title="永久链接">#</a></h3>
+<p><strong>性质：代码生成工具，不是功能测试。</strong></p>
+<p>从 Hibernate 元数据导出建表脚本，产出 <code>db/schema-mysql.generated.sql</code> 作为比对基线：</p>
+<div class="highlight"><pre><span></span><code>mvn<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-Dtest<span class="o">=</span>SchemaDdlGeneratorTest<span class="w"> </span>-Dddl.gen<span class="o">=</span><span class="nb">true</span>
+diff<span class="w"> </span>db/schema-mysql.generated.sql<span class="w"> </span>db/schema-mysql.sql
+</code></pre></div>
+
+<p><strong>为什么要生成而不是手写</strong>：手写 DDL 与 JPA 实体一旦不同步，生产环境
+<code>ddl-auto=validate</code> 会在启动时直接失败；而人工核对 13 张表的上百个字段极易遗漏。
+用 Hibernate 自身的元数据导出可保证「实体 = 脚本」。</p>
+<p><code>@EnabledIfSystemProperty</code> 关闭的原因见 <code>T-03</code>。</p>
+<hr>
+<h2 id="4-覆盖范围与盲区">4 覆盖范围与盲区<a class="headerlink" href="#4-覆盖范围与盲区" title="永久链接">#</a></h2>
+<h3 id="41-覆盖率实测jacoco167-类">4.1 覆盖率实测（JaCoCo，167 类）<a class="headerlink" href="#41-覆盖率实测jacoco167-类" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>覆盖率</th>
+<th>分子/分母</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>行</td>
+<td><strong>73.39%</strong></td>
+<td>2383 / 3247</td>
+</tr>
+<tr>
+<td>指令</td>
+<td>74.99%</td>
+<td>12853 / 17140</td>
+</tr>
+<tr>
+<td>方法</td>
+<td>80.06%</td>
+<td>546 / 682</td>
+</tr>
+<tr>
+<td><strong>分支</strong></td>
+<td><strong>52.30%</strong></td>
+<td>579 / 1107</td>
+</tr>
+<tr>
+<td>圈复杂度</td>
+<td>58.29%</td>
+<td>721 / 1237</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>本次新增 2 个测试类（36 用例）的净效果：<strong>分支覆盖 50.55% → 52.30%（+1.75pt）</strong>、
+行覆盖 73.05% → 73.39%。分支覆盖的涨幅更值得看 —— 访问控制这类代码的价值几乎全在
+「该拒的有没有拒」，正是分支覆盖抓的那部分；行覆盖只说明「代码被执行过」，
+对「白名单为空时必须全拒」这类语义完全不敏感（行覆盖全绿、白名单却形同虚设是可以同时成立的）。</p>
+</blockquote>
+<p>覆盖率报告：<code>cloud-platform-server/target/site/jacoco/index.html</code>（浏览器打开，可按包/类下钻）。</p>
+<h3 id="42-行覆盖为-0-的类13-个">4.2 行覆盖为 0 的类（13 个）<a class="headerlink" href="#42-行覆盖为-0-的类13-个" title="永久链接">#</a></h3>
+<p>这些类<strong>一次都没被执行到</strong>。逐个核对原因 —— 区分「可以接受的未覆盖」与「欠账」：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>类</th>
+<th>原因</th>
+<th>性质</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RedisStateStore</code></td>
+<td>测试不启 Redis（设计如此）</td>
+<td>⚠️ <strong>欠账</strong>：可像 <code>TwoLevelCacheTest</code> 那样用 Mockito 假造 <code>StringRedisTemplate</code> 覆盖，当前无任何用例</td>
+</tr>
+<tr>
+<td><code>PahoMqttClientManager.ClientCallback</code></td>
+<td>回调只在真实 Broker 连接时触发</td>
+<td>可接受（见第 8 章）</td>
+</tr>
+<tr>
+<td><code>AuthController.LoginRequest</code></td>
+<td>record 的隐式访问器</td>
+<td>可接受</td>
+</tr>
+<tr>
+<td><code>EnterpriseUpMessages.MapehnResp</code> / <code>DownMessages.Ack</code></td>
+<td>报文 DTO 的部分字段访问器</td>
+<td>可接受</td>
+</tr>
+<tr>
+<td><code>CarUpMessages.AccidentMediaResp</code></td>
+<td>同上</td>
+<td>可接受</td>
+</tr>
+<tr>
+<td><code>RegulatoryDtos.*</code>（7 个）</td>
+<td>对外 DTO，失败路径未被断言</td>
+<td>⚠️ 部分欠账：<code>MapehnRequest</code>/<code>MapehnResponse</code> 的序列化契约值得钉死</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>结论</strong>：13 个里约 8 个属「真实环境才走到」的合理未覆盖，约 2 个（<code>RedisStateStore</code>、
+<code>RegulatoryDtos</code> 序列化契约）属真正的欠账，已进第 10 章计划。</p>
+</blockquote>
+<h3 id="43-分支覆盖-5055-意味着什么">4.3 分支覆盖 50.55% 意味着什么<a class="headerlink" href="#43-分支覆盖-5055-意味着什么" title="永久链接">#</a></h3>
+<p>分支覆盖只有一半，说明<strong>失败分支与边界条件覆盖不足</strong>。相对最值得补的几处：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>位置</th>
+<th>未覆盖的典型分支</th>
+<th>风险</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>入站队列 / 离线队列</td>
+<td>容量打满时的丢弃分支</td>
+<td>丢数据路径从未被验证</td>
+</tr>
+<tr>
+<td>遥测批量写入</td>
+<td>缓冲满/写失败/丢弃计数</td>
+<td>压力下的降级行为未验证</td>
+</tr>
+<tr>
+<td>监管平台调用</td>
+<td>超时、4xx、5xx、报文格式错</td>
+<td>对端异常时的重试与放弃逻辑</td>
+</tr>
+<tr>
+<td>轨迹抽稀</td>
+<td>单点、两点、全部重合、极端容差</td>
+<td>轨迹图变形的边界</td>
+</tr>
+<tr>
+<td>报文留痕采样</td>
+<td>采样率 0 / 1、事件类强制全留</td>
+<td>留痕缺失（监管取证要求）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="44-功能维度的覆盖矩阵">4.4 功能维度的覆盖矩阵<a class="headerlink" href="#44-功能维度的覆盖矩阵" title="永久链接">#</a></h3>
+<p>不是所有「功能」都能用行覆盖率表达。按模块给出<strong>断言强度</strong>：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>模块</th>
+<th>断言强度</th>
+<th>依据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Topic 与协议字典</td>
+<td><strong>强</strong></td>
+<td>23 + 19 用例，字面量逐条钉死</td>
+</tr>
+<tr>
+<td>安全（签名/令牌/防重放）</td>
+<td><strong>强</strong></td>
+<td>独立实现计算期望值，含失败分支</td>
+</tr>
+<tr>
+<td>报文业务链路（事故/故障/地图/远驾）</td>
+<td><strong>强</strong></td>
+<td>E2E 18 用例覆盖 8 个分组</td>
+</tr>
+<tr>
+<td>对外接口契约</td>
+<td><strong>强</strong></td>
+<td>路径+方法+字段名+错误码逐条钉死</td>
+</tr>
+<tr>
+<td>缓存</td>
+<td><strong>强（逻辑）+ 中（装配）</strong></td>
+<td>10 + 3 用例；L2 真实 Redis 未测</td>
+</tr>
+<tr>
+<td>数据保留清理</td>
+<td><strong>中</strong></td>
+<td>4 用例覆盖语法与事务；真实 MySQL 上的大表表现未测</td>
+</tr>
+<tr>
+<td>限流</td>
+<td><strong>弱</strong></td>
+<td>⚠️ 只测算法，<strong>未测是否接入链路</strong> → <code>T-02</code></td>
+</tr>
+<tr>
+<td>遥测批量写入</td>
+<td><strong>弱</strong></td>
+<td>仅间接覆盖，无直接断言</td>
+</tr>
+<tr>
+<td>MQTT 真实收发</td>
+<td><strong>无</strong></td>
+<td>见第 8 章</td>
+</tr>
+<tr>
+<td>前端</td>
+<td><strong>无</strong></td>
+<td>仅 <code>vue-tsc</code> 类型检查，无单测/E2E → <code>T-06</code></td>
+</tr>
+<tr>
+<td>性能</td>
+<td><strong>无（单测层）</strong></td>
+<td>由独立的压测脚本承担，见《性能优化与压测报告》</td>
+</tr>
+<tr>
+<td>部署与配置</td>
+<td><strong>无（单测层）</strong></td>
+<td>由 14 条冒烟断言承担，见《开发与部署说明》第 10 章</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="5-覆盖率门槛">5 覆盖率门槛<a class="headerlink" href="#5-覆盖率门槛" title="永久链接">#</a></h2>
+<h3 id="51-本次发现并修复门槛曾是死配置t-01-交叉引用-e-03">5.1 本次发现并修复：门槛曾是<strong>死配置</strong>（<code>T-01</code> / 交叉引用 <code>E-03</code>）<a class="headerlink" href="#51-本次发现并修复门槛曾是死配置t-01-交叉引用-e-03" title="永久链接">#</a></h3>
+<p><code>pom.xml</code> 声明了 <code>jacoco.line.coverage.min=0.60</code>，但<strong>只有 <code>prepare-agent</code> 与 <code>report</code> 两个执行，
+没有 <code>check</code></strong> —— 也就是说：</p>
+<ul>
+<li>属性被声明了，但<strong>没有任何东西引用它</strong>；</li>
+<li>覆盖率即便掉到 10%，<code>mvn package</code> 依然成功；</li>
+<li>报告会生成，看起来「有做覆盖率」，但<strong>它不拦任何东西</strong>。</li>
+</ul>
+<p>这与《性能优化与压测报告》的 <code>F-01</code>（限流器未接入请求链路）属于<strong>同一族问题</strong>：
+<strong>配置/代码存在，但从未被调用</strong>。</p>
+<h3 id="52-修复方案已实施并验证">5.2 修复方案（已实施并验证）<a class="headerlink" href="#52-修复方案已实施并验证" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;execution&gt;</span>
+<span class="w">  </span><span class="nt">&lt;id&gt;</span>check-coverage<span class="nt">&lt;/id&gt;</span>
+<span class="w">  </span><span class="nt">&lt;phase&gt;</span>verify<span class="nt">&lt;/phase&gt;</span>
+<span class="w">  </span><span class="nt">&lt;goals&gt;&lt;goal&gt;</span>check<span class="nt">&lt;/goal&gt;&lt;/goals&gt;</span>
+<span class="w">  </span><span class="nt">&lt;configuration&gt;</span>
+<span class="w">    </span><span class="nt">&lt;rules&gt;&lt;rule&gt;&lt;element&gt;</span>BUNDLE<span class="nt">&lt;/element&gt;&lt;limits&gt;&lt;limit&gt;</span>
+<span class="w">      </span><span class="nt">&lt;counter&gt;</span>LINE<span class="nt">&lt;/counter&gt;&lt;value&gt;</span>COVEREDRATIO<span class="nt">&lt;/value&gt;</span>
+<span class="w">      </span><span class="nt">&lt;minimum&gt;</span>${jacoco.line.coverage.min}<span class="nt">&lt;/minimum&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/limit&gt;&lt;/limits&gt;&lt;/rule&gt;&lt;/rules&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/configuration&gt;</span>
+<span class="nt">&lt;/execution&gt;</span>
+</code></pre></div>
+
+<p>实测（<code>mvn verify</code>）：</p>
+<div class="highlight"><pre><span></span><code>Tests run: 200, Failures: 0, Errors: 0, Skipped: 1
+jacoco:0.8.12:check (check-coverage) @ dssad-cloud-platform
+  → Analyzed bundle 'dssad-cloud-platform' with 167 classes
+All coverage checks have been met.
+BUILD SUCCESS (33.308 s)
+</code></pre></div>
+
+<h3 id="53-门槛策略">5.3 门槛策略<a class="headerlink" href="#53-门槛策略" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>出报告</th>
+<th>校验门槛</th>
+<th>定位</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mvn test</code></td>
+<td>是</td>
+<td>否</td>
+<td>本地快速迭代</td>
+</tr>
+<tr>
+<td><code>mvn package</code></td>
+<td>是</td>
+<td>否</td>
+<td>只想出包</td>
+</tr>
+<tr>
+<td><strong><code>mvn verify</code></strong></td>
+<td>是</td>
+<td><strong>是</strong></td>
+<td><strong>CI 与发布</strong>（<code>scripts/build.sh</code> 默认走这条）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>为什么是 0.60 而不是把当前值 0.73 设成门槛</strong>：门槛的作用是拦住<strong>断崖式下滑</strong>，
+不是逼所有人绕过它。留 13 个百分点缓冲，可以让「新增一个纯 DTO 类」不至于直接打断构建；
+若设成 0.73，第一次加个未覆盖的 DTO 就会逼着开发去写无意义的 getter 测试 —— 那是负收益。</p>
+<hr>
+<h2 id="6-测试隔离与幽灵用例防治">6 测试隔离与「幽灵用例」防治<a class="headerlink" href="#6-测试隔离与幽灵用例防治" title="永久链接">#</a></h2>
+<p>「幽灵用例」指<strong>单独跑通过、全量跑随机失败</strong>的用例。它是最消耗团队信任的一类问题 ——
+一旦出现，人们就开始习惯性重跑 CI，测试的实际保护力归零。本项目从三个方向防治：</p>
+<h3 id="61-数据隔离">6.1 数据隔离<a class="headerlink" href="#61-数据隔离" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">spring</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">datasource</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jdbc:h2:mem:dssad_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE</span>
+<span class="w">  </span><span class="nt">jpa</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">hibernate</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">ddl-auto</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">create-drop</span><span class="w">        </span><span class="c1"># 上下文销毁即清表</span>
+</code></pre></div>
+
+<ul>
+<li><strong>内存库 + <code>create-drop</code></strong>：每个 Spring 上下文都是全新的库，不存在跨用例残留。</li>
+<li><strong><code>MODE=MySQL</code></strong>：让 H2 用 MySQL 方言解析 SQL。
+  这一点很关键 —— <code>TelemetryRetentionServiceTest</code> 要真跑
+  <code>delete ... limit ?</code> 这条 native SQL，若方言不对会给出<strong>假绿的语法校验</strong>。</li>
+</ul>
+<h3 id="62-缓存必须彻底关闭-最容易踩的一条">6.2 缓存必须彻底关闭（★ 最容易踩的一条）<a class="headerlink" href="#62-缓存必须彻底关闭-最容易踩的一条" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">spring</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">cache</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">none</span>
+<span class="nt">dssad</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">cache</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre></div>
+
+<p><strong>为什么必须两处都关</strong>：单测若留着缓存，会出现这样的时序：</p>
+<blockquote>
+<p>A 用例注入报文 → 统计接口算一次 → 结果进缓存；
+B 用例再注入报文 → 统计接口<strong>从缓存读到 A 时刻的旧值</strong> → 断言失败。</p>
+</blockquote>
+<p>失败信息通常表现为「计数少了一个」，看起来像业务 bug，实际是缓存串了用例。
+而且它会<strong>随机复现</strong>（取决于用例执行顺序），是最典型的幽灵用例来源。</p>
+<p><strong>缓存行为本身由 <code>TwoLevelCacheTest</code>（直接 <code>new TwoLevelCache(...)</code>）与
+<code>DashboardCacheIntegrationTest</code>（显式构造上下文）覆盖</strong>，
+不需要在业务集成测试里掺进来。这是「用专门的测试测专门的东西」的实例。</p>
+<h3 id="63-定时任务必须关闭">6.3 定时任务必须关闭<a class="headerlink" href="#63-定时任务必须关闭" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">dssad</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">retention</span><span class="p">:</span>
+<span class="w">    </span><span class="c1"># 单测关闭自动清理：定时任务在测试上下文里跑起来会删掉其他用例插入的数据</span>
+</code></pre></div>
+
+<p>保留策略清理（每天 03:30）若在测试里被触发，会删除其他用例刚写入的行，
+造成「随机少数据」。清理逻辑本身由 <code>TelemetryRetentionServiceTest</code> <strong>显式调用</strong>来验证，
+既可控又不影响他人。</p>
+<h3 id="64-时间必须可控">6.4 时间必须可控<a class="headerlink" href="#64-时间必须可控" title="永久链接">#</a></h3>
+<p>凡是涉及窗口/超时的用例（<code>SlidingWindowRateLimiterTest</code>、<code>MqttReliabilityTest</code> 的重发间隔），
+一律<strong>注入可控时钟</strong>而不是 <code>Thread.sleep</code>：</p>
+<blockquote>
+<p>固定窗口与滑动窗口的核心差异体现在「窗口边界前后几毫秒」的行为上。
+依赖真实时钟的测试在 CI 上必然抖动 —— 进程被调度暂停 200 ms 就会得到不同结论。</p>
+</blockquote>
+<h3 id="65-外部依赖必须指向确定不可达的地址">6.5 外部依赖必须指向「确定不可达」的地址<a class="headerlink" href="#65-外部依赖必须指向确定不可达的地址" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">dssad</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">regulatory</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">base-url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://127.0.0.1:9/regulatory</span><span class="w">   </span><span class="c1"># 端口 9（discard），必然失败</span>
+<span class="w">    </span><span class="nt">timeout-millis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span>
+<span class="w">    </span><span class="nt">retry-delays-millis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10,20</span><span class="w">                </span><span class="c1"># 把重试间隔压到毫秒级</span>
+</code></pre></div>
+
+<p><strong>把「对端不可达」变成一条确定性的可测路径</strong>：既覆盖了降级分支，
+又不会因为真去连一个不存在的域名而产生几秒超时或不可复现的网络错误。</p>
+<hr>
+<h2 id="7-测试工具与可复现性">7 测试工具与可复现性<a class="headerlink" href="#7-测试工具与可复现性" title="永久链接">#</a></h2>
+<h3 id="71-运行命令">7.1 运行命令<a class="headerlink" href="#71-运行命令" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># 全量（含覆盖率报告；不含门槛校验）</span>
+mvn<span class="w"> </span>-B<span class="w"> </span><span class="nb">test</span>
+
+<span class="c1"># 全量 + 覆盖率门槛校验（等同于 scripts/build.sh 的默认行为）</span>
+bash<span class="w"> </span>scripts/build.sh
+<span class="c1"># 或</span>
+mvn<span class="w"> </span>-B<span class="w"> </span>verify
+
+<span class="c1"># 单个测试类</span>
+mvn<span class="w"> </span>-B<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-Dtest<span class="o">=</span>PlatformEndToEndTest
+
+<span class="c1"># 单个方法（类名#方法名）</span>
+mvn<span class="w"> </span>-B<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-Dtest<span class="o">=</span><span class="s1">'PlatformEndToEndTest#*事故*'</span>
+
+<span class="c1"># 生成 DDL 比对基线（显式开关，会覆盖 db/schema-mysql.generated.sql）</span>
+mvn<span class="w"> </span>-B<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-Dtest<span class="o">=</span>SchemaDdlGeneratorTest<span class="w"> </span>-Dddl.gen<span class="o">=</span><span class="nb">true</span>
+</code></pre></div>
+
+<h3 id="72-报告位置">7.2 报告位置<a class="headerlink" href="#72-报告位置" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>文件</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>target/site/jacoco/index.html</code></td>
+<td>覆盖率总览（可按包/类下钻；<code>jacoco.csv</code> 为机器可读版）</td>
+</tr>
+<tr>
+<td><code>target/surefire-reports/TEST-*.xml</code></td>
+<td>每个用例的精确结果（含耗时、跳过原因）</td>
+</tr>
+<tr>
+<td><code>target/surefire-reports/*.txt</code></td>
+<td>人读摘要</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>⚠️ <strong>注意 surefire 的 <code>*txt</code> 摘要在使用 <code>@Nested</code> 时会给出误导性数字</strong>：
+外层类的 <code>Tests run</code> 可能显示为 0（计数在内层类里）。
+要拿准确数字请解析 <strong>XML</strong>（<code>&lt;testcase&gt;</code> 元素逐个计数）。
+本文第 2 章的数据即来自 XML 解析。</p>
+</blockquote>
+<h3 id="73-测试配置的公共入口">7.3 测试配置的公共入口<a class="headerlink" href="#73-测试配置的公共入口" title="永久链接">#</a></h3>
+<p><code>src/test/java/.../support/TestProperties.java</code> 是测试侧的配置装配辅助类。
+<strong>新增 <code>AppProperties</code> 的配置分组时必须同步更新它</strong> ——
+否则会出现「测试上下文启动失败 / 编译报错」，这是刻意的编译期保护
+（本次新增 <code>retention</code> 分组时就触发了它，属预期行为）。</p>
+<hr>
+<h2 id="8-未纳入自动化测试的部分务必知情">8 未纳入自动化测试的部分（务必知情）<a class="headerlink" href="#8-未纳入自动化测试的部分务必知情" title="永久链接">#</a></h2>
+<p>以下内容<strong>没有</strong>任何自动化测试覆盖，上线前需按对应文档手工验证。
+把它们明确列出来，是为了避免「200 个用例全绿 = 没问题」的错觉 ——
+本项目最贵的几类故障（限流未接线 <code>F-01</code>、探活不覆盖通道 <code>E-01</code>、Actuator 无鉴权 <code>O-03</code>）
+全部是「单测全绿、问题照旧」的形态。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>未覆盖项</th>
+<th>为什么没覆盖</th>
+<th>替代验证方式</th>
+<th>参考</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MQTT 真实收发链路</strong></td>
+<td>无 Broker；Paho 客户端与网络传输层不在测试范围</td>
+<td>本地 Mosquitto（<code>docker compose --profile mqtt up -d</code>）+ 报文注入</td>
+<td>部署说明 5.3</td>
+</tr>
+<tr>
+<td><strong>容器构建与运行</strong></td>
+<td>本机 Docker 守护进程未启动</td>
+<td>上线前 <code>docker compose config</code> + 实际起服</td>
+<td>部署说明附录 C</td>
+</tr>
+<tr>
+<td><strong>Nginx 配置</strong></td>
+<td>本机无 nginx 二进制</td>
+<td>服务器 <code>nginx -t</code></td>
+<td>部署说明 9.3</td>
+</tr>
+<tr>
+<td><strong>HTTPS / TLS</strong></td>
+<td>无证书、无域名</td>
+<td>自签证书先跑一遍</td>
+<td>部署说明 9.4</td>
+</tr>
+<tr>
+<td><strong>systemd 单元</strong></td>
+<td>开发机为 Windows</td>
+<td>服务器 <code>systemctl</code> 启停一次</td>
+<td>部署说明 9.2</td>
+</tr>
+<tr>
+<td><strong>前端渲染与交互</strong></td>
+<td>前端零测试资产（<code>T-06</code>）</td>
+<td>人工走查 + <code>vue-tsc</code> 类型检查</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>性能与容量</strong></td>
+<td>单测不测性能</td>
+<td>独立压测脚本 + 实测报告</td>
+<td>性能报告第 3~6 章</td>
+</tr>
+<tr>
+<td><strong>多实例行为</strong></td>
+<td>全部测试为单实例</td>
+<td>需先修 <code>P-01</code>（<code>@Scheduled</code> 无分布式锁）后才能测</td>
+<td>详细设计 <code>P-01</code></td>
+</tr>
+<tr>
+<td><strong>限流是否生效</strong></td>
+<td><code>T-02</code>（重大盲区）</td>
+<td>目前只能用探针脚本手工验证 → <strong>建议补自动化</strong></td>
+<td>性能报告 <code>F-01</code></td>
+</tr>
+<tr>
+<td><strong>真实 MySQL 上的 DDL</strong></td>
+<td>单测用 H2</td>
+<td>已由部署说明 EV-5/EV-6/EV-8 覆盖（13 表/47 索引 + <code>validate</code> 反向探针）</td>
+<td>部署说明 6.3~6.5</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="9-测试体系缺陷与改进项">9 测试体系缺陷与改进项<a class="headerlink" href="#9-测试体系缺陷与改进项" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>编号</th>
+<th>级别</th>
+<th>问题</th>
+<th>证据</th>
+<th>影响</th>
+<th>建议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>T-01</strong></td>
+<td>中</td>
+<td><strong>覆盖率门槛是死配置</strong>：<code>jacoco.line.coverage.min</code> 被声明但无 <code>check</code> 执行，覆盖率再低也不拦构建</td>
+<td>原 <code>pom.xml</code> 仅 <code>prepare-agent</code> + <code>report</code></td>
+<td>质量门槛形同不存在，覆盖率无声下滑</td>
+<td><strong>本次已修复</strong>（绑 <code>verify</code>），实测 <code>All coverage checks have been met</code></td>
+</tr>
+<tr>
+<td><strong>T-02</strong></td>
+<td><strong>高</strong></td>
+<td><strong>限流能力没有任何「行为断言」</strong>：<code>SlidingWindowRateLimiterTest</code> 与 <code>SecurityAndRateLimitTest</code> 测的是<strong>限流算法本身</strong>；全测试目录 <code>grep -rn "tryAcquireHttp|RATE_LIMITED|4001"</code> <strong>零命中</strong> —— 也就是说，「限流是否被接进请求链路」从未被验证</td>
+<td>静态核查：测试目录零引用；实测：同 VIN 连打 130 次全部放行（<code>F-01</code>）</td>
+<td><strong>这正是 P0 缺陷 <code>F-01</code> 能在 200 个用例全绿的情况下潜伏至今的直接原因</strong>。配置写着「100 次/分钟」，测试全绿，实际零限流</td>
+<td>① 先修 <code>F-01</code>（加 <code>RateLimitInterceptor</code>）；② 立刻补一条集成测试：MockMvc 同 VIN 连打 <code>http-per-minute + 5</code> 次 → <strong>断言出现 <code>4001</code></strong>；③ 把 <code>perf/rate_limit_probe.py</code> 的判据（「130 次应被拒」）纳入发布门禁；④ <strong>同类问题已按此原则补齐 2 例</strong>：<code>O-01</code>（通道探活）与 <code>O-03</code>（Actuator 访问控制）都已从「声明存在」升级为「行为断言」，见第 2 章</td>
+</tr>
+<tr>
+<td><strong>T-03</strong></td>
+<td>中</td>
+<td><code>SchemaDdlGeneratorTest</code> 默认跳过（<code>@EnabledIfSystemProperty</code>），它是<strong>防实体/DDL 漂移的唯一自动化手段</strong></td>
+<td><code>Tests run: 1, Skipped: 1</code></td>
+<td>漂移只能在生产启动时被 <code>ddl-auto=validate</code> 拦下（已证明会拒绝启动，但那是发版时才发现）</td>
+<td>在 CI 增一条独立任务：跑它并与 <code>db/schema-mysql.sql</code> <strong>做 diff</strong>，有差异即失败</td>
+</tr>
+<tr>
+<td><strong>T-04</strong></td>
+<td>中</td>
+<td><strong>分支覆盖仅 50.55%</strong>，失败分支与边界条件覆盖不足</td>
+<td>JaCoCo：509 / 1007</td>
+<td>压力、对端异常、容量打满等<strong>降级路径从未被验证</strong></td>
+<td>按 4.3 节的清单优先补：队列丢弃、批量写失败、监管平台异常、抽稀边界、采样边界</td>
+</tr>
+<tr>
+<td><strong>T-05</strong></td>
+<td>低</td>
+<td><code>RedisStateStore</code> 行覆盖为 0，而它在 <code>prod</code> 下是<strong>默认启用</strong>的（<code>dssad.redis.enabled=true</code>）</td>
+<td>JaCoCo 0 覆盖类清单</td>
+<td>多实例部署时的登录态/去重/限流路径无自动化保护</td>
+<td>参照 <code>TwoLevelCacheTest</code>，用 Mockito 假造 <code>StringRedisTemplate</code> 补测</td>
+</tr>
+<tr>
+<td><strong>T-06</strong></td>
+<td>中</td>
+<td><strong>前端零自动化测试</strong>：<code>package.json</code> 无 <code>test</code> 脚本，无 vitest/jest/cypress/playwright</td>
+<td><code>grep</code> 无任何测试依赖</td>
+<td>前端唯一门禁是 <code>vue-tsc</code> 类型检查；<strong>类型正确 ≠ 行为正确</strong>（路由守卫、鉴权跳转、图表数据映射错都测不到）</td>
+<td>至少补：① 路由守卫与登录态单测；② <code>api/types.ts</code> 与后端响应体的契约测试（可用后端 surefire 快照生成夹具）</td>
+</tr>
+<tr>
+<td><strong>T-07</strong></td>
+<td>低</td>
+<td><code>FaultCodeDictionaryTest</code> 只断言码值集合，不断言<strong>码值与含义的映射</strong></td>
+<td>类注释与实现</td>
+<td>码值不变但含义写串（如 4356 与 4357 互换）不会被发现</td>
+<td>增加「码值 → 描述」的抽样断言</td>
+</tr>
+<tr>
+<td><strong>T-08</strong></td>
+<td>信息</td>
+<td>测试不覆盖 MQTT 真实传输与 Paho 客户端回调</td>
+<td>设计如此</td>
+<td>属于「需要真实 Broker」的一类，见第 8 章</td>
+<td>在联调环境补一组带 Broker 的冒烟脚本</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="缺陷族谱四例同类问题">缺陷族谱：四例同类问题<a class="headerlink" href="#缺陷族谱四例同类问题" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>编号</th>
+<th>归属文档</th>
+<th>共同特征</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>F-01</code></td>
+<td>性能报告</td>
+<td>限流器<strong>写了 145 行实现 + 单测 + 配置</strong>，但 <code>tryAcquireHttp</code>/<code>tryAcquireMqttPublish</code> <strong>零调用点</strong></td>
+</tr>
+<tr>
+<td><code>T-01</code> / <code>E-03</code></td>
+<td>本文 / 部署说明</td>
+<td>覆盖率门槛<strong>属性声明 + 报告生成</strong>，但无 <code>check</code> 执行 → 从未生效</td>
+</tr>
+<tr>
+<td><code>P-02</code></td>
+<td>详细设计</td>
+<td><code>markOfflineVehicles</code> 有完整实现，但<strong>无任何调用方</strong> → 车辆 <code>online</code> 永不回落</td>
+</tr>
+<tr>
+<td><code>E-01</code></td>
+<td>部署说明</td>
+<td><code>health-check</code> <strong>如实返回 <code>mqttConnected</code></strong>，但<strong>没有任何探针或告警消费它</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>规律：写了、有注释、有配置，但没有任何调用方或消费者。</strong></p>
+<p><strong>建议在 CI 增加一条通用检查</strong>：对关键能力做<strong>端到端行为断言</strong>，而不是只断言「类存在」。
+具体到本项目，最小可行集是三条：</p>
+<ol>
+<li>「同 VIN 连打 N+5 次 HTTP → 必须出现 <code>4001</code>」（保护限流）</li>
+<li>「同一 VIN 心跳超时后 → <code>online</code> 必须变为 <code>false</code>」（保护在线状态）</li>
+<li>「MQTT 断连时 → 至少有一处可被外部观测的信号为异常」（保护通道监控）</li>
+</ol>
+<hr>
+<h2 id="10-后续测试计划按优先级">10 后续测试计划（按优先级）<a class="headerlink" href="#10-后续测试计划按优先级" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>优先级</th>
+<th>任务</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>P0</strong></td>
+<td>修 <code>F-01</code> + 补限流行为断言（<code>T-02</code>）</td>
+<td>当前最大的「测试以为覆盖了、实际没覆盖」缺口</td>
+</tr>
+<tr>
+<td><strong>P0</strong></td>
+<td>在 CI 里跑 <code>mvn verify</code>（含覆盖率门槛）</td>
+<td>门槛已接线，但只有真的跑起来才算生效</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>CI 增加 DDL 漂移 diff 任务（<code>T-03</code>）</td>
+<td>把漂移从「发版时发现」提前到「提交时发现」</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>补分支覆盖：队列丢弃 / 批量写失败 / 监管平台异常（<code>T-04</code>）</td>
+<td>降级路径是生产上最先出事的地方</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>前端补路由守卫与接口契约测试（<code>T-06</code>）</td>
+<td>前端零门禁</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>补 <code>RedisStateStore</code> 测试（<code>T-05</code>）</td>
+<td>prod 默认启用却零覆盖</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>增加「在线状态回落」行为断言（对应 <code>P-02</code>）</td>
+<td>同上族问题</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>用 Testcontainers 引入真实 MySQL 的集成测试</td>
+<td>覆盖 H2 与 MySQL 的行为差异（当前用 H2 <code>MODE=MySQL</code> 近似）</td>
+</tr>
+<tr>
+<td>P3</td>
+<td>故障码含义映射断言（<code>T-07</code>）</td>
+<td>低风险但便宜</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="附录-a-命令与产物速查">附录 A 命令与产物速查<a class="headerlink" href="#附录-a-命令与产物速查" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>目的</th>
+<th>命令</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>全量测试</td>
+<td><code>mvn -B test</code></td>
+</tr>
+<tr>
+<td>全量 + 覆盖率门槛</td>
+<td><code>mvn -B verify</code> 或 <code>bash scripts/build.sh</code></td>
+</tr>
+<tr>
+<td>单类</td>
+<td><code>mvn -B test -Dtest=PlatformEndToEndTest</code></td>
+</tr>
+<tr>
+<td>单方法</td>
+<td><code>mvn -B test -Dtest='PlatformEndToEndTest#*事故*'</code></td>
+</tr>
+<tr>
+<td>生成 DDL 基线</td>
+<td><code>mvn -B test -Dtest=SchemaDdlGeneratorTest -Dddl.gen=true</code></td>
+</tr>
+<tr>
+<td>覆盖率报告</td>
+<td><code>target/site/jacoco/index.html</code> · <code>target/site/jacoco/jacoco.csv</code></td>
+</tr>
+<tr>
+<td>用例结果（精确）</td>
+<td><code>target/surefire-reports/TEST-*.xml</code></td>
+</tr>
+<tr>
+<td>用例结果（人读）</td>
+<td><code>target/surefire-reports/*.txt</code></td>
+</tr>
+<tr>
+<td>环境自检 + 全链路冒烟</td>
+<td><code>bash scripts/check-env.sh</code> · <code>bash scripts/health.sh</code></td>
+</tr>
+<tr>
+<td>限流行为探针</td>
+<td><code>python perf/rate_limit_probe.py --base-url ... --vin ... --count 130 --token ...</code></td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="附录-b-断言口径约定">附录 B 断言口径约定<a class="headerlink" href="#附录-b-断言口径约定" title="永久链接">#</a></h2>
+<p>写新用例时必须遵守，否则会得到「看起来在测、其实测错」的用例。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>约定</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>业务成败看业务码，不看 HTTP 状态码</strong></td>
+<td>平台在 HTTP 200 的响应体里用 <code>code</code> 表达失败（<code>2001</code> 未授权 / <code>3001</code> 不存在 / <code>4001</code> 限流）。<strong>鉴权失败路径比正常查询更快</strong> —— 只看状态码会把「全部被拒」当成「性能极佳」</td>
+</tr>
+<tr>
+<td><strong>时间统一按 13 位毫秒时间戳断言</strong></td>
+<td>文档 1.4 约定所有 <code>timestamp</code> 为毫秒；<code>Instant</code> 序列化为 13 位数字，<code>LocalDate</code> 序列化为数组</td>
+</tr>
+<tr>
+<td><strong>期望值独立计算，不抄实现常量</strong></td>
+<td>见 1.2 原则二</td>
+</tr>
+<tr>
+<td><strong>不依赖真实时间</strong></td>
+<td>涉及窗口/超时的用例注入可控时钟</td>
+</tr>
+<tr>
+<td><strong>不为 mock 写测试</strong></td>
+<td>「断言 mock 返回自己设定的值」不构成验证</td>
+</tr>
+<tr>
+<td><strong>外部依赖指向确定不可达地址</strong></td>
+<td>把降级分支变成确定性可测路径（<code>http://127.0.0.1:9/</code>）</td>
+</tr>
+<tr>
+<td><strong>协议字面量必须逐条钉死</strong></td>
+<td>字段名、枚举值、错误码一旦上线不可改；改坏只静默断链</td>
+</tr>
+<tr>
+<td><strong>优先保证失败分支有断言</strong></td>
+<td>边界与异常路径出错概率远高于主流程</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="版本记录">版本记录<a class="headerlink" href="#版本记录" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>版本</th>
+<th>日期</th>
+<th>变更说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>v1.0</td>
+<td>2026-09-23</td>
+<td>首次发布。覆盖测试策略与分层依据、14 个测试类逐类详述（含「在保护什么风险」）、覆盖率实测与门槛策略、测试隔离与幽灵用例防治、未自动化覆盖清单、以及 8 项测试体系缺陷（<code>T-01</code>~<code>T-08</code>）。其中 <code>T-01</code> 已修复并验证；<code>T-02</code>（限流能力无行为断言）确认是 P0 缺陷 <code>F-01</code> 未被发现的直接原因。</td>
+</tr>
+<tr>
+<td>v1.1</td>
+<td>2026-09-23</td>
+<td>新增 2 个测试类共 <strong>36 个用例</strong>：<code>MqttChannelProbeTest</code>（8 例，<code>O-01</code> 通道探活的行为断言）、<code>ActuatorAccessControlTest</code>（28 例，<code>O-03</code> Actuator 访问控制，含「空白名单全拒 / 非法 CIDR 启动失败 / 伪造 XFF 不得绕过」三条安全语义钉死）。测试规模 14 类 164 例 → <strong>16 类 200 例</strong>；行覆盖 73.05% → <strong>73.39%</strong>。分层表与资产明细表按实测数据重算。</td>
+</tr>
+</tbody>
+</table></div>
+  </main>
+</div>
+<button id="to-top" type="button" title="回到顶部" aria-label="回到顶部">&#8593;</button>
+<script>
+
+(function () {
+  'use strict';
+
+  /* --- 1. 侧边栏滚动高亮当前章节 --- */
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  var targets = links
+    .map(function (a) {
+      var id = decodeURIComponent(a.getAttribute('href').slice(1));
+      var el = document.getElementById(id);
+      return el ? { link: a, el: el } : null;
+    })
+    .filter(Boolean);
+
+  function setActive(link) {
+    links.forEach(function (a) { a.classList.remove('active'); });
+    if (!link) return;
+    link.classList.add('active');
+    // 让高亮项始终留在侧边栏可视区内
+    var bar = document.querySelector('.sidebar');
+    if (!bar) return;
+    var r = link.getBoundingClientRect(), b = bar.getBoundingClientRect();
+    if (r.top < b.top + 60 || r.bottom > b.bottom - 40) {
+      bar.scrollTop += r.top - b.top - bar.clientHeight / 3;
+    }
+  }
+
+  var ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      ticking = false;
+      var best = null;
+      for (var i = 0; i < targets.length; i++) {
+        if (targets[i].el.getBoundingClientRect().top <= 120) best = targets[i];
+        else break;
+      }
+      if (best) setActive(best.link);
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* --- 2. 代码块复制按钮 --- */
+  document.querySelectorAll('.highlight').forEach(function (block) {
+    var code = block.querySelector('code');
+    if (!code) return;
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.addEventListener('click', function () {
+      var text = code.innerText;
+      var done = function () {
+        btn.textContent = '已复制';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = '复制';
+          btn.classList.remove('done');
+        }, 1400);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    block.appendChild(btn);
+  });
+
+  // file:// 下 navigator.clipboard 不可用时的兜底
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* 忽略 */ }
+    document.body.removeChild(ta);
+  }
+
+  /* --- 3. 回到顶部 --- */
+  var top = document.getElementById('to-top');
+  if (top) {
+    top.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    window.addEventListener('scroll', function () {
+      top.classList.toggle('show', window.scrollY > 500);
+    }, { passive: true });
+  }
+
+  /* --- 4. 窄屏侧边栏 --- */
+  var menuBtn = document.getElementById('menu-btn');
+  var sidebar = document.querySelector('.sidebar');
+  if (menuBtn && sidebar) {
+    menuBtn.addEventListener('click', function () { sidebar.classList.toggle('open'); });
+    sidebar.addEventListener('click', function (e) {
+      if (e.target.tagName === 'A') sidebar.classList.remove('open');
+    });
+  }
+})();
+
+</script>
+</body>
+</html>

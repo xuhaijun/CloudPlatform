@@ -1,0 +1,2315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DSSAD 云平台 · 运维手册与告警预案</title>
+<meta name="generator" content="scripts/md2html.py">
+<style>
+
+:root{
+  --bg:#0d1117;
+  --bg-side:#090c11;
+  --bg-elev:#161b22;
+  --bg-code:#161b22;
+  --border:#21262d;
+  --border-soft:#1a1f27;
+  --text:#c9d1d9;
+  --text-strong:#e6edf3;
+  --text-dim:#8b949e;
+  --accent:#58a6ff;
+  --accent-soft:rgba(88,166,255,.12);
+  --green:#3fb950;
+  --orange:#d29922;
+  --red:#f85149;
+  --purple:#bc8cff;
+  --sidebar-w:308px;
+  --radius:8px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+              "Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15.5px;line-height:1.78;
+  -webkit-font-smoothing:antialiased;
+}
+code,pre,kbd,.mono{
+  font-family:"JetBrains Mono","Cascadia Code",Consolas,"Courier New",monospace;
+  font-variant-ligatures:none;
+}
+
+/* ---------- 布局：左固定 TOC / 右正文 ---------- */
+.layout{display:flex;align-items:flex-start;min-height:100vh}
+
+.sidebar{
+  width:var(--sidebar-w);flex:0 0 var(--sidebar-w);
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  background:var(--bg-side);border-right:1px solid var(--border);
+  padding:22px 0 60px;
+}
+.sidebar-brand{
+  padding:0 20px 16px;margin-bottom:14px;border-bottom:1px solid var(--border-soft);
+}
+.sidebar-brand .t{font-size:14px;font-weight:600;color:var(--text-strong);letter-spacing:.2px}
+.sidebar-brand .s{font-size:12px;color:var(--text-dim);margin-top:4px}
+
+.toc{padding:0 10px}
+.toc ul{list-style:none;margin:0;padding:0}
+.toc > ul > li{margin:2px 0}
+.toc a{
+  display:block;padding:6px 10px;border-radius:6px;
+  color:var(--text-dim);text-decoration:none;font-size:13.5px;
+  border-left:2px solid transparent;transition:all .15s ease;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.toc > ul > li > a{color:var(--text);font-weight:500}
+.toc a:hover{background:var(--bg-elev);color:var(--text-strong)}
+.toc a.active{
+  color:var(--accent);background:var(--accent-soft);
+  border-left-color:var(--accent);font-weight:600;
+}
+.toc ul ul{margin-left:12px}
+.toc ul ul a{font-size:12.8px;padding:4px 10px}
+
+/* ---------- 正文 ---------- */
+.content{
+  flex:1 1 auto;min-width:0;max-width:1000px;
+  padding:44px 56px 120px;
+}
+.content > *:first-child{margin-top:0}
+
+/* 页头 */
+.doc-header{margin-bottom:34px;padding-bottom:22px;border-bottom:1px solid var(--border)}
+h1{
+  font-size:30px;line-height:1.35;margin:0 0 16px;color:var(--text-strong);
+  font-weight:700;letter-spacing:-.3px;
+}
+.doc-meta{font-size:12.5px;color:var(--text-dim);display:flex;gap:14px;flex-wrap:wrap}
+.doc-meta span{display:inline-flex;align-items:center;gap:5px}
+.doc-meta code{font-size:12px;color:var(--text-dim);background:transparent;padding:0}
+
+/* 「定位说明」摘要卡（md 中紧跟 h1 的引用块） */
+.doc-lead{
+  background:linear-gradient(180deg,rgba(88,166,255,.07),rgba(88,166,255,.02));
+  border:1px solid rgba(88,166,255,.22);border-left:3px solid var(--accent);
+  border-radius:var(--radius);padding:14px 18px;margin:0 0 30px;
+  font-size:14px;color:var(--text-dim);line-height:1.8;
+}
+.doc-lead p{margin:0 0 8px}
+.doc-lead p:last-child{margin-bottom:0}
+.doc-lead strong{color:var(--text-strong)}
+.doc-lead code{font-size:12.5px;color:var(--accent);background:rgba(88,166,255,.1);padding:1px 5px;border-radius:4px}
+
+/* 标题层级 */
+h2{
+  font-size:23px;font-weight:650;color:var(--text-strong);
+  margin:56px 0 18px;padding:0 0 10px 0;
+  border-bottom:1px solid var(--border);position:relative;
+}
+h2::before{
+  content:"";position:absolute;left:-56px;top:6px;width:3px;height:20px;
+  background:var(--accent);border-radius:2px;
+}
+h3{
+  font-size:18px;font-weight:600;color:var(--accent);
+  margin:34px 0 12px;padding-left:0;
+}
+h4{font-size:15.5px;font-weight:600;color:var(--text-strong);margin:24px 0 10px}
+h5,h6{font-size:14.5px;font-weight:600;color:var(--text-dim);margin:20px 0 8px}
+
+/* 标题锚点链接（hover 显现） */
+.headerlink{
+  color:var(--text-dim);text-decoration:none;opacity:0;
+  margin-left:8px;font-size:.75em;transition:opacity .15s ease;
+}
+h2:hover .headerlink,h3:hover .headerlink,h4:hover .headerlink{opacity:.7}
+.headerlink:hover{opacity:1;color:var(--accent)}
+
+p{margin:0 0 15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+
+strong{color:var(--text-strong);font-weight:650}
+em{color:var(--text-strong)}
+hr{border:0;border-top:1px solid var(--border);margin:38px 0}
+
+ul,ol{margin:0 0 15px;padding-left:26px}
+li{margin:5px 0}
+li > ul,li > ol{margin:5px 0}
+ul li::marker{color:var(--text-dim)}
+ol li::marker{color:var(--accent);font-weight:600}
+
+/* 引用块（除 .doc-lead 外的） */
+blockquote{
+  margin:0 0 16px;padding:12px 18px;
+  background:var(--bg-elev);border-left:3px solid var(--border);
+  border-radius:0 var(--radius) var(--radius) 0;color:var(--text-dim);
+}
+blockquote p:last-child{margin-bottom:0}
+
+/* 行内代码 */
+code{
+  font-size:13px;background:rgba(110,118,129,.18);color:#79c0ff;
+  padding:2px 6px;border-radius:5px;white-space:nowrap;
+}
+pre code{background:none;padding:0;color:inherit;white-space:pre;font-size:13.2px}
+pre{
+  margin:0;padding:16px 18px;overflow-x:auto;
+  background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);
+  line-height:1.62;
+}
+
+/* 代码块容器 + 复制按钮 */
+.highlight{
+  position:relative;margin:0 0 18px;
+  background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;
+}
+.highlight pre{border:0;border-radius:0;background:transparent}
+.copy-btn{
+  position:absolute;top:8px;right:8px;z-index:2;
+  background:rgba(110,118,129,.22);color:var(--text-dim);
+  border:1px solid var(--border);border-radius:6px;
+  padding:3px 9px;font-size:11.5px;cursor:pointer;
+  font-family:inherit;opacity:0;transition:opacity .15s ease,background .15s ease;
+}
+.highlight:hover .copy-btn{opacity:1}
+.copy-btn:hover{background:rgba(88,166,255,.22);color:var(--accent);border-color:rgba(88,166,255,.4)}
+.copy-btn.done{color:var(--green);border-color:rgba(63,185,80,.45)}
+
+/* 任务列表（- [ ] / - [x]）*/
+li.task{list-style:none;margin-left:-22px;display:flex;align-items:flex-start;gap:9px}
+li.task > p{display:contents}
+li.task .cb{
+  flex:0 0 auto;width:14px;height:14px;margin-top:6px;
+  border:1.5px solid var(--text-dim);border-radius:3px;
+}
+li.task.done .cb{background:var(--green);border-color:var(--green)}
+li.task.done{color:var(--text-dim)}
+
+/* 表格 */
+.table-wrap{overflow-x:auto;margin:0 0 18px}
+table{
+  border-collapse:collapse;width:100%;font-size:14px;
+  border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;
+}
+thead th{
+  background:var(--bg-elev);color:var(--text-strong);font-weight:600;
+  text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+tbody td{padding:9px 14px;border-bottom:1px solid var(--border-soft);vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:rgba(255,255,255,.014)}
+tbody tr:hover{background:rgba(88,166,255,.05)}
+td code,th code{font-size:12.5px}
+
+/* 回到顶部 */
+#to-top{
+  position:fixed;right:26px;bottom:26px;z-index:10;
+  width:40px;height:40px;border-radius:50%;
+  background:var(--bg-elev);color:var(--text-dim);
+  border:1px solid var(--border);cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:all .2s ease;
+}
+#to-top.show{opacity:1;pointer-events:auto}
+#to-top:hover{color:var(--accent);border-color:var(--accent);transform:translateY(-2px)}
+
+/* 窄屏：侧边栏收起 */
+#menu-btn{
+  display:none;position:fixed;top:14px;left:14px;z-index:20;
+  width:38px;height:38px;border-radius:8px;
+  background:var(--bg-elev);border:1px solid var(--border);
+  color:var(--text);cursor:pointer;font-size:17px;
+}
+@media (max-width:960px){
+  #menu-btn{display:block}
+  .sidebar{
+    position:fixed;left:0;top:0;z-index:15;height:100vh;
+    transform:translateX(-100%);transition:transform .22s ease;
+    box-shadow:0 0 40px rgba(0,0,0,.5);
+  }
+  .sidebar.open{transform:translateX(0)}
+  .content{padding:70px 22px 100px}
+  h2::before{display:none}
+}
+@media print{
+  .sidebar,#to-top,#menu-btn,.copy-btn{display:none}
+  body{background:#fff;color:#111}
+  .content{max-width:none;padding:0}
+}
+
+/* ---------- pygments 语法高亮（github-dark） ---------- */
+pre { line-height: 125%; }
+td.linenos .normal { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+.highlight .hll { background-color: #6e7681 }
+.highlight { background: transparent; }
+.highlight .c { color: #8B949E; font-style: italic } /* Comment */
+.highlight .err { color: #F85149 } /* Error */
+.highlight .esc { color: #E6EDF3 } /* Escape */
+.highlight .g { color: #E6EDF3 } /* Generic */
+.highlight .k { color: #FF7B72 } /* Keyword */
+.highlight .l { color: #A5D6FF } /* Literal */
+.highlight .n { color: #E6EDF3 } /* Name */
+.highlight .o { color: #FF7B72; font-weight: bold } /* Operator */
+.highlight .x { color: #E6EDF3 } /* Other */
+.highlight .p { color: #E6EDF3 } /* Punctuation */
+.highlight .ch { color: #8B949E; font-style: italic } /* Comment.Hashbang */
+.highlight .cm { color: #8B949E; font-style: italic } /* Comment.Multiline */
+.highlight .cp { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Preproc */
+.highlight .cpf { color: #8B949E; font-style: italic } /* Comment.PreprocFile */
+.highlight .c1 { color: #8B949E; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Special */
+.highlight .gd { color: #FFA198; background-color: #490202 } /* Generic.Deleted */
+.highlight .ge { color: #E6EDF3; font-style: italic } /* Generic.Emph */
+.highlight .ges { color: #E6EDF3; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.highlight .gr { color: #FFA198 } /* Generic.Error */
+.highlight .gh { color: #79C0FF; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #56D364; background-color: #0F5323 } /* Generic.Inserted */
+.highlight .go { color: #8B949E } /* Generic.Output */
+.highlight .gp { color: #8B949E } /* Generic.Prompt */
+.highlight .gs { color: #E6EDF3; font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #79C0FF } /* Generic.Subheading */
+.highlight .gt { color: #FF7B72 } /* Generic.Traceback */
+.highlight .g-Underline { color: #E6EDF3; text-decoration: underline } /* Generic.Underline */
+.highlight .kc { color: #79C0FF } /* Keyword.Constant */
+.highlight .kd { color: #FF7B72 } /* Keyword.Declaration */
+.highlight .kn { color: #FF7B72 } /* Keyword.Namespace */
+.highlight .kp { color: #79C0FF } /* Keyword.Pseudo */
+.highlight .kr { color: #FF7B72 } /* Keyword.Reserved */
+.highlight .kt { color: #FF7B72 } /* Keyword.Type */
+.highlight .ld { color: #79C0FF } /* Literal.Date */
+.highlight .m { color: #A5D6FF } /* Literal.Number */
+.highlight .s { color: #A5D6FF } /* Literal.String */
+.highlight .na { color: #E6EDF3 } /* Name.Attribute */
+.highlight .nb { color: #E6EDF3 } /* Name.Builtin */
+.highlight .nc { color: #F0883E; font-weight: bold } /* Name.Class */
+.highlight .no { color: #79C0FF; font-weight: bold } /* Name.Constant */
+.highlight .nd { color: #D2A8FF; font-weight: bold } /* Name.Decorator */
+.highlight .ni { color: #FFA657 } /* Name.Entity */
+.highlight .ne { color: #F0883E; font-weight: bold } /* Name.Exception */
+.highlight .nf { color: #D2A8FF; font-weight: bold } /* Name.Function */
+.highlight .nl { color: #79C0FF; font-weight: bold } /* Name.Label */
+.highlight .nn { color: #FF7B72 } /* Name.Namespace */
+.highlight .nx { color: #E6EDF3 } /* Name.Other */
+.highlight .py { color: #79C0FF } /* Name.Property */
+.highlight .nt { color: #7EE787 } /* Name.Tag */
+.highlight .nv { color: #79C0FF } /* Name.Variable */
+.highlight .ow { color: #FF7B72; font-weight: bold } /* Operator.Word */
+.highlight .pm { color: #E6EDF3 } /* Punctuation.Marker */
+.highlight .w { color: #6E7681 } /* Text.Whitespace */
+.highlight .mb { color: #A5D6FF } /* Literal.Number.Bin */
+.highlight .mf { color: #A5D6FF } /* Literal.Number.Float */
+.highlight .mh { color: #A5D6FF } /* Literal.Number.Hex */
+.highlight .mi { color: #A5D6FF } /* Literal.Number.Integer */
+.highlight .mo { color: #A5D6FF } /* Literal.Number.Oct */
+.highlight .sa { color: #79C0FF } /* Literal.String.Affix */
+.highlight .sb { color: #A5D6FF } /* Literal.String.Backtick */
+.highlight .sc { color: #A5D6FF } /* Literal.String.Char */
+.highlight .dl { color: #79C0FF } /* Literal.String.Delimiter */
+.highlight .sd { color: #A5D6FF } /* Literal.String.Doc */
+.highlight .s2 { color: #A5D6FF } /* Literal.String.Double */
+.highlight .se { color: #79C0FF } /* Literal.String.Escape */
+.highlight .sh { color: #79C0FF } /* Literal.String.Heredoc */
+.highlight .si { color: #A5D6FF } /* Literal.String.Interpol */
+.highlight .sx { color: #A5D6FF } /* Literal.String.Other */
+.highlight .sr { color: #79C0FF } /* Literal.String.Regex */
+.highlight .s1 { color: #A5D6FF } /* Literal.String.Single */
+.highlight .ss { color: #A5D6FF } /* Literal.String.Symbol */
+.highlight .bp { color: #E6EDF3 } /* Name.Builtin.Pseudo */
+.highlight .fm { color: #D2A8FF; font-weight: bold } /* Name.Function.Magic */
+.highlight .vc { color: #79C0FF } /* Name.Variable.Class */
+.highlight .vg { color: #79C0FF } /* Name.Variable.Global */
+.highlight .vi { color: #79C0FF } /* Name.Variable.Instance */
+.highlight .vm { color: #79C0FF } /* Name.Variable.Magic */
+.highlight .il { color: #A5D6FF } /* Literal.Number.Integer.Long */
+.highlight .l-Scalar, .highlight .l-Scalar-Plain { color:#A5D6FF }
+.highlight .p-Indicator { color:#E6EDF3 }
+.highlight .highlight { background: transparent; }
+</style>
+</head>
+<body>
+<button id="menu-btn" type="button" aria-label="目录">&#9776;</button>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="t">DSSAD 云平台 · 运维手册与告警预案</div>
+      <div class="s">docs/ops/DSSAD云平台运维手册与告警预案.md</div>
+    </div>
+    <nav class="toc">
+<div class="toc">
+<ul>
+<li><a href="#1-运维对象与拓扑">1. 运维对象与拓扑</a><ul>
+<li><a href="#11-进程与端口清单">1.1 进程与端口清单</a></li>
+<li><a href="#12-依赖与失败影响">1.2 依赖与失败影响</a></li>
+<li><a href="#13-部署形态">1.3 部署形态</a></li>
+<li><a href="#14-数据流与运维关注点">1.4 数据流与运维关注点</a></li>
+</ul>
+</li>
+<li><a href="#2-日常巡检">2. 日常巡检</a><ul>
+<li><a href="#21-每日约-5-分钟">2.1 每日（约 5 分钟）</a></li>
+<li><a href="#22-每周">2.2 每周</a></li>
+<li><a href="#23-每月">2.3 每月</a></li>
+</ul>
+</li>
+<li><a href="#3-探活模型三层-一层通道">3. 探活模型：三层 + 一层通道</a><ul>
+<li><a href="#31-四个端点的语义分工">3.1 四个端点的语义分工</a></li>
+<li><a href="#32-为什么数据通道不做成-actuator-健康组实测结论勿改回">3.2 为什么数据通道不做成 actuator 健康组（实测结论，勿改回）</a></li>
+<li><a href="#33-通道探针-scriptsmqtt-watchsh">3.3 通道探针 scripts/mqtt-watch.sh</a></li>
+</ul>
+</li>
+<li><a href="#4-监控指标与告警规则">4. 监控指标与告警规则</a><ul>
+<li><a href="#41-指标来源">4.1 指标来源</a></li>
+<li><a href="#42-关键指标与健康区间">4.2 关键指标与健康区间</a></li>
+<li><a href="#43-告警分级">4.3 告警分级</a></li>
+<li><a href="#44-prometheus-抓取与告警规则模板">4.4 Prometheus 抓取与告警规则模板</a></li>
+<li><a href="#45-抑制与防抖">4.5 抑制与防抖</a></li>
+</ul>
+</li>
+<li><a href="#5-应急预案剧本">5. 应急预案（剧本）</a><ul>
+<li><a href="#剧本-o-01mqtt-通道断开收不到车端数据">剧本 O-01：MQTT 通道断开（收不到车端数据）</a></li>
+<li><a href="#剧本-o-02mysql-不可用-主从延迟">剧本 O-02：MySQL 不可用 / 主从延迟</a></li>
+<li><a href="#剧本-o-03redis-不可用l2-降级">剧本 O-03：Redis 不可用（L2 降级）</a></li>
+<li><a href="#剧本-o-04磁盘写满">剧本 O-04：磁盘写满</a></li>
+<li><a href="#剧本-o-05oom-gc-风暴">剧本 O-05：OOM / GC 风暴</a></li>
+<li><a href="#剧本-o-06队列积压与数据丢弃">剧本 O-06：队列积压与数据丢弃</a></li>
+<li><a href="#剧本-o-07监管平台对接失败">剧本 O-07：监管平台对接失败</a></li>
+<li><a href="#剧本-o-08tls-证书过期-nginx-5xx">剧本 O-08：TLS 证书过期 / Nginx 5xx</a></li>
+<li><a href="#剧本-o-09多实例重复执行定时任务">剧本 O-09：多实例重复执行定时任务</a></li>
+</ul>
+</li>
+<li><a href="#6-发布与回滚-sop">6. 发布与回滚 SOP</a><ul>
+<li><a href="#61-发布前检查清单">6.1 发布前检查清单</a></li>
+<li><a href="#62-发布步骤">6.2 发布步骤</a></li>
+<li><a href="#63-回滚">6.3 回滚</a></li>
+<li><a href="#64-ddl-漂移生产启动失败的常见根因">6.4 DDL 漂移（生产启动失败的常见根因）</a></li>
+</ul>
+</li>
+<li><a href="#7-备份与恢复">7. 备份与恢复</a><ul>
+<li><a href="#71-备份对象与频率">7.1 备份对象与频率</a></li>
+<li><a href="#72-mysql-备份与校验">7.2 MySQL 备份与校验</a></li>
+<li><a href="#73-媒体与配置">7.3 媒体与配置</a></li>
+<li><a href="#74-恢复演练每月一次">7.4 恢复演练（每月一次）</a></li>
+</ul>
+</li>
+<li><a href="#8-容量与扩容">8. 容量与扩容</a><ul>
+<li><a href="#81-磁盘预算千车规模">8.1 磁盘预算（千车规模）</a></li>
+<li><a href="#82-连接与并发">8.2 连接与并发</a></li>
+<li><a href="#83-扩容判定与步骤">8.3 扩容判定与步骤</a></li>
+</ul>
+</li>
+<li><a href="#9-值班手册">9. 值班手册</a><ul>
+<li><a href="#91-交接与上报">9.1 交接与上报</a></li>
+<li><a href="#92-常见误判清单">9.2 常见误判清单</a></li>
+<li><a href="#93-复盘">9.3 复盘</a></li>
+</ul>
+</li>
+<li><a href="#10-风险与缺陷清单o-系列">10. 风险与缺陷清单（O 系列）</a></li>
+<li><a href="#附录-a命令速查">附录 A：命令速查</a></li>
+<li><a href="#附录-b日志与排障速查">附录 B：日志与排障速查</a><ul>
+<li><a href="#b1-位置">B.1 位置</a></li>
+<li><a href="#b2-高频排障-grep">B.2 高频排障 grep</a></li>
+<li><a href="#b3-定时任务时刻表多实例下需留意-o-07">B.3 定时任务时刻表（多实例下需留意 O-07）</a></li>
+</ul>
+</li>
+<li><a href="#附录-c配置项速查生产必填">附录 C：配置项速查（生产必填）</a></li>
+<li><a href="#附录-d联系人矩阵模板发布前填写">附录 D：联系人矩阵（模板，发布前填写）</a></li>
+<li><a href="#附录-e变更记录">附录 E：变更记录</a></li>
+</ul>
+</div>
+
+    </nav>
+  </aside>
+  <main class="content">
+    <header class="doc-header">
+      <h1>DSSAD 云平台 · 运维手册与告警预案</h1>
+      <div class="doc-meta">
+        <span>源文件 <code>docs/ops/DSSAD云平台运维手册与告警预案.md</code></span>
+        <span>由 scripts/md2html.py 生成</span>
+      </div>
+    </header>
+    <div class="doc-lead">
+<blockquote>
+<p><strong>文档定位</strong>：把「平台跑起来之后怎么活」讲清楚 —— 巡检什么、看哪个指标、什么情况算故障、
+出故障按哪个剧本处置、怎么发布回滚、怎么备份扩容。</p>
+<p><strong>读者</strong>：一线值班同学、运维工程师、发布责任人、排障时的开发同学。</p>
+<p><strong>配套资产</strong>（都已随代码入库，不是纸面方案）：
+<code>scripts/mqtt-watch.sh</code>（通道探针）、<code>scripts/health.sh</code>（业务冒烟）、
+<code>scripts/run-local.sh</code>（成品包起服与优雅停止）、<code>deploy/</code>（Nginx / systemd / Mosquitto 资产）。</p>
+<p><strong>事实口径</strong>：本文所有阈值、路径、命令、缺陷编号均来自<strong>代码复核或本机实测</strong>。
+无法在本机验证的（真实 Prometheus、真实 MySQL 主从、真实 Nginx、真实 S3）均<strong>显式标注「未验证」</strong>，
+不用「配置看起来对」冒充「已验证」。</p>
+</blockquote>
+</div>
+<hr>
+<h2 id="1-运维对象与拓扑">1. 运维对象与拓扑<a class="headerlink" href="#1-运维对象与拓扑" title="永久链接">#</a></h2>
+<h3 id="11-进程与端口清单">1.1 进程与端口清单<a class="headerlink" href="#11-进程与端口清单" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>组件</th>
+<th>进程/容器</th>
+<th>默认端口</th>
+<th>对外暴露</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>平台后端</td>
+<td><code>dssad-cloud-platform.jar</code>（systemd <code>dssad-cloud-platform</code>）</td>
+<td>8080</td>
+<td><strong>仅内网</strong>（经 Nginx 代理）</td>
+<td>唯一有业务状态的进程</td>
+</tr>
+<tr>
+<td>Nginx</td>
+<td><code>nginx</code></td>
+<td>80 / 443</td>
+<td>公网</td>
+<td>TLS 终止、<code>/api</code> 反代、<code>/actuator/</code> 返 404</td>
+</tr>
+<tr>
+<td>MySQL</td>
+<td><code>mysql</code> / 容器</td>
+<td>3306</td>
+<td><strong>仅内网</strong></td>
+<td>业务数据主库（生产用 8.0.17+）</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td><code>redis</code> / 容器</td>
+<td>6379</td>
+<td><strong>仅内网</strong></td>
+<td>多实例共享：令牌、去重、限流、二级缓存 L2</td>
+</tr>
+<tr>
+<td>MQTT Broker</td>
+<td><code>mosquitto</code> / 第三方</td>
+<td>1883（或 8883）</td>
+<td>视组网</td>
+<td>车端上行 + 平台下行</td>
+</tr>
+<tr>
+<td>SRS（流媒体）</td>
+<td>外部系统</td>
+<td>1935 / 8080</td>
+<td>视组网</td>
+<td>事故取证视频拉流</td>
+</tr>
+<tr>
+<td>媒体存储</td>
+<td>本地盘或对象存储</td>
+<td>—</td>
+<td>经 Nginx <code>/media</code></td>
+<td>文档约定单文件 ≤ 200MB</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>安全基线</strong>：MySQL 与 Redis <strong>不对公网暴露</strong>。生产编排里二者只接 <code>internal: true</code> 的网络，
+应用容器不映射 <code>ports</code> 只 <code>expose</code> —— 否则可绕过 Nginx 与 TLS 直连后端。</p>
+</blockquote>
+<h3 id="12-依赖与失败影响">1.2 依赖与失败影响<a class="headerlink" href="#12-依赖与失败影响" title="永久链接">#</a></h3>
+<p>这张表回答「谁挂了会怎样」，是排障时判断影响面的第一张表：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>依赖</th>
+<th>挂掉后的表现</th>
+<th>平台还能干什么</th>
+<th>分级</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MySQL</strong></td>
+<td>启动阶段直接失败（<code>ddl-auto=validate</code> + 连接失败 fail-fast）；运行中则所有查询与写入报 5xxx/9999</td>
+<td>几乎不能；健康检查仍可能返回 UP</td>
+<td>P0</td>
+</tr>
+<tr>
+<td><strong>Redis</strong></td>
+<td>L2 缓存降级为仅 L1（Caffeine），多实例间令牌/去重/限流不再共享</td>
+<td>单实例可用；多实例会出现「同一辆车重复入库」风险</td>
+<td>P0（多实例）/ P2（单实例）</td>
+</tr>
+<tr>
+<td><strong>MQTT Broker</strong></td>
+<td>「探活全绿但收不到数据」（见 O-01）</td>
+<td>查询类接口完全可用，历史数据可查</td>
+<td>P0</td>
+</tr>
+<tr>
+<td><strong>SRS</strong></td>
+<td>取证视频无法拉流，<code>/accident-media</code> 相关流程报错</td>
+<td>其他功能正常</td>
+<td>P1</td>
+</tr>
+<tr>
+<td><strong>媒体存储盘</strong></td>
+<td>上传失败（<code>STORAGE_ERROR</code> 5003）；轨迹写入不受影响</td>
+<td>业务可用，取证链路断</td>
+<td>P0</td>
+</tr>
+<tr>
+<td><strong>监管平台</strong></td>
+<td>换取 MQTT 密码与上报失败（<code>UPSTREAM_ERROR</code> 5002）；<strong>已连接的 MQTT 不受影响</strong></td>
+<td>本地功能正常，上报积压</td>
+<td>P1</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="13-部署形态">1.3 部署形态<a class="headerlink" href="#13-部署形态" title="永久链接">#</a></h3>
+<p>三种形态的运维命令不同，<strong>别混用</strong>：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>形态</th>
+<th>启动/停止</th>
+<th>看日志</th>
+<th>配置文件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>systemd（推荐）</td>
+<td><code>sudo systemctl start/stop/restart dssad-cloud-platform</code></td>
+<td><code>journalctl -u dssad-cloud-platform -f</code>；文件 <code>/var/log/dssad/dssad-cloud-platform.log</code></td>
+<td><code>/etc/dssad/dssad-cloud-platform.env</code>（<code>chmod 600</code>）</td>
+</tr>
+<tr>
+<td>容器</td>
+<td><code>docker compose -f docker-compose.prod.yml up -d</code> / <code>down</code></td>
+<td><code>docker compose logs -f app</code></td>
+<td><code>.env</code> + compose 的 <code>environment</code></td>
+</tr>
+<tr>
+<td>本机成品包（终验用）</td>
+<td><code>bash scripts/run-local.sh --bg</code> / <code>--stop</code></td>
+<td><code>.run/app-&lt;port&gt;.log</code></td>
+<td>环境变量或命令行参数</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="14-数据流与运维关注点">1.4 数据流与运维关注点<a class="headerlink" href="#14-数据流与运维关注点" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code>flowchart LR
+    V[车端 / 网关] --&gt;|MQTT QoS1| B[Broker]
+    B --&gt; Q[入站队列]
+    Q --&gt; W[消费线程 x4]
+    W --&gt; R{路由}
+    R --&gt;|遥测| T[(轨迹/状态流水&lt;br/&gt;90~180 天)]
+    R --&gt;|事故| A[(事故与取证)]
+    R --&gt;|留痕| L[(报文留痕&lt;br/&gt;180 天)]
+    W --&gt; C[二级缓存]
+    C --&gt; L1[Caffeine L1]
+    C --&gt; L2[(Redis L2)]
+    W --&gt; D[(MySQL)]
+    A --&gt; S[媒体存储 / SRS]
+    P[监控系统] -.-&gt;|探针| H[mqtt-health / health-check]
+    P -.-&gt;|抓取| M[/actuator/prometheus/]
+    P -.-&gt;|深探| X[/api/v1/monitor/mqtt/]
+</code></pre></div>
+
+<p><strong>运维视角的三个关键点</strong>：</p>
+<ol>
+<li><strong>链路是异步的</strong>：车端 → Broker → 队列 → 消费线程 → 库。任何一段卡住，对外表现都是
+   「数据没上来」，但根因完全不同 —— 所以必须能分别看到「连接面 / 管道面 / 数据面」三组指标
+   （平台已经都暴露了，见 4.1）。</li>
+<li><strong>队列积压 ≠ 故障，但丢弃 = 数据永久丢失</strong>。积压时摘实例只会让积压更严重（因为实例不再消费），
+   这是最容易做错的处置动作。</li>
+<li><strong>磁盘是唯一不可逆资源</strong>：轨迹约 14GB/天/千车。保留期与磁盘容量必须对账，
+   否则某天凌晨会以「写入全失败」的形式爆出来。</li>
+</ol>
+<hr>
+<h2 id="2-日常巡检">2. 日常巡检<a class="headerlink" href="#2-日常巡检" title="永久链接">#</a></h2>
+<h3 id="21-每日约-5-分钟">2.1 每日（约 5 分钟）<a class="headerlink" href="#21-每日约-5-分钟" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>动作</th>
+<th>命令</th>
+<th>期望</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>业务冒烟</td>
+<td><code>bash scripts/health.sh --base-url https://域名</code></td>
+<td>14 项通过</td>
+</tr>
+<tr>
+<td>2</td>
+<td>通道探针</td>
+<td><code>bash scripts/mqtt-watch.sh --base-url http://127.0.0.1:8080</code></td>
+<td>退出码 0（<strong>不是 10</strong>）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>通道深探</td>
+<td><code>bash scripts/mqtt-watch.sh --base-url http://127.0.0.1:8080 --deep</code></td>
+<td>退出码 0，无积压无丢弃</td>
+</tr>
+<tr>
+<td>4</td>
+<td>看丢弃计数</td>
+<td>大屏「运维监控」页或 <code>/api/v1/monitor/mqtt</code> 的 <code>inboundDropped</code> 等四项</td>
+<td>全为 0</td>
+</tr>
+<tr>
+<td>5</td>
+<td>看磁盘</td>
+<td><code>df -h /data /var/log</code></td>
+<td><code>/data</code> &lt; 80%</td>
+</tr>
+<tr>
+<td>6</td>
+<td>看错误日志</td>
+<td><code>grep -c ERROR /var/log/dssad/dssad-cloud-platform.log</code></td>
+<td>与昨日同量级（突增才看）</td>
+</tr>
+<tr>
+<td>7</td>
+<td>看清理任务</td>
+<td><code>grep '\[留痕\]|\[保留策略\]' /var/log/dssad/*.log | tail</code></td>
+<td>当日 03:00 / 03:30 各有记录</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="22-每周">2.2 每周<a class="headerlink" href="#22-每周" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>动作</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>通道指标趋势</td>
+<td><code>reconnectAttempts</code> 是否在无人工干预下持续增长（网络不稳或凭据将过期）</td>
+</tr>
+<tr>
+<td>2</td>
+<td>缓存命中率</td>
+<td><code>/api/v1/monitor/cache</code> 的 <code>hitRate</code>，持续低于 50% 说明缓存被穿透（见 4.2）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>连接池</td>
+<td><code>/actuator/prometheus</code> 的 <code>hikaricp_connections_pending</code>，非 0 即排队</td>
+</tr>
+<tr>
+<td>4</td>
+<td>慢查询</td>
+<td>MySQL <code>slow_query_log</code>，重点看 <code>track_point</code>、<code>mqtt_message_log</code> 的写入与大屏聚合查询</td>
+</tr>
+<tr>
+<td>5</td>
+<td>备份可用性</td>
+<td>抽查最近一次全备能否 <code>mysql -e "select count(*) from vehicle"</code> 还原（见第 7 章）</td>
+</tr>
+<tr>
+<td>6</td>
+<td>证书剩余期</td>
+<td><code>openssl s_client -connect 域名:443 2&gt;/dev/null | openssl x509 -noout -dates</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="23-每月">2.3 每月<a class="headerlink" href="#23-每月" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>动作</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>容量对账</td>
+<td>实际日增与 8.1 的预算对比，偏差 &gt; 30% 要查原因（新车接入？采样率被改？）</td>
+</tr>
+<tr>
+<td>2</td>
+<td>恢复演练</td>
+<td>在隔离环境按 7.4 做一次恢复，记录实际 RTO</td>
+</tr>
+<tr>
+<td>3</td>
+<td>保留期复核</td>
+<td>磁盘增长率 × 保留天数 是否仍小于可用空间</td>
+</tr>
+<tr>
+<td>4</td>
+<td>告警有效性</td>
+<td>人为制造一次通道断开（改 Broker 地址重启），确认告警真的响了</td>
+</tr>
+<tr>
+<td>5</td>
+<td>依赖盘点</td>
+<td>监管平台凭据有效期、Broker 证书、SRS 可用性</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>第 4 项最关键</strong>：从不演练的告警等于没有告警。演练方式见 8.3 末尾的「反向探针」。</p>
+</blockquote>
+<hr>
+<h2 id="3-探活模型三层-一层通道">3. 探活模型：三层 + 一层通道<a class="headerlink" href="#3-探活模型三层-一层通道" title="永久链接">#</a></h2>
+<h3 id="31-四个端点的语义分工">3.1 四个端点的语义分工<a class="headerlink" href="#31-四个端点的语义分工" title="永久链接">#</a></h3>
+<p>这是本手册最重要的表 —— <strong>平台刻意把「服务活着」和「数据在流」拆成两个信号</strong>，
+只看前两个就会踩 O-01 的坑。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>端点</th>
+<th>语义</th>
+<th>断链时</th>
+<th>无令牌</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/actuator/health/liveness</code></td>
+<td>进程活着（<strong>不含任何依赖</strong>）</td>
+<td>200 UP</td>
+<td>是</td>
+<td>编排 liveness，失败才重启</td>
+</tr>
+<tr>
+<td><code>/actuator/health/readiness</code></td>
+<td>可以接流量</td>
+<td>200 UP</td>
+<td>是</td>
+<td>编排 readiness，失败摘流</td>
+</tr>
+<tr>
+<td><code>/api/v1/monitor/health-check</code></td>
+<td>服务可用（<strong>刻意不算 MQTT</strong>）</td>
+<td>200 UP，但 <code>mqttConnected:false</code></td>
+<td>是</td>
+<td>负载均衡/业务探活</td>
+</tr>
+<tr>
+<td><code>/api/v1/monitor/mqtt-health</code></td>
+<td><strong>数据通道是否通</strong></td>
+<td><strong>503 DOWN</strong></td>
+<td>是</td>
+<td>监控告警（本手册的核心）</td>
+</tr>
+<tr>
+<td><code>/actuator/health</code>（聚合）</td>
+<td>全部指示器聚合</td>
+<td><strong>仍 200 UP</strong></td>
+<td>是⚠️</td>
+<td>不建议用于判定（见 3.2）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="32-为什么数据通道不做成-actuator-健康组实测结论勿改回">3.2 为什么数据通道<strong>不</strong>做成 actuator 健康组（实测结论，勿改回）<a class="headerlink" href="#32-为什么数据通道不做成-actuator-健康组实测结论勿改回" title="永久链接">#</a></h3>
+<p>最初的设计是把通道做成 <code>HealthIndicator</code> 并挂到 health group <code>mqtt</code>，实测结果是：</p>
+<div class="highlight"><pre><span></span><code>GET /actuator/health/mqtt  →  503  {"status":"DOWN","components":{"mqttChannel":{...}}}
+GET /actuator/health       →  503  {"status":"DOWN","groups":["liveness","mqtt","readiness"]}   ← 副作用
+</code></pre></div>
+
+<p><strong>Spring Boot 的聚合端点始终包含所有已注册的 <code>HealthIndicator</code>，健康组的 <code>include</code> 只能往里加，
+不能把它从聚合里摘出去</strong>（官方文档口径 + 本机实测一致）。后果与设计意图正好相反：</p>
+<ul>
+<li>任何用 <code>/actuator/health</code> 判活的编排/网关会把实例<strong>摘流甚至重启</strong>；</li>
+<li>而 Broker 故障重启应用毫无用处 —— 典型的重启风暴。</li>
+</ul>
+<p>最终方案：通道状态由业务探针端点 <code>/api/v1/monitor/mqtt-health</code> 表达（<code>DOWN</code> → HTTP 503），
+三个好处：
+① 不动聚合端点，liveness/readiness 不受数据通道影响；
+② 该端点天然被 Nginx 的 <code>/api/</code> 规则代理，<strong>不需要为此在 <code>/actuator/</code> 上开洞</strong>
+（生产 Nginx 把 <code>/actuator/</code> 整体 404，这是正确的收敛姿势）；
+③ 与既有业务探针同源，运维只需记一个域名加一条路径。</p>
+<h3 id="33-通道探针-scriptsmqtt-watchsh">3.3 通道探针 <code>scripts/mqtt-watch.sh</code><a class="headerlink" href="#33-通道探针-scriptsmqtt-watchsh" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># 主探针（无凭据，建议每分钟一次）</span>
+bash<span class="w"> </span>scripts/mqtt-watch.sh<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:8080
+
+<span class="c1"># 深度检查（需凭据，建议每 5 分钟一次）：积压与丢弃</span>
+bash<span class="w"> </span>scripts/mqtt-watch.sh<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:8080<span class="w"> </span>--deep<span class="w"> </span>--backlog<span class="w"> </span><span class="m">2000</span>
+
+<span class="c1"># 本地/开发态：未启用 MQTT 属正常</span>
+bash<span class="w"> </span>scripts/mqtt-watch.sh<span class="w"> </span>--allow-disabled
+</code></pre></div>
+
+<p><strong>退出码即故障分类</strong>（不是 Nagios 三段码，映射见 4.3）：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>退出码</th>
+<th>含义</th>
+<th>处置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>正常</td>
+<td>—</td>
+</tr>
+<tr>
+<td>10</td>
+<td>通道未启用（<code>mqtt.enabled=false</code>）</td>
+<td><strong>生产属配置错误</strong>，立即查环境变量</td>
+</tr>
+<tr>
+<td>20</td>
+<td>通道断开 / 凭据致命错误</td>
+<td>剧本 O-01</td>
+</tr>
+<tr>
+<td>30</td>
+<td>队列积压超阈值</td>
+<td>剧本 O-06</td>
+</tr>
+<tr>
+<td>40</td>
+<td><strong>已发生丢弃</strong></td>
+<td>剧本 O-06（最严重，数据不可恢复）</td>
+</tr>
+<tr>
+<td>90</td>
+<td>探针侧问题（不可达/404/鉴权）</td>
+<td>先确认是不是监控配置或版本不对</td>
+</tr>
+<tr>
+<td>91</td>
+<td>参数错误</td>
+<td>修脚本调用</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>机器可读输出</strong>（便于 Zabbix/自定义采集器正则提取）：</p>
+<div class="highlight"><pre><span></span><code>MQTT_WATCH base=http://127.0.0.1:8080 status=DOWN state=RECONNECTING reconnect=2 \
+  inbound=0 offline=0 pendingAck=0 dropped=0 threshold=5000 reason=channel-down result=channel-down
+</code></pre></div>
+
+<p><strong>cron 示例</strong>（每分钟主探针，每 5 分钟深探，输出进 syslog 便于和告警平台对接）：</p>
+<div class="highlight"><pre><span></span><code>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>/opt/dssad/scripts/mqtt-watch.sh<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:8080<span class="w"> </span>--quiet<span class="w"> </span><span class="o">||</span><span class="w"> </span>logger<span class="w"> </span>-t<span class="w"> </span>mqtt-watch<span class="w"> </span><span class="s2">"exit=</span><span class="nv">$?</span><span class="s2">"</span>
+*/5<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>/opt/dssad/scripts/mqtt-watch.sh<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:8080<span class="w"> </span>--deep<span class="w"> </span>--quiet<span class="w"> </span>--password<span class="w"> </span><span class="s2">"</span><span class="nv">$DSSAD_ADMIN_PASSWORD</span><span class="s2">"</span><span class="w"> </span><span class="o">||</span><span class="w"> </span>logger<span class="w"> </span>-t<span class="w"> </span>mqtt-watch<span class="w"> </span><span class="s2">"deep exit=</span><span class="nv">$?</span><span class="s2">"</span>
+</code></pre></div>
+
+<blockquote>
+<p>探针<strong>无状态</strong>：不在本地记「连续失败几次」。防抖动交给告警平台的持续时长/连续次数
+（Prometheus <code>for: 2m</code>、Zabbix trigger 连续 3 次）。写进脚本只会多一份需要同步维护的隐藏状态。</p>
+</blockquote>
+<hr>
+<h2 id="4-监控指标与告警规则">4. 监控指标与告警规则<a class="headerlink" href="#4-监控指标与告警规则" title="永久链接">#</a></h2>
+<h3 id="41-指标来源">4.1 指标来源<a class="headerlink" href="#41-指标来源" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>来源</th>
+<th>内容</th>
+<th>鉴权</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/actuator/prometheus</code></td>
+<td>JVM、HTTP、连接池、GC（78 个 HELP 指标）</td>
+<td>无（Nginx 已 404）</td>
+<td>需在<strong>内网</strong>直连 8080 抓取，或按需放行该路径</td>
+</tr>
+<tr>
+<td><code>/actuator/metrics/&lt;name&gt;</code></td>
+<td>单指标查询，排障用</td>
+<td>无（同上）</td>
+<td>不建议监控系统依赖</td>
+</tr>
+<tr>
+<td><code>/api/v1/monitor/mqtt</code></td>
+<td>连接面 + 管道面 + 数据面全部计数</td>
+<td><strong>需令牌</strong></td>
+<td>深探与排障主入口</td>
+</tr>
+<tr>
+<td><code>/api/v1/monitor/mqtt-health</code></td>
+<td>通道状态（粗粒度）</td>
+<td>无</td>
+<td>告警主信号</td>
+</tr>
+<tr>
+<td><code>/api/v1/monitor/cache</code></td>
+<td>各级命中率、限流配置</td>
+<td>需令牌</td>
+<td>缓存穿透的唯一可见入口</td>
+</tr>
+<tr>
+<td><code>/api/v1/dashboard/overview</code></td>
+<td>业务大盘（车辆、事故、任务）</td>
+<td>需令牌</td>
+<td>业务侧趋势</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="42-关键指标与健康区间">4.2 关键指标与健康区间<a class="headerlink" href="#42-关键指标与健康区间" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>来源</th>
+<th>正常</th>
+<th>告警阈值</th>
+<th>为什么这个阈值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>status</code></td>
+<td>mqtt-health</td>
+<td>UP</td>
+<td>DOWN 持续 2 分钟</td>
+<td>指数退避重连（2s→60s）下，短闪断常态，2 分钟可滤掉抖动</td>
+</tr>
+<tr>
+<td><code>droppedTotal</code></td>
+<td>mqtt</td>
+<td>0</td>
+<td><strong>&gt; 0</strong></td>
+<td>丢弃不可恢复，一次即告警</td>
+</tr>
+<tr>
+<td><code>inboundQueueSize + offlineQueueSize</code></td>
+<td>mqtt</td>
+<td>&lt; 1000</td>
+<td>&gt; 5000 持续 5 分钟</td>
+<td>离线队列上限 10000；过半说明消费跟不上</td>
+</tr>
+<tr>
+<td><code>pendingAck</code></td>
+<td>mqtt</td>
+<td>&lt; 100</td>
+<td>&gt; 500</td>
+<td>待确认堆积说明下行或对端有问题</td>
+</tr>
+<tr>
+<td><code>reconnectAttempts</code></td>
+<td>mqtt-health</td>
+<td>波动</td>
+<td>10 分钟内持续增长</td>
+<td>持续增长 = 从未连上，常见原因是凭据过期</td>
+</tr>
+<tr>
+<td><code>hikaricp_connections_pending</code></td>
+<td>prometheus</td>
+<td>0</td>
+<td>&gt; 0 持续 1 分钟</td>
+<td>池上限 20；一旦排队，请求会在 3s 后大批失败</td>
+</tr>
+<tr>
+<td><code>http_server_requests_seconds_count{outcome="SERVER_ERROR"}</code></td>
+<td>prometheus</td>
+<td>&lt; 0.1%</td>
+<td>&gt; 1% 持续 5 分钟</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>jvm_memory_used_bytes{area="heap"}</code> 老年代占比</td>
+<td>prometheus</td>
+<td>&lt; 75%</td>
+<td>&gt; 85% 持续 10 分钟</td>
+<td>配合 <code>-Xmx4g</code>，逼近上限会引发 GC 风暴</td>
+</tr>
+<tr>
+<td><code>hitRate</code></td>
+<td>cache</td>
+<td>70%~95%</td>
+<td>&lt; 50% 持续 10 分钟</td>
+<td>生产 TTL 30s/60s 的真实预期区间（<strong>不是</strong>压测里的 99.86%）</td>
+</tr>
+<tr>
+<td>同盘可用空间</td>
+<td>node_exporter / df</td>
+<td>&gt; 20%</td>
+<td>&lt; 15%（<code>/data</code>）</td>
+<td>轨迹约 14GB/天/千车，见 8.1</td>
+</tr>
+<tr>
+<td>定时任务日志</td>
+<td>日志</td>
+<td>每日有</td>
+<td>24h 无记录</td>
+<td>清理任务停摆 → 磁盘失控</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="43-告警分级">4.3 告警分级<a class="headerlink" href="#43-告警分级" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>级别</th>
+<th>判定</th>
+<th>响应</th>
+<th>通知</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>P0</strong></td>
+<td>数据通道断 / 数据丢弃 / 主库不可用 / 磁盘将满</td>
+<td>15 分钟内响应，2 小时内恢复或降级</td>
+<td>电话 + 群</td>
+<td><code>status=DOWN</code>、<code>droppedTotal&gt;0</code>、<code>/data</code> &lt; 5%</td>
+</tr>
+<tr>
+<td><strong>P1</strong></td>
+<td>功能受损但数据未丢 / 缓存或连接池异常</td>
+<td>1 小时内响应，当日解决</td>
+<td>群 + 邮件</td>
+<td>积压超阈、命中率骤降、SRS 不可用、上报失败</td>
+</tr>
+<tr>
+<td><strong>P2</strong></td>
+<td>趋势性风险 / 可自愈</td>
+<td>次日处理</td>
+<td>邮件/工单</td>
+<td>证书 30 天内到期、命中率缓慢下降、日志盘 &gt; 80%</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>分级与退出码映射</strong>：<code>20</code>/<code>40</code> → P0；<code>30</code> → P1；<code>10</code> → 生产 P0、开发忽略；<code>90</code> → P2（先查监控自身）。</p>
+<h3 id="44-prometheus-抓取与告警规则模板">4.4 Prometheus 抓取与告警规则模板<a class="headerlink" href="#44-prometheus-抓取与告警规则模板" title="永久链接">#</a></h3>
+<blockquote>
+<p>⚠️ <strong>未验证声明</strong>：本机无 Prometheus/promtool，本节规则<strong>未经真实 Prometheus 校验</strong>（语法仅供参考）。
+落地前请用 <code>promtool check rules</code> 校验，并在预发环境跑通一次静默告警。</p>
+</blockquote>
+<p>抓取配置（<code>scrape_configs</code>，抓的是内网 8080，不经 Nginx）：</p>
+<div class="highlight"><pre><span></span><code><span class="nt">scrape_configs</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dssad-app</span>
+<span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/actuator/prometheus</span>
+<span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"10.0.0.11:8080"</span><span class="p p-Indicator">]</span><span class="w">     </span><span class="c1"># 直连后端，勿走 Nginx（/actuator/ 已 404）</span>
+<span class="w">    </span><span class="nt">relabel_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">__address__</span><span class="p p-Indicator">]</span>
+<span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">instance</span>
+</code></pre></div>
+
+<p>告警规则（<code>dssad-alerts.yml</code>）：</p>
+<div class="highlight"><pre><span></span><code><span class="nt">groups</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dssad-platform</span>
+<span class="w">    </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">      </span><span class="c1"># ---- 数据通道：探针端点（HTTP 503），blackbox 或自研 exporter ----</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DssadMqttChannelDown</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">probe_success{job="dssad-mqtt-probe"} == 0</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2m</span><span class="w">                                </span><span class="c1"># 滤掉指数退避下的短闪断</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> severity</span><span class="p">:</span><span class="w"> </span><span class="nv">P0</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">"DSSAD</span><span class="nv"> </span><span class="s">数据通道断开（收不到车端数据）"</span>
+<span class="w">          </span><span class="nt">runbook</span><span class="p">:</span><span class="w"> </span><span class="s">"运维手册</span><span class="nv"> </span><span class="s">剧本</span><span class="nv"> </span><span class="s">O-01"</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DssadMqttDisabledInProd</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">probe_http_status_code{job="dssad-mqtt-probe"} == 200</span>
+<span class="w">              </span><span class="l l-Scalar l-Scalar-Plain">and on(instance) probe_dssad_mqtt_disabled == 1</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> severity</span><span class="p">:</span><span class="w"> </span><span class="nv">P0</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">"生产环境</span><span class="nv"> </span><span class="s">MQTT</span><span class="nv"> </span><span class="s">未启用（配置错误，平台收不到任何数据）"</span>
+
+<span class="w">      </span><span class="c1"># ---- 应用内指标（micrometer，经 /actuator/prometheus） ----</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DssadDbPoolSaturated</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hikaricp_connections_pending{pool="dssad-hikari"} &gt; 0</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> severity</span><span class="p">:</span><span class="w"> </span><span class="nv">P0</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">"数据库连接池已排队（池上限</span><span class="nv"> </span><span class="s">20，请求将在</span><span class="nv"> </span><span class="s">3s</span><span class="nv"> </span><span class="s">后失败）"</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DssadHttpServerErrors</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">sum(rate(http_server_requests_seconds_count{outcome="SERVER_ERROR"}[5m]))</span>
+<span class="w">            </span><span class="no">/ sum(rate(http_server_requests_seconds_count[5m])) &gt; 0.01</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> severity</span><span class="p">:</span><span class="w"> </span><span class="nv">P1</span><span class="w"> </span><span class="p p-Indicator">}</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DssadHeapPressure</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">sum(jvm_memory_used_bytes{area="heap"}) / sum(jvm_memory_max_bytes{area="heap"}) &gt; 0.85</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> severity</span><span class="p">:</span><span class="w"> </span><span class="nv">P1</span><span class="w"> </span><span class="p p-Indicator">}</span>
+
+<span class="w">      </span><span class="c1"># ---- 依赖与主机（node_exporter / mysqld_exporter） ----</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DssadMediaDiskFilling</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">(node_filesystem_avail_bytes{mountpoint="/data"} / node_filesystem_size_bytes{mountpoint="/data"}) &lt; 0.15</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> severity</span><span class="p">:</span><span class="w"> </span><span class="nv">P1</span><span class="w"> </span><span class="p p-Indicator">}</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DssadMysqlReplicationLag</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mysql_slave_status_seconds_behind_master &gt; 30</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> severity</span><span class="p">:</span><span class="w"> </span><span class="nv">P1</span><span class="w"> </span><span class="p p-Indicator">}</span>
+</code></pre></div>
+
+<p><strong>业务计数（积压/丢弃）为什么不在上面</strong>：它们是应用内的计数器，<strong>没有导出为 Prometheus 指标</strong>，
+因此只能通过 <code>mqtt-watch.sh --deep</code> 采集。两种落地方式：</p>
+<ol>
+<li>用 textfile collector 落盘（推荐，见下方脚本片段）；</li>
+<li>或把 MQTT 通道计数补成 micrometer 指标（改动代码，当前未做）。</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># /etc/cron.d/dssad-metrics —— 每分钟生成 textfile 指标，node_exporter 的 textfile collector 会抓走</span>
+*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>root<span class="w"> </span>/opt/dssad/scripts/mqtt-watch-export.sh<span class="w"> </span>&gt;<span class="w"> </span>/var/lib/node_exporter/textfile/dssad_mqtt.prom
+</code></pre></div>
+
+<blockquote>
+<p><code>mqtt-watch-export.sh</code> <strong>本手册未提供</strong>（属待补资产，见 10. 缺陷清单 O-05）：
+它的实现要点是把 <code>mqtt-watch.sh --json</code> 的输出转成
+<code>dssad_mqtt_queue_size{kind="inbound"} 0</code> 这类文本行，并在探针失败时输出 <code>dssad_mqtt_probe_success 0</code>。</p>
+</blockquote>
+<h3 id="45-抑制与防抖">4.5 抑制与防抖<a class="headerlink" href="#45-抑制与防抖" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>处理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Broker 维护窗口</td>
+<td>提前静默 <code>DssadMqttChannelDown</code>，窗口结束后确认恢复</td>
+</tr>
+<tr>
+<td>DB 主从切换</td>
+<td>抑制从库延迟告警，只留主库判定</td>
+</tr>
+<tr>
+<td>发布期间</td>
+<td>发布前静默 5 分钟，发布后立即手动跑一次 <code>health.sh</code> + <code>mqtt-watch.sh</code></td>
+</tr>
+<tr>
+<td>清理窗口（03:00–04:00）</td>
+<td>抑制由磁盘 IO / 慢查询引发的 P1（此时批量删除会持续占用 IO，属预期）</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="5-应急预案剧本">5. 应急预案（剧本）<a class="headerlink" href="#5-应急预案剧本" title="永久链接">#</a></h2>
+<p>剧本格式统一为：<strong>现象 → 判定（怎么确认是它） → 处置（按顺序做） → 验证（怎么算恢复了） → 易误判</strong>。</p>
+<h3 id="剧本-o-01mqtt-通道断开收不到车端数据">剧本 O-01：MQTT 通道断开（收不到车端数据）<a class="headerlink" href="#剧本-o-01mqtt-通道断开收不到车端数据" title="永久链接">#</a></h3>
+<ul>
+<li><strong>现象</strong>：面板车辆全部置灰或数据不更新；<code>mqtt-watch.sh</code> 退出码 20；<code>/api/v1/monitor/mqtt-health</code> 返回 503。</li>
+<li><strong>判定</strong>：</li>
+</ul>
+<div class="highlight"><pre><span></span><code>bash<span class="w"> </span>scripts/mqtt-watch.sh<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:8080<span class="w">        </span><span class="c1"># 得到 state 与 reason</span>
+grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"\[MQTT\]"</span><span class="w"> </span>/var/log/dssad/dssad-cloud-platform.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-20
+</code></pre></div>
+
+<p>看 <code>reason</code> 分两条完全不同的路：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>reason</th>
+<th>含义</th>
+<th>处置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>channel-down</code></td>
+<td>网络/Broker 问题，应用在按 2s→60s 指数退避重连</td>
+<td>① 查 Broker 进程与 1883 连通性 <code>telnet broker 1883</code>；② 查网络策略/防火墙；③ 查 Broker 是否限流踢客户端（clientId 冲突也会导致互踢，见易误判）</td>
+</tr>
+<tr>
+<td><code>credentials-or-config-failed</code></td>
+<td>凭据换取失败等<strong>致命</strong>错误，重连不会自愈</td>
+<td>① 查监管平台可达性；② 查企业凭据有效期；③ 修正配置后<strong>必须重启</strong>（状态已置 FAILED）</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>验证</strong>：探针退出码回到 0，且 <code>reconnect=0</code> 之后不再增长；在面板上看到车辆数据更新。</li>
+<li><strong>易误判</strong>：</li>
+<li><code>health-check</code> 仍返回 200 是<strong>设计如此</strong>，不代表通道正常（这正是 O-01 要解决的问题）；</li>
+<li>日志里 <code>[MQTT] 未取得 MQTT 密码且无静态配置，将以匿名方式连接</code> 说明凭据链路先挂了，
+    匿名连接在多数 Broker 上会被拒 —— 先修凭据，别急着查网络；</li>
+<li><strong>clientId 冲突</strong>：两个实例用同一 <code>clientId</code> 会互相踢线，表现为「连上又断」无限循环。
+    多实例部署必须保证 <code>clientId</code> 唯一（<code>dssad.mqtt.client-id-prefix</code> + 实例标识）。</li>
+</ul>
+<h3 id="剧本-o-02mysql-不可用-主从延迟">剧本 O-02：MySQL 不可用 / 主从延迟<a class="headerlink" href="#剧本-o-02mysql-不可用-主从延迟" title="永久链接">#</a></h3>
+<ul>
+<li><strong>现象</strong>：接口大面积 5xxx/9999；日志大量 <code>Communications link failure</code>；连接池 pending 持续 &gt; 0。</li>
+<li><strong>判定</strong>：</li>
+</ul>
+<div class="highlight"><pre><span></span><code>mysqladmin<span class="w"> </span>-h<span class="w"> </span><span class="nv">$DB_HOST</span><span class="w"> </span>-u<span class="w"> </span><span class="nv">$DB_USERNAME</span><span class="w"> </span>-p<span class="w"> </span>ping
+mysql<span class="w"> </span>-h<span class="w"> </span><span class="nv">$DB_HOST</span><span class="w"> </span>-u<span class="w"> </span><span class="nv">$DB_USERNAME</span><span class="w"> </span>-p<span class="w"> </span>-e<span class="w"> </span><span class="s2">"show slave status\G"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"Running|Behind"</span>
+grep<span class="w"> </span>-cE<span class="w"> </span><span class="s2">"Communications link failure|Connection is not available"</span><span class="w"> </span>/var/log/dssad/*.log
+</code></pre></div>
+
+<ul>
+<li><strong>处置顺序</strong>（<strong>先止血再找根因</strong>）：</li>
+<li>确认是主库还是从库；从库延迟只影响读一致性，把读流量切主库可缓解（本平台未做读写分离，通常忽略）；</li>
+<li>主库不可用：等待 DB 侧恢复（重启/切换），<strong>不要重启应用</strong> —— 应用会自动重连，重启只会丢掉内存中的在途批量（会以「少量轨迹点丢失」的形式出现）；</li>
+<li>恢复后确认离线队列与在途批量是否已落库（看 <code>droppedTotal</code> 与 <code>trackPointsPersisted</code> 是否继续增长）。</li>
+<li><strong>验证</strong>：<code>health.sh</code> 14 项通过；<code>hikaricp_connections_pending</code> 归零。</li>
+<li><strong>易误判</strong>：连接池 <code>connection-timeout: 3000</code>（3 秒）很短 —— DB 抖动时表现为 <strong>3 秒后大批 500</strong>，
+  而不是「慢慢超时」。看到大量 3 秒整的请求耗时，直接去看 DB，不用怀疑代码。</li>
+</ul>
+<h3 id="剧本-o-03redis-不可用l2-降级">剧本 O-03：Redis 不可用（L2 降级）<a class="headerlink" href="#剧本-o-03redis-不可用l2-降级" title="永久链接">#</a></h3>
+<ul>
+<li><strong>现象</strong>：单实例仍可用；多实例下出现「同一报文重复入库」或令牌校验异常；<code>/api/v1/monitor/cache</code> 的
+  <code>mode</code> 从 <code>L1(Caffeine)+L2(Redis)</code> 变成只剩 L1。</li>
+<li><strong>判定</strong>：<code>redis-cli -h $REDIS_HOST -a $REDIS_PASSWORD ping</code> → 期望 <code>PONG</code>。</li>
+<li><strong>处置</strong>：</li>
+<li>单实例：可继续服务，按 P2 处理，但<strong>必须</strong>尽快恢复 —— L2 承担跨实例一致性；</li>
+<li>多实例：<strong>立即摘除非必要实例</strong>（只保留一个）或整体切到单实例模式，避免重复入库污染监管数据；</li>
+<li>Redis 数据丢失后无需数据修复，但需确认去重窗口已重建（新的报文开始正常入库）。</li>
+<li><strong>验证</strong>：<code>cache</code> 接口的 <code>mode</code> 恢复双级；观察 5 分钟无重复记录（按 <code>msgId</code> 去重命中数是间接证据）。</li>
+<li><strong>易误判</strong>：Redis 恢复后<strong>旧令牌全部失效</strong>（令牌默认存 Redis）→ 前端表现为突然全部要求重新登录，
+  这是预期行为，不是新故障。</li>
+</ul>
+<h3 id="剧本-o-04磁盘写满">剧本 O-04：磁盘写满<a class="headerlink" href="#剧本-o-04磁盘写满" title="永久链接">#</a></h3>
+<ul>
+<li><strong>现象</strong>：媒体上传报 5003；日志刷 <code>No space left on device</code>；MySQL 可能进入只读。</li>
+<li><strong>判定</strong>：</li>
+</ul>
+<div class="highlight"><pre><span></span><code>df<span class="w"> </span>-h<span class="w"> </span>/data<span class="w"> </span>/var/log<span class="w"> </span>/var/lib/mysql
+du<span class="w"> </span>-sh<span class="w"> </span>/data/dssad/media<span class="w"> </span>/var/log/dssad<span class="w">          </span><span class="c1"># 谁在吃空间</span>
+du<span class="w"> </span>-sh<span class="w"> </span>/var/lib/mysql/dssad_cloud<span class="w">                </span><span class="c1"># 哪个库/表最大</span>
+</code></pre></div>
+
+<ul>
+<li><strong>处置</strong>（按恢复速度排序）：</li>
+<li><strong>日志先救急</strong>（最安全）：<code>journalctl --vacuum-size=500M</code>；确认 <code>logback</code> 滚动已生效
+     （<code>max-file-size: 200MB</code> / <code>max-history: 30</code> / <code>total-size-cap: 10GB</code>）；</li>
+<li><strong>媒体文件</strong>：按取证保留要求清理最老的归档（<strong>先确认已备份/已上报，再删</strong>）；</li>
+<li><strong>遥测流水</strong>：手动触发保留策略清理，或临时调小 <code>DSSAD_TRACK_RETENTION_DAYS</code>；</li>
+<li>MySQL binlog：确认已有备份后 <code>PURGE BINARY LOGS BEFORE ...</code>。</li>
+<li><strong>验证</strong>：可用空间恢复到 20% 以上；上传恢复正常；MySQL 可写。</li>
+<li><strong>易误判</strong>：</li>
+<li><strong>不要</strong>先删数据表（<code>TRUNCATE</code> 不可回滚，且监管取证要求保留期内数据不可删）；</li>
+<li>清理窗口是 03:00（留痕）与 03:30（遥测），单批 5000 行 —— 磁盘告警在窗口前最紧张，
+    窗口后回落属预期，别当成两起故障。</li>
+</ul>
+<h3 id="剧本-o-05oom-gc-风暴">剧本 O-05：OOM / GC 风暴<a class="headerlink" href="#剧本-o-05oom-gc-风暴" title="永久链接">#</a></h3>
+<ul>
+<li><strong>现象</strong>：进程被 systemd 重启（<code>Restart=on-failure</code>）；<code>/var/log/dssad/heapdump.hprof</code> 出现；
+  接口 P50 明显上升。</li>
+<li><strong>判定</strong>：</li>
+</ul>
+<div class="highlight"><pre><span></span><code>journalctl<span class="w"> </span>-u<span class="w"> </span>dssad-cloud-platform<span class="w"> </span>--since<span class="w"> </span><span class="s2">"1 hour ago"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-iE<span class="w"> </span><span class="s2">"oom|killed|exit"</span>
+ls<span class="w"> </span>-lh<span class="w"> </span>/var/log/dssad/heapdump.hprof
+curl<span class="w"> </span>-s<span class="w"> </span>--noproxy<span class="w"> </span><span class="s1">'*'</span><span class="w"> </span>http://127.0.0.1:8080/actuator/prometheus<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"^jvm_gc|^jvm_memory_used_bytes"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head
+</code></pre></div>
+
+<ul>
+<li><strong>处置</strong>：</li>
+<li>保留 heapdump 再重启（默认参数已指向 <code>/var/log/dssad</code>）；</li>
+<li>检查是否发生「大批量查询把整表拉进内存」——看请求日志里有没有 <code>size</code> 很大的分页（接口限了 <code>max-page-size</code>，但导出类接口需单独确认）；</li>
+<li>检查 <code>offlineCacheSize</code>（默认 10000）在长时间断链时是否被填满（这是设计内的内存占用，但会叠加）；</li>
+<li>若为长期增长 → 属泄漏，需带 heapdump 走开发流程，<strong>不要</strong>只调大 Xmx 了事。</li>
+<li><strong>验证</strong>：重启后 10 分钟内 GC 暂停恢复正常；<code>jvm_memory_used_bytes</code> 呈锯齿而非持续攀升。</li>
+<li><strong>易误判</strong>：<code>systemd</code> 的 <code>Restart=on-failure</code> 会让 OOM 表现为「服务自己好了」，掩盖问题 ——
+  必须看 <code>journalctl</code> 的退出码，<code>kill -9</code>/OOM 的退出码是 137。</li>
+</ul>
+<h3 id="剧本-o-06队列积压与数据丢弃">剧本 O-06：队列积压与数据丢弃<a class="headerlink" href="#剧本-o-06队列积压与数据丢弃" title="永久链接">#</a></h3>
+<ul>
+<li><strong>现象</strong>：<code>mqtt-watch.sh</code> 退出码 30（积压）或 40（丢弃）；<code>inboundQueueSize</code> 持续增长。</li>
+<li><strong>判定</strong>：</li>
+</ul>
+<div class="highlight"><pre><span></span><code>bash<span class="w"> </span>scripts/mqtt-watch.sh<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:8080<span class="w"> </span>--deep<span class="w"> </span>--json
+curl<span class="w"> </span>-s<span class="w"> </span>--noproxy<span class="w"> </span><span class="s1">'*'</span><span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Token: </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span>http://127.0.0.1:8080/api/v1/monitor/mqtt
+</code></pre></div>
+
+<p>区分两种根因：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>特征</th>
+<th>根因</th>
+<th>处置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>connected=true</code> 且积压增长</td>
+<td>消费跟不上（慢 SQL / 磁盘慢 / 线程不够）</td>
+<td>查慢查询与磁盘 IO；必要时调 <code>consumerThreads</code>（默认 4）或扩容实例</td>
+</tr>
+<tr>
+<td><code>connected</code> 反复 true/false</td>
+<td>通道抖动导致反复重连，重连期间消费停滞</td>
+<td>按 O-01 处理通道</td>
+</tr>
+<tr>
+<td>已出现 <code>droppedTotal &gt; 0</code></td>
+<td>上游已按超时重发过，<strong>数据有断档</strong></td>
+<td>① 记录丢弃量与时间窗；② 通知业务方该时段数据不完整；③ 评估是否触发对端补传</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>验证</strong>：积压在 10 分钟内回落到阈值以下；<code>droppedTotal</code> 不再增长。</li>
+<li><strong>易误判</strong>：</li>
+<li><strong>摘实例不会缓解积压</strong>，只会让剩下的实例压力更大（消费端水平扩展才有效）；</li>
+<li>低优先级数据是被<strong>故意</strong>丢弃的（<code>offlineDroppedLowPriority</code>），它是设计内的取舍，
+    但<strong>必须告警</strong> —— 因为它意味着「已经发生过一次数据缺失」，只是丢的不是关键数据。</li>
+</ul>
+<h3 id="剧本-o-07监管平台对接失败">剧本 O-07：监管平台对接失败<a class="headerlink" href="#剧本-o-07监管平台对接失败" title="永久链接">#</a></h3>
+<ul>
+<li><strong>现象</strong>：<code>UPSTREAM_ERROR</code> 5002；日志 <code>[监管平台] 调用失败 path=...</code>。</li>
+<li><strong>判定</strong>：<code>curl -sS -o /dev/null -w '%{http_code}\n' $DSSAD_REGULATORY_BASE_URL/passport/...</code>。</li>
+<li><strong>处置</strong>：</li>
+<li>确认对端是否公告维护；</li>
+<li>检查平台侧凭据（企业 ID / 密钥）是否被更换或过期；</li>
+<li>上报类失败会在重试机制内自愈（<code>Retry</code> 配置：确认 5s×3 次、无效 3s×5 次），
+     不必人工重放；<strong>换取 MQTT 密码失败</strong>则会影响通道，按 O-01 处理。</li>
+<li><strong>验证</strong>：日志不再出现 5002；MQTT 通道状态稳定。</li>
+<li><strong>易误判</strong>：<code>换取 MQTT 密码失败</code> 的日志是 <code>ERROR</code> 级别但<strong>通道可能仍正常</strong>（已连接的会话不受影响），
+  不要仅凭一条 ERROR 就重启服务 —— 重启会真的把连接断掉。</li>
+</ul>
+<h3 id="剧本-o-08tls-证书过期-nginx-5xx">剧本 O-08：TLS 证书过期 / Nginx 5xx<a class="headerlink" href="#剧本-o-08tls-证书过期-nginx-5xx" title="永久链接">#</a></h3>
+<ul>
+<li><strong>现象</strong>：浏览器证书告警；接口 502/504。</li>
+<li><strong>判定</strong>：</li>
+</ul>
+<div class="highlight"><pre><span></span><code>openssl<span class="w"> </span>s_client<span class="w"> </span>-connect<span class="w"> </span>域名:443<span class="w"> </span>-servername<span class="w"> </span>域名<span class="w"> </span>&lt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="p">|</span><span class="w"> </span>openssl<span class="w"> </span>x509<span class="w"> </span>-noout<span class="w"> </span>-dates
+nginx<span class="w"> </span>-t<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>tail<span class="w"> </span>-50<span class="w"> </span>/var/log/nginx/error.log
+curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'%{http_code}\n'</span><span class="w"> </span>--noproxy<span class="w"> </span><span class="s1">'*'</span><span class="w"> </span>http://127.0.0.1:8080/api/v1/monitor/health-check<span class="w">   </span><span class="c1"># 后端本身是否活着</span>
+</code></pre></div>
+
+<ul>
+<li><strong>处置</strong>：</li>
+<li>证书：替换后 <code>nginx -s reload</code>（<strong>必须确认新证书文件已存在且权限可读</strong>，否则 reload 失败而旧进程继续跑，
+     表现为「换了证书但网站打不开」）；</li>
+<li>502：后端未起来或端口不对 → 先直连 8080 确认，再查 Nginx <code>proxy_pass</code>；</li>
+<li>504：看 <code>proxy_read_timeout 120s</code> 是否被长查询突破（大屏跨月聚合是常见触发点），
+     确认是慢查询就优化查询而不是无限加大超时。</li>
+<li><strong>验证</strong>：<code>curl -I https://域名/</code> 返回 200；证书日期已更新。</li>
+<li><strong>易误判</strong>：Nginx 配置错误时 <code>nginx -t</code> <strong>不报错但 reload 不生效</strong>的情况多见于证书缺失 ——
+  始终用 <code>curl</code> 端到端验证，而不是只看 <code>nginx -t</code> 的结果。</li>
+</ul>
+<h3 id="剧本-o-09多实例重复执行定时任务">剧本 O-09：多实例重复执行定时任务<a class="headerlink" href="#剧本-o-09多实例重复执行定时任务" title="永久链接">#</a></h3>
+<ul>
+<li><strong>现象</strong>：清理任务日志在同一时刻出现多份；<code>MapBarrierService</code> 的每日任务重复执行。</li>
+<li><strong>背景</strong>：平台有 5 个 <code>@Scheduled</code> 任务（见附录 B.3），其中遥测刷新与 ACK 重试是秒级的、
+  只应在<strong>单实例</strong>语义下运行；当前<strong>没有分布式锁</strong>（缺陷 P-01）。</li>
+<li><strong>处置</strong>：</li>
+<li>多实例部署时，用部署层规避：把秒级任务（<code>fixedDelay=1s</code> 的遥测刷新与 ACK 重试）
+     限制为<strong>只在「主实例」开启</strong>（通过环境变量注入一个「是否启用定时任务」的开关，
+     当前代码未提供该开关 → 属待补能力）；</li>
+<li>或接受「多实例重复执行」并保证任务幂等（清理任务天然幂等；ACK 重试需确认不会重复下发）。</li>
+<li><strong>验证</strong>：同一时刻仅一个实例输出任务日志。</li>
+<li><strong>易误判</strong>：清理任务重复执行的<strong>后果不严重</strong>（幂等），但 ACK 重试重复执行可能导致<strong>重复下行</strong>，
+  需要重点确认。</li>
+</ul>
+<hr>
+<h2 id="6-发布与回滚-sop">6. 发布与回滚 SOP<a class="headerlink" href="#6-发布与回滚-sop" title="永久链接">#</a></h2>
+<h3 id="61-发布前检查清单">6.1 发布前检查清单<a class="headerlink" href="#61-发布前检查清单" title="永久链接">#</a></h3>
+<ul>
+<li class="task"><span class="cb"></span><code>bash scripts/check-env.sh</code> 通过（环境问题会伪装成代码问题）</li>
+<li class="task"><span class="cb"></span><code>mvn verify</code> 通过（含覆盖率门槛 0.60，实测 <code>All coverage checks have been met</code>）</li>
+<li class="task"><span class="cb"></span>若实体有改动：<code>db/schema-mysql.sql</code> 已同步（<strong>不同步 → 生产启动直接失败</strong>，见 6.4）</li>
+<li class="task"><span class="cb"></span>已在<strong>隔离环境</strong>用 prod profile + 真实 MySQL 起过一次（<code>scripts/run-local.sh --prod</code>）</li>
+<li class="task"><span class="cb"></span>数据库已备份（见 7.2）</li>
+<li class="task"><span class="cb"></span>发布窗口避开 03:00–04:00 清理窗口</li>
+<li class="task"><span class="cb"></span>告警静默已开，回滚负责人已确定</li>
+<li class="task"><span class="cb"></span><code>DSSAD_ADMIN_PASSWORD</code> 等密钥已在配置中覆盖（不能是开发默认口令）</li>
+</ul>
+<h3 id="62-发布步骤">6.2 发布步骤<a class="headerlink" href="#62-发布步骤" title="永久链接">#</a></h3>
+<p><strong>systemd 形态（推荐）</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. 上传新 jar 到临时名，避免覆盖正在运行的包</span>
+scp<span class="w"> </span>target/dssad-cloud-platform.jar<span class="w"> </span>server:/opt/dssad/dssad-cloud-platform.jar.new
+
+<span class="c1"># 2. 原子替换 + 重启（mv 在同一文件系统上是原子的，避免半包）</span>
+ssh<span class="w"> </span>server<span class="w"> </span><span class="s1">'cd /opt/dssad \</span>
+<span class="s1">  &amp;&amp; cp dssad-cloud-platform.jar dssad-cloud-platform.jar.bak \</span>
+<span class="s1">  &amp;&amp; mv dssad-cloud-platform.jar.new dssad-cloud-platform.jar \</span>
+<span class="s1">  &amp;&amp; systemctl restart dssad-cloud-platform \</span>
+<span class="s1">  &amp;&amp; sleep 20 &amp;&amp; systemctl is-active dssad-cloud-platform'</span>
+
+<span class="c1"># 3. 验证</span>
+bash<span class="w"> </span>scripts/health.sh<span class="w"> </span>--base-url<span class="w"> </span>https://域名<span class="w"> </span>--no-simulator
+bash<span class="w"> </span>scripts/mqtt-watch.sh<span class="w"> </span>--base-url<span class="w"> </span>http://内网IP:8080
+</code></pre></div>
+
+<p><strong>容器形态</strong></p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.prod.yml<span class="w"> </span>build<span class="w"> </span>app
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.prod.yml<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>app<span class="w">       </span><span class="c1"># 滚动：depends_on service_healthy 会先等依赖</span>
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.prod.yml<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>app
+</code></pre></div>
+
+<p><strong>本机终验（上线前最后一道）</strong></p>
+<div class="highlight"><pre><span></span><code>bash<span class="w"> </span>scripts/build.sh<span class="w"> </span>--web<span class="w">          </span><span class="c1"># 含测试与覆盖率</span>
+bash<span class="w"> </span>scripts/run-local.sh<span class="w"> </span>--prod<span class="w">     </span><span class="c1"># prod profile；缺必填环境变量会直接报错而不是起半残实例</span>
+bash<span class="w"> </span>scripts/health.sh<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:8080<span class="w"> </span>--no-simulator
+bash<span class="w"> </span>scripts/run-local.sh<span class="w"> </span>--stop<span class="w">     </span><span class="c1"># SIGTERM → 优雅停机 → 确认端口释放</span>
+</code></pre></div>
+
+<blockquote>
+<p><code>--no-simulator</code> 是<strong>必须</strong>的：模拟器会凭空写入事故与故障记录，污染监管取证链路。</p>
+</blockquote>
+<h3 id="63-回滚">6.3 回滚<a class="headerlink" href="#63-回滚" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>情形</th>
+<th>动作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>应用异常、表结构未变</td>
+<td>回滚 jar（<code>.jar.bak</code>）+ 重启，5 分钟内可完成</td>
+</tr>
+<tr>
+<td>应用异常、表结构已变（含新增列/表）</td>
+<td><strong>先回滚应用</strong>，再评估表结构：新增列/表通常可保留（旧应用不读不写），删除/改名必须回滚</td>
+</tr>
+<tr>
+<td>数据被写坏</td>
+<td>停写 → 从备份恢复受影响表 → 核对时间窗内数据是否与车端补传冲突</td>
+</tr>
+</tbody>
+</table></div>
+<div class="highlight"><pre><span></span><code>ssh<span class="w"> </span>server<span class="w"> </span><span class="s1">'cd /opt/dssad &amp;&amp; cp dssad-cloud-platform.jar.bak dssad-cloud-platform.jar \</span>
+<span class="s1">  &amp;&amp; systemctl restart dssad-cloud-platform &amp;&amp; sleep 20 &amp;&amp; systemctl is-active dssad-cloud-platform'</span>
+bash<span class="w"> </span>scripts/health.sh<span class="w"> </span>--base-url<span class="w"> </span>https://域名<span class="w"> </span>--no-simulator
+</code></pre></div>
+
+<p><strong>判定标准</strong>：<code>health.sh</code> 14 项通过 + 通道探针退出码 0 + 面板数据在更新，三者齐全才算回滚成功。</p>
+<h3 id="64-ddl-漂移生产启动失败的常见根因">6.4 DDL 漂移（生产启动失败的常见根因）<a class="headerlink" href="#64-ddl-漂移生产启动失败的常见根因" title="永久链接">#</a></h3>
+<p>生产 profile 使用 <code>ddl-auto=validate</code>：<strong>JPA 实体与真实表结构必须完全一致，否则拒绝启动</strong>。
+这是刻意设计的门禁（比带着错表结构跑起来好），本机已用<strong>空库反向探针</strong>证明它真的在拦：</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 期望：退出码非 0 + Schema-validation: missing table，且日志里没有 "Tomcat started"</span>
+<span class="nv">DB_NAME</span><span class="o">=</span>空库<span class="w"> </span>java<span class="w"> </span>-jar<span class="w"> </span>dssad-cloud-platform.jar<span class="w"> </span>--spring.profiles.active<span class="o">=</span>prod
+</code></pre></div>
+
+<p>改过实体就必须同步建表脚本：</p>
+<div class="highlight"><pre><span></span><code>mvn<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-Dtest<span class="o">=</span>SchemaDdlGeneratorTest<span class="w"> </span>-Dddl.gen<span class="o">=</span><span class="nb">true</span><span class="w">   </span><span class="c1"># 产出 schema-mysql.generated.sql</span>
+diff<span class="w"> </span>db/schema-mysql.generated.sql<span class="w"> </span>db/schema-mysql.sql<span class="w">  </span><span class="c1"># 与本文件比对后再提交</span>
+</code></pre></div>
+
+<p>发版时如果卡在 <code>Schema-validation</code>，处置顺序是：
+① 按上一步 diff 出差异 → ② 人工审核 DDL（确认不会锁表/丢数据）→ ③ 在低峰执行 → ④ 重启验证。
+<strong>不要</strong>为了「先跑起来」把 <code>ddl-auto</code> 改成 <code>update</code>（生产自动改表是事故来源）。</p>
+<hr>
+<h2 id="7-备份与恢复">7. 备份与恢复<a class="headerlink" href="#7-备份与恢复" title="永久链接">#</a></h2>
+<h3 id="71-备份对象与频率">7.1 备份对象与频率<a class="headerlink" href="#71-备份对象与频率" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>对象</th>
+<th>频率</th>
+<th>保留</th>
+<th>方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MySQL 全量</td>
+<td>每日 01:00（避开 03:00 清理窗口）</td>
+<td>30 天</td>
+<td><code>mysqldump --single-transaction</code></td>
+</tr>
+<tr>
+<td>MySQL binlog</td>
+<td>持续</td>
+<td>7 天</td>
+<td>用于时间点恢复（PITR）</td>
+</tr>
+<tr>
+<td>媒体文件 <code>/data/dssad/media</code></td>
+<td>每周增量</td>
+<td>按取证要求</td>
+<td>rsync / 对象存储同步</td>
+</tr>
+<tr>
+<td>配置 <code>/etc/dssad/*.env</code></td>
+<td>变更即备份</td>
+<td>长期</td>
+<td>加密后入库（<strong>含口令，禁止明文进 git</strong>）</td>
+</tr>
+<tr>
+<td>建表脚本 <code>db/schema-mysql.sql</code></td>
+<td>随代码</td>
+<td>长期</td>
+<td>git 已有</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="72-mysql-备份与校验">7.2 MySQL 备份与校验<a class="headerlink" href="#72-mysql-备份与校验" title="永久链接">#</a></h3>
+<p><strong>用仓库内的 <code>scripts/backup.sh</code>（推荐，已实测）</strong>：</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 日常备份（凭据从 --env-file 或环境变量 / 仓库 .env 读取）</span>
+bash<span class="w"> </span>scripts/backup.sh<span class="w"> </span>--out<span class="w"> </span>/backup/dssad<span class="w"> </span>--keep<span class="w"> </span><span class="m">30</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--env-file<span class="w"> </span>/etc/dssad/dssad-cloud-platform.env
+
+<span class="c1"># 附带**真恢复演练**：把备份还原到临时库、比对表数、再自动删除临时库</span>
+bash<span class="w"> </span>scripts/backup.sh<span class="w"> </span>--out<span class="w"> </span>/backup/dssad<span class="w"> </span>--keep<span class="w"> </span><span class="m">30</span><span class="w"> </span>--restore-check<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--env-file<span class="w"> </span>/etc/dssad/dssad-cloud-platform.env
+
+<span class="c1"># 预演：只打印将执行的命令（口令一律以 *** 掩码），不产生任何写入</span>
+bash<span class="w"> </span>scripts/backup.sh<span class="w"> </span>--dry-run
+</code></pre></div>
+
+<p>三类手工命令最容易漏掉的事，脚本各有硬措施：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>裸 <code>mysqldump &gt; x.sql</code> 的风险</th>
+<th>脚本的措施</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>一致性</td>
+<td>不加 <code>--single-transaction</code> 会对 MyISAM 表加全局读锁，<strong>高峰备份 = 一次故障</strong></td>
+<td>默认加上；并加 <code>--quick</code> 流式读取，不把整表结果集堆进客户端内存</td>
+</tr>
+<tr>
+<td>完整性</td>
+<td>进程被杀 / 连接断开会留下<strong>语法完整、内容截断</strong>的 <code>.sql</code>，直到真要恢复时才发现</td>
+<td>① <code>gzip -t</code> 完整性；② 结尾必须存在 <code>Dump completed</code> 收尾标记；③ <code>CREATE TABLE</code> 计数与库中实际表数比对</td>
+</tr>
+<tr>
+<td>磁盘</td>
+<td>不轮转会先把磁盘写满，然后<strong>应用先挂</strong>（告警指向数据库空间不足，真因却是备份堆积）</td>
+<td><code>--keep N</code> 只保留最近 N 份；且只删本脚本自己命名的文件（不做通配符删除）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>注册定时任务</strong>（脚本已就绪，注册动作需人工执行一次）：</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># /etc/cron.d/dssad-backup</span>
+<span class="c1"># 每日 01:00 —— 避开 03:00 留痕清理、03:30 遥测清理、00:05 地图拉取</span>
+<span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>root<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>/opt/dssad<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>/bin/bash<span class="w"> </span>scripts/backup.sh<span class="w"> </span>--out<span class="w"> </span>/backup/dssad<span class="w"> </span>--keep<span class="w"> </span><span class="m">30</span><span class="w"> </span>--env-file<span class="w"> </span>/etc/dssad/dssad-cloud-platform.env<span class="w"> </span>&gt;&gt;<span class="w"> </span>/var/log/dssad/backup.log<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+<span class="c1"># 每月 1 日 02:00 —— 真恢复演练（这是巡检项，不是可选项：没恢复过的备份不算备份）</span>
+<span class="m">0</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>root<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>/opt/dssad<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>/bin/bash<span class="w"> </span>scripts/backup.sh<span class="w"> </span>--out<span class="w"> </span>/backup/dssad<span class="w"> </span>--keep<span class="w"> </span><span class="m">30</span><span class="w"> </span>--restore-check<span class="w"> </span>--env-file<span class="w"> </span>/etc/dssad/dssad-cloud-platform.env<span class="w"> </span>&gt;&gt;<span class="w"> </span>/var/log/dssad/backup.log<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+</code></pre></div>
+
+<p><strong>接监控</strong>：脚本最后一行是机器可读摘要，成功与失败各一种，可直接被采集：</p>
+<div class="highlight"><pre><span></span><code>BACKUP_OK file=/backup/dssad/dssad_cloud_20260923_105452.sql.gz size_bytes=5552 tables=13 duration_s=1 restore_check=ok kept=30
+BACKUP_FAIL stage=verify reason=truncated
+</code></pre></div>
+
+<blockquote>
+<p><code>stage</code> 与告警级别的对应：<code>connect</code>（凭据/网络）→ P1；<code>dump</code>（导出失败）→ P1；
+<strong><code>verify</code> → P0</strong> —— 它意味着「备份已不可用，下一个需要恢复的时刻会失败」；
+<code>restore-check</code> → P1；<code>rotate</code> → P2（不影响当下，但磁盘会持续增长）。</p>
+</blockquote>
+<p><strong>排障时的手工核对通路</strong>（原理与脚本一致，用于交叉验证）：</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 一致性与完整性</span>
+gzip<span class="w"> </span>-t<span class="w"> </span>/backup/dssad/dssad_cloud_20260923_105452.sql.gz<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"压缩包完整"</span>
+gzip<span class="w"> </span>-dc<span class="w"> </span>/backup/dssad/xxx.sql.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-c<span class="w"> </span><span class="m">4096</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-c<span class="w"> </span><span class="s2">"Dump completed"</span><span class="w">   </span><span class="c1"># 必须为 1</span>
+
+<span class="c1"># 表数比对（转储内 vs 库内）</span>
+gzip<span class="w"> </span>-dc<span class="w"> </span>/backup/dssad/xxx.sql.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-c<span class="w"> </span><span class="s1">'^CREATE TABLE'</span>
+mysql<span class="w"> </span>-h<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>-u<span class="w"> </span>root<span class="w"> </span>-p<span class="w"> </span>-N<span class="w"> </span>-B<span class="w"> </span>-e<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='dssad_cloud'"</span>
+</code></pre></div>
+
+<blockquote>
+<p>本机验证过的同类操作：把 <code>db/schema-mysql.sql</code> 打到真实 MySQL 8.4 上得到 <strong>13 表 / 47 索引</strong>、
+零报错，并用空库反向探针确认 <code>ddl-auto=validate</code> 门禁有效。
+<code>backup.sh</code> 亦在真实 MySQL 8.4 上实测：13 表库备份 → 三重校验通过 → 恢复演练表数一致 →
+连跑 3 次后按 <code>--keep 2</code> 正确清理；并用<strong>截断文件反例</strong>验证了「<code>gzip -t</code> 失败 +
+<code>Dump completed</code> 命中 0 次」确实能被判据识别。</p>
+</blockquote>
+<h3 id="73-媒体与配置">7.3 媒体与配置<a class="headerlink" href="#73-媒体与配置" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code>rsync<span class="w"> </span>-a<span class="w"> </span>--delete-after<span class="w"> </span>/data/dssad/media/<span class="w"> </span>backup@nas:/backup/dssad/media/
+cp<span class="w"> </span>/etc/dssad/dssad-cloud-platform.env<span class="w"> </span>/backup/config/<span class="k">$(</span>date<span class="w"> </span>+%F<span class="k">)</span>.env<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span>/backup/config/<span class="k">$(</span>date<span class="w"> </span>+%F<span class="k">)</span>.env
+</code></pre></div>
+
+<h3 id="74-恢复演练每月一次">7.4 恢复演练（每月一次）<a class="headerlink" href="#74-恢复演练每月一次" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>命令/动作</th>
+<th>期望</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>起一个空 MySQL</td>
+<td>—</td>
+</tr>
+<tr>
+<td>2</td>
+<td>导入最近全备</td>
+<td>无报错</td>
+</tr>
+<tr>
+<td>3</td>
+<td>应用 prod profile 对着它启动</td>
+<td>① <code>ddl-auto=validate</code> 通过；② 能查到车辆与事故数据</td>
+</tr>
+<tr>
+<td>4</td>
+<td>记录耗时</td>
+<td>即 <strong>RTO 实测值</strong></td>
+</tr>
+<tr>
+<td>5</td>
+<td>清理演练环境</td>
+<td>确认没有残留库</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>目标值（需按实际容量校准）</strong>：RPO ≤ 24 小时（全备）+ 秒级（binlog）；RTO ≤ 1 小时。</p>
+<blockquote>
+<p>演练环境必须与生产隔离。本机做同类验证时用的临时库（<code>dssad_cloud_verify</code>、<code>dssad_empty_probe</code>）
+已在使用后 <code>DROP</code> 清理。</p>
+</blockquote>
+<hr>
+<h2 id="8-容量与扩容">8. 容量与扩容<a class="headerlink" href="#8-容量与扩容" title="永久链接">#</a></h2>
+<h3 id="81-磁盘预算千车规模">8.1 磁盘预算（千车规模）<a class="headerlink" href="#81-磁盘预算千车规模" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>数据</th>
+<th>日增（估算依据）</th>
+<th>保留</th>
+<th>稳态占用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>轨迹点 <code>track_point</code></td>
+<td>1000 台 × 1Hz ≈ <strong>8640 万行/天</strong>，约 <strong>14GB/天</strong></td>
+<td>90 天</td>
+<td>≈ 1.26 TB</td>
+</tr>
+<tr>
+<td>状态流水 <code>state_snapshot</code></td>
+<td>与上报频率相关</td>
+<td>180 天</td>
+<td>视采样而定</td>
+</tr>
+<tr>
+<td>报文留痕 <code>mqtt_message_log</code></td>
+<td><code>audit.mode=sampled</code>、<code>sample-rate=0.05</code> 后 ≈ 432 万条/天</td>
+<td>180 天</td>
+<td>≈ 与轨迹同量级</td>
+</tr>
+<tr>
+<td>媒体（事故视频）</td>
+<td>每起事故 4 路 × 2 分钟 ≈ 数百 MB</td>
+<td>按取证要求</td>
+<td>波动大，需单独监控</td>
+</tr>
+<tr>
+<td>日志</td>
+<td>≤ 10GB（<code>total-size-cap</code> 已封顶）</td>
+<td>30 个文件</td>
+<td>≤ 10 GB</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>留痕模式的取舍</strong>：<code>audit.mode=full</code> 时 1000 台车 1Hz 全量留痕 ≈ 8640 万条/天，
+生产默认是 <code>sampled</code>（5%）。<strong>改这个开关必须同步评估磁盘</strong>，它是磁盘增长最快的单一变量。</p>
+<p><strong>保留期与磁盘的关系</strong>：<code>retention.track-point-days=90</code> 与 <code>state-snapshot-days=180</code> 的默认值
+是按存储预算反推的，不是随口给的。调大保留期前先算「日增 × 天数 &lt; 可用空间 × 0.8」。</p>
+</blockquote>
+<h3 id="82-连接与并发">8.2 连接与并发<a class="headerlink" href="#82-连接与并发" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>参数</th>
+<th>当前值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tomcat 线程</td>
+<td><code>max: 200</code>，<code>min-spare: 20</code></td>
+<td>虚拟线程开启后它不再是真正的并发上限</td>
+</tr>
+<tr>
+<td>虚拟线程</td>
+<td>prod 开启</td>
+<td>阻塞式 IO 不再吃线程</td>
+</tr>
+<tr>
+<td>Hikari 连接池</td>
+<td><code>maximum-pool-size: 20</code>，<code>min-idle: 5</code></td>
+<td><strong>真正的唯一排队点</strong>；<code>connection-timeout: 3000</code></td>
+</tr>
+<tr>
+<td>入站消费线程</td>
+<td><code>consumer-threads: 4</code></td>
+<td>隔离 MQTT 回调线程</td>
+</tr>
+<tr>
+<td>离线队列</td>
+<td><code>offline-cache-size: 10000</code></td>
+<td>断链期间的缓冲，超出按优先级丢弃</td>
+</tr>
+<tr>
+<td>缓存</td>
+<td>L1 <code>max-size: 50000</code>，L1 TTL 30s，L2 TTL 60s</td>
+<td>—</td>
+</tr>
+<tr>
+<td>限流</td>
+<td>HTTP 100 次/分钟·车，MQTT 10 条/秒·车</td>
+<td>文档 9.1 约定</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键结论</strong>：压测显示（见性能报告）虚拟线程启用后突发流量的表现是
+<strong>「3 秒后大批失败」而非「排队等待」</strong> —— 因为 Hikari 的 20 个连接是唯一排队点，
+<code>connection-timeout</code> 一到就批量失败。因此<strong>连接池 pending &gt; 0 必须 P0 告警</strong>。</p>
+<h3 id="83-扩容判定与步骤">8.3 扩容判定与步骤<a class="headerlink" href="#83-扩容判定与步骤" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>信号</th>
+<th>结论</th>
+<th>动作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU 持续 &gt; 70% 且连接池 pending = 0</td>
+<td>计算瓶颈</td>
+<td>加实例（无状态，可水平扩展）</td>
+</tr>
+<tr>
+<td>连接池 pending &gt; 0 且 DB CPU &lt; 60%</td>
+<td>池上限瓶颈</td>
+<td>提高 <code>maximum-pool-size</code>（<strong>同时确认 DB 的 max_connections</strong>）</td>
+</tr>
+<tr>
+<td>积压增长且消费线程满载</td>
+<td>消费瓶颈</td>
+<td>提高 <code>consumer-threads</code> 或加实例</td>
+</tr>
+<tr>
+<td>磁盘 &gt; 85%</td>
+<td>容量瓶颈</td>
+<td>扩容磁盘 / 缩短保留期 / 归档冷数据</td>
+</tr>
+<tr>
+<td>多实例部署</td>
+<td>一致性要求</td>
+<td><strong>必须</strong> <code>dssad.redis.enabled=true</code>（去重/限流/令牌跨实例共享）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>扩容后必做</strong>：确认新实例的 <code>clientId</code> 唯一（否则互踢，见 O-01 易误判）；
+确认只有预期数量的实例在跑定时任务（见 O-09）。</p>
+<p><strong>反向探针（每月演练）</strong>：人为把 <code>DSSAD_MQTT_BROKER_URL</code> 改成一个不存在的地址重启实例，
+确认 <code>mqtt-watch.sh</code> 退出码变 20、告警真的响了、而 <code>/actuator/health</code> 与编排探测<strong>不受影响</strong>
+（这三条都通过才算告警链路合格）。恢复后把地址改回。本机已用这种方式实测：</p>
+<div class="highlight"><pre><span></span><code>[失败] 通道 DOWN：state=RECONNECTING reason=channel-down（已重连 2 次）
+MQTT_WATCH ... status=DOWN ... result=channel-down     exit=20
+GET /actuator/health  → 200 UP      ← 编排不受影响（刻意设计）
+GET /api/v1/monitor/health-check → 200（mqttConnected:false）  ← 原始 E-01 场景
+</code></pre></div>
+
+<hr>
+<h2 id="9-值班手册">9. 值班手册<a class="headerlink" href="#9-值班手册" title="永久链接">#</a></h2>
+<h3 id="91-交接与上报">9.1 交接与上报<a class="headerlink" href="#91-交接与上报" title="永久链接">#</a></h3>
+<ul>
+<li><strong>交接</strong>：当前告警状态、正在处理的事项、已静默的告警与静默原因、下次维护窗口。</li>
+<li><strong>上报</strong>：P0 立即进群并电话通知负责人；P1 进群；P2 记工单。</li>
+<li><strong>禁止</strong>：在未确认影响面前重启生产实例（重启会丢掉内存中的在途批量与登录态）。</li>
+</ul>
+<h3 id="92-常见误判清单">9.2 常见误判清单<a class="headerlink" href="#92-常见误判清单" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>看到的</th>
+<th>真实含义</th>
+<th>别做什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>health-check</code> 200 但面板没数据</td>
+<td>通道断了（<strong>设计如此</strong>）</td>
+<td>别以为「服务正常，是前端问题」</td>
+</tr>
+<tr>
+<td>日志一条 <code>ERROR [监管平台] ...</code></td>
+<td>换取凭据失败，通道可能仍正常</td>
+<td>别仅凭一条 ERROR 重启服务</td>
+</tr>
+<tr>
+<td>请求耗时恰好 3 秒后失败</td>
+<td>Hikari <code>connection-timeout</code> 触发</td>
+<td>别去查代码，直接查 DB</td>
+</tr>
+<tr>
+<td>缓存命中率 99%</td>
+<td>短窗口 + 短 TTL 造成的假象（压测口径）</td>
+<td>别拿它当生产预期，生产看 70%~95%</td>
+</tr>
+<tr>
+<td>Redis 恢复后全员掉登录</td>
+<td>令牌存 Redis，属预期</td>
+<td>别当成新故障上报</td>
+</tr>
+<tr>
+<td>03:00 后磁盘回落</td>
+<td>清理任务正常执行</td>
+<td>别当成两起故障</td>
+</tr>
+<tr>
+<td>服务「自己好了」</td>
+<td>可能是 OOM 被 systemd 重启</td>
+<td>别跳过 <code>journalctl</code> 的退出码（137 = 被杀）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="93-复盘">9.3 复盘<a class="headerlink" href="#93-复盘" title="永久链接">#</a></h3>
+<p>每次 P0/P1 后 3 个工作日内出复盘，必须包含：
+① 时间线（发现→定位→止血→恢复）；② <strong>为什么监控没提前发现</strong>（是否缺指标/阈值不对）；
+③ 处置中做错的动作；④ 手册/脚本要改的具体条目（写明改哪一节）。</p>
+<hr>
+<h2 id="10-风险与缺陷清单o-系列">10. 风险与缺陷清单（O 系列）<a class="headerlink" href="#10-风险与缺陷清单o-系列" title="永久链接">#</a></h2>
+<blockquote>
+<p>编号规则：<code>O-xx</code> 为本手册发现的运维侧问题。均已按代码复核或本机实测确认，不含推测。</p>
+</blockquote>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>编号</th>
+<th>级别</th>
+<th>问题</th>
+<th>证据</th>
+<th>状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>O-01</strong></td>
+<td><strong>高</strong></td>
+<td><strong>探活不覆盖数据通道</strong>：Broker 断开时 liveness/readiness/health-check 全部成功，平台一条数据收不到却「全绿」</td>
+<td>实测：断链时 <code>health-check</code> 200（<code>mqttConnected:false</code>）、<code>liveness</code> 200</td>
+<td>✅ <strong>已修复</strong>：新增 <code>GET /api/v1/monitor/mqtt-health</code>（DOWN → 503）+ <code>scripts/mqtt-watch.sh</code> + 8 个单测</td>
+</tr>
+<tr>
+<td><strong>O-02</strong></td>
+<td>中</td>
+<td><strong><code>/actuator/prometheus</code> 声明了但不存在</strong>：<code>management.endpoints.web.exposure.include</code> 里写了 <code>prometheus</code>，pom 却没有 <code>micrometer-registry-prometheus</code> → 端点 404，抓取端全空且不报错</td>
+<td>修复前实测 404；修复后 200 且 <strong>78 个 HELP 指标</strong></td>
+<td>✅ <strong>已修复</strong>：补依赖</td>
+</tr>
+<tr>
+<td><strong>O-03</strong></td>
+<td><strong>高</strong></td>
+<td>~~<code>/actuator/**</code> 无任何应用层鉴权~~</td>
+<td>复核时：<code>AdminTokenInterceptor</code> 只注册在 <code>/api/v1/**</code> 上，它内部的 <code>uri.startsWith("/actuator")</code> 分支<strong>永不执行</strong>（死代码）；全仓无 CIDR/白名单类</td>
+<td>✅ <strong>已修复</strong>：新增 <code>ActuatorIpWhitelistFilter</code>（来源 IP 白名单，fail-closed）+ <code>IpCidrMatcher</code> + 25 个单测。判定基于 <strong>TCP 对端地址</strong>，<strong>不采信 <code>X-Forwarded-For</code></strong>（<code>forward-headers-strategy=framework</code> 会把 XFF 还原进 <code>getRemoteAddr()</code>，直接读它等于留一个伪造绕过口子，已有专门回归用例 <code>rejectsSpoofedForwardedHeader</code>）。白名单外一律返回 <strong>404</strong>（不确认端点存在）；配非法 CIDR <strong>启动即失败</strong>；配空列表 = <strong>全拒</strong>。配置项 <code>dssad.security.actuator.allowed-cidrs</code> / 环境变量 <code>DSSAD_ACTUATOR_ALLOWED_CIDRS</code></td>
+</tr>
+<tr>
+<td><strong>O-04</strong></td>
+<td>中</td>
+<td><strong>无 Prometheus 抓取与告警落地</strong>：4.4 的规则未在真实 Prometheus 校验；积压/丢弃计数<strong>未导出为 Prometheus 指标</strong>，只能靠脚本采集</td>
+<td>本机无 Prometheus/promtool</td>
+<td>⚠️ <strong>部分</strong>：规则模板已给；<code>mqtt-watch-export.sh</code>（textfile 导出）<strong>待补</strong></td>
+</tr>
+<tr>
+<td><strong>O-05</strong></td>
+<td>中</td>
+<td>~~无自动备份：仓库内无备份脚本与定时任务~~</td>
+<td>仓库复核</td>
+<td>✅ <strong>已修复（脚本）</strong>：新增 <code>scripts/backup.sh</code> —— 一致性备份（<code>--single-transaction</code> 不锁表）+ <strong>三重校验</strong>（gzip 完整性 / <code>Dump completed</code> 收尾标记 / <code>CREATE TABLE</code> 计数与库中表数比对）+ 轮转 + 可选 <code>--restore-check</code> 真恢复演练；退出码分级（10/20/30/40/45/50/60）便于告警分类。<strong>遗留</strong>：生产上的 cron / systemd timer 需人工注册（本机沙箱无法代注册计划任务）</td>
+</tr>
+<tr>
+<td><strong>O-06</strong></td>
+<td>低</td>
+<td><strong>本地档位无文件日志</strong>：<code>logging.file.name</code> 只在 prod profile 配置，local 仅控制台</td>
+<td>配置复核</td>
+<td>⚠️ 设计如此（本地看控制台更方便），但<strong>容器化时若忘了设置 <code>DSSAD_LOG_DIR</code> 会丢失文件日志</strong></td>
+</tr>
+<tr>
+<td><strong>O-07</strong></td>
+<td>中</td>
+<td><strong>多实例 <code>@Scheduled</code> 无分布式锁</strong>（沿用设计文档 P-01）：5 个定时任务在多实例下会重复执行</td>
+<td>代码复核：5 处 <code>@Scheduled</code></td>
+<td>❌ 未修复：处置见剧本 O-09（清理幂等，ACK 重试需确认）</td>
+</tr>
+<tr>
+<td><strong>O-08</strong></td>
+<td>中</td>
+<td><strong>优雅停机未生效</strong>：<code>server.shutdown</code> 未配置 → 默认 <code>immediate</code>，SIGTERM 会切断在途请求（如 ≤200MB 的事故视频上传），客户端看到连接重置、服务端留半个文件</td>
+<td>配置复核：<code>grep shutdown</code> 无结果</td>
+<td>✅ <strong>已修复</strong>：<code>server.shutdown=graceful</code> + <code>spring.lifecycle.timeout-per-shutdown-phase=30s</code>（小于 systemd <code>TimeoutStopSec=60</code>）</td>
+</tr>
+<tr>
+<td><strong>O-09</strong></td>
+<td>低</td>
+<td><strong>保留期被误设为 0 会静默关闭清理</strong>：<code>retentionDays &lt;= 0</code> 时跳过清理且只打 <code>debug</code> 日志</td>
+<td>代码复核：<code>TelemetryRetentionService</code></td>
+<td>⚠️ 已纳入巡检（2.1 第 7 项：确认每日有清理日志）</td>
+</tr>
+<tr>
+<td><strong>O-10</strong></td>
+<td>低</td>
+<td><strong>限流算法口径</strong>：<code>/api/v1/monitor/cache</code> 已显式暴露 <code>algorithm=sliding-window-counter</code>，但接口文档写的仍是「100 次/分钟」的固定窗口直觉</td>
+<td>代码复核</td>
+<td>⚠️ 建议接口文档补充算法说明（滑动窗口允许约 2 倍突发）</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="附录-a命令速查">附录 A：命令速查<a class="headerlink" href="#附录-a命令速查" title="永久链接">#</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># ===== 探活 =====</span>
+bash<span class="w"> </span>scripts/health.sh<span class="w"> </span>--base-url<span class="w"> </span>https://域名<span class="w"> </span>--no-simulator<span class="w">        </span><span class="c1"># 业务冒烟（14 项）</span>
+bash<span class="w"> </span>scripts/mqtt-watch.sh<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:8080<span class="w">          </span><span class="c1"># 通道探针</span>
+bash<span class="w"> </span>scripts/mqtt-watch.sh<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:8080<span class="w"> </span>--deep<span class="w">   </span><span class="c1"># 通道 + 积压/丢弃</span>
+curl<span class="w"> </span>-s<span class="w"> </span>--noproxy<span class="w"> </span><span class="s1">'*'</span><span class="w"> </span>http://127.0.0.1:8080/api/v1/monitor/health-check
+curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'%{http_code}\n'</span><span class="w"> </span>--noproxy<span class="w"> </span><span class="s1">'*'</span><span class="w"> </span>http://127.0.0.1:8080/api/v1/monitor/mqtt-health
+
+<span class="c1"># ===== 运行态 =====</span>
+sudo<span class="w"> </span>systemctl<span class="w"> </span>status<span class="w"> </span>dssad-cloud-platform
+sudo<span class="w"> </span>systemctl<span class="w"> </span>restart<span class="w"> </span>dssad-cloud-platform
+journalctl<span class="w"> </span>-u<span class="w"> </span>dssad-cloud-platform<span class="w"> </span>-f
+tail<span class="w"> </span>-f<span class="w"> </span>/var/log/dssad/dssad-cloud-platform.log
+
+<span class="c1"># ===== 指标 =====</span>
+curl<span class="w"> </span>-s<span class="w"> </span>--noproxy<span class="w"> </span><span class="s1">'*'</span><span class="w"> </span>http://127.0.0.1:8080/actuator/prometheus<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"^hikaricp|^jvm_memory_used_bytes"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head
+<span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"username":"admin","password":"***"}'</span><span class="w"> </span>http://127.0.0.1:8080/api/v1/auth/login<span class="w"> </span><span class="p">|</span><span class="w"> </span>sed<span class="w"> </span>-n<span class="w"> </span><span class="s1">'s/.*"token":"\([^"]*\)".*/\1/p'</span><span class="k">)</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Token: </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span>http://127.0.0.1:8080/api/v1/monitor/mqtt
+curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Token: </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span>http://127.0.0.1:8080/api/v1/monitor/cache
+
+<span class="c1"># ===== 按 msgId 追溯一条报文的完整链路（对端说「没收到」时的最强证据）=====</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Token: </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span>http://127.0.0.1:8080/api/v1/monitor/messages/trace/&lt;msgId&gt;
+
+<span class="c1"># ===== 磁盘与库 =====</span>
+df<span class="w"> </span>-h<span class="w"> </span>/data<span class="w"> </span>/var/log<span class="p">;</span><span class="w"> </span>du<span class="w"> </span>-sh<span class="w"> </span>/data/dssad/media
+mysql<span class="w"> </span>-h<span class="w"> </span><span class="nv">$DB_HOST</span><span class="w"> </span>-u<span class="w"> </span><span class="nv">$DB_USERNAME</span><span class="w"> </span>-p<span class="w"> </span>-e<span class="w"> </span><span class="s2">"SELECT table_name, ROUND(data_length/1024/1024) mb FROM information_schema.tables WHERE table_schema='dssad_cloud' ORDER BY data_length DESC LIMIT 10;"</span>
+</code></pre></div>
+
+<h2 id="附录-b日志与排障速查">附录 B：日志与排障速查<a class="headerlink" href="#附录-b日志与排障速查" title="永久链接">#</a></h2>
+<h3 id="b1-位置">B.1 位置<a class="headerlink" href="#b1-位置" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>形态</th>
+<th>路径</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>应用文件日志（prod）</td>
+<td><code>${DSSAD_LOG_DIR:-/var/log/dssad}/dssad-cloud-platform.log</code>（200MB/文件，30 个，总 10GB 封顶）</td>
+</tr>
+<tr>
+<td>systemd 标准输出</td>
+<td><code>/var/log/dssad/stdout.log</code>、<code>stderr.log</code>；或 <code>journalctl -u dssad-cloud-platform</code></td>
+</tr>
+<tr>
+<td>Heap dump</td>
+<td><code>/var/log/dssad/heapdump.hprof</code>（<code>-XX:+HeapDumpOnOutOfMemoryError</code>）</td>
+</tr>
+<tr>
+<td>Nginx</td>
+<td><code>/var/log/nginx/access.log</code>、<code>error.log</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="b2-高频排障-grep">B.2 高频排障 grep<a class="headerlink" href="#b2-高频排障-grep" title="永久链接">#</a></h3>
+<div class="highlight"><pre><span></span><code>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"\[MQTT\]"</span><span class="w">            </span>/var/log/dssad/dssad-cloud-platform.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-30<span class="w">   </span><span class="c1"># 通道</span>
+grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"Communications link failure|Connection is not available"</span><span class="w"> </span>/var/log/dssad/*.log<span class="w">   </span><span class="c1"># 数据库</span>
+grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"\[监管平台\]"</span><span class="w">         </span>/var/log/dssad/dssad-cloud-platform.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-20<span class="w">   </span><span class="c1"># 上游</span>
+grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"\[留痕\]|\[保留策略\]"</span><span class="w"> </span>/var/log/dssad/dssad-cloud-platform.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-10<span class="w">   </span><span class="c1"># 清理任务</span>
+grep<span class="w"> </span>-cE<span class="w"> </span><span class="s2">"ERROR"</span><span class="w">              </span>/var/log/dssad/dssad-cloud-platform.log<span class="w">               </span><span class="c1"># 错误量趋势</span>
+grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"Schema-validation|APPLICATION FAILED TO START"</span><span class="w"> </span>/var/log/dssad/*.log<span class="w">        </span><span class="c1"># 启动失败</span>
+</code></pre></div>
+
+<h3 id="b3-定时任务时刻表多实例下需留意-o-07">B.3 定时任务时刻表（多实例下需留意 O-07）<a class="headerlink" href="#b3-定时任务时刻表多实例下需留意-o-07" title="永久链接">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>任务</th>
+<th>触发</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>遥测刷新</td>
+<td>每 1 秒（<code>fixedDelay</code>）</td>
+<td>缓冲批量落库</td>
+</tr>
+<tr>
+<td>ACK 重试扫描</td>
+<td>每 1 秒（<code>fixedDelay</code>）</td>
+<td>未确认消息重发</td>
+</tr>
+<tr>
+<td>留痕清理</td>
+<td><code>0 0 3 * * ?</code></td>
+<td>删除超期报文留痕</td>
+</tr>
+<tr>
+<td>遥测保留清理</td>
+<td><code>0 30 3 * * ?</code></td>
+<td>分批删除超期轨迹/状态（5000 行/批）</td>
+</tr>
+<tr>
+<td>屏障地图刷新</td>
+<td><code>0 5 0 * * ?</code></td>
+<td>每日刷新地图屏障数据</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="附录-c配置项速查生产必填">附录 C：配置项速查（生产必填）<a class="headerlink" href="#附录-c配置项速查生产必填" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>变量</th>
+<th>用途</th>
+<th>缺失后果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DB_USERNAME</code> / <code>DB_PASSWORD</code></td>
+<td>数据库凭据</td>
+<td>启动失败（fail-fast）</td>
+</tr>
+<tr>
+<td><code>DSSAD_ENTERPRISE_ID</code></td>
+<td>云云身份标识（Topic/clientId 的一部分）</td>
+<td>启动失败</td>
+</tr>
+<tr>
+<td><code>DSSAD_MQTT_BROKER_URL</code></td>
+<td>Broker 地址</td>
+<td>启动失败</td>
+</tr>
+<tr>
+<td><code>DSSAD_REGULATORY_BASE_URL</code></td>
+<td>监管平台地址</td>
+<td>启动失败</td>
+</tr>
+<tr>
+<td><code>DSSAD_STORAGE_PUBLIC_URL</code> / <code>DSSAD_SRS_URL</code></td>
+<td>媒体与流地址</td>
+<td>启动失败</td>
+</tr>
+<tr>
+<td><code>DSSAD_ADMIN_USER</code> / <code>DSSAD_ADMIN_PASSWORD</code></td>
+<td>管理端账号</td>
+<td><strong>不设则用开发默认口令（生产不可接受）</strong></td>
+</tr>
+<tr>
+<td><code>DSSAD_LOG_DIR</code></td>
+<td>文件日志目录</td>
+<td>容器化时可能丢文件日志（O-06）</td>
+</tr>
+<tr>
+<td><code>DSSAD_TRACK_RETENTION_DAYS</code> / <code>DSSAD_STATE_RETENTION_DAYS</code></td>
+<td>保留期（默认 90 / 180）</td>
+<td>设为 0 会静默关闭清理（O-09）</td>
+</tr>
+<tr>
+<td><code>DSSAD_AUDIT_MODE</code> / <code>DSSAD_AUDIT_SAMPLE_RATE</code></td>
+<td>留痕模式与采样率</td>
+<td>设成 <code>full</code> 会让磁盘增长一个数量级</td>
+</tr>
+<tr>
+<td><code>DSSAD_ACTUATOR_ALLOWED_CIDRS</code></td>
+<td>Actuator 来源 IP 白名单（fail-closed）</td>
+<td>默认仅回环 <code>127.0.0.1/32,::1/128</code> → <strong>容器/K8s 部署时 Nginx 与 kubelet 的探活会拿到 404</strong>（需补 Docker 网段或节点网段）；配空值 = <strong>全拒</strong>；配非法 CIDR = <strong>启动失败</strong>（刻意如此，不允许「静默不生效」）</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="附录-d联系人矩阵模板发布前填写">附录 D：联系人矩阵（模板，发布前填写）<a class="headerlink" href="#附录-d联系人矩阵模板发布前填写" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>角色</th>
+<th>姓名/组</th>
+<th>联系方式</th>
+<th>覆盖范围</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>一线值班</td>
+<td></td>
+<td></td>
+<td>全部告警首响应</td>
+</tr>
+<tr>
+<td>平台负责人</td>
+<td></td>
+<td></td>
+<td>P0 决策与对外沟通</td>
+</tr>
+<tr>
+<td>DBA</td>
+<td></td>
+<td></td>
+<td>MySQL/Redis</td>
+</tr>
+<tr>
+<td>网络/组网</td>
+<td></td>
+<td></td>
+<td>Broker、专线、防火墙</td>
+</tr>
+<tr>
+<td>监管平台对接人</td>
+<td></td>
+<td></td>
+<td>凭据、上报口径</td>
+</tr>
+<tr>
+<td>业务方（车队运营）</td>
+<td></td>
+<td></td>
+<td>数据缺失影响面确认</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="附录-e变更记录">附录 E：变更记录<a class="headerlink" href="#附录-e变更记录" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>日期</th>
+<th>变更</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2026-09-23</td>
+<td>初版</td>
+<td>建立三层探活模型；新增通道探针端点与脚本；修复 O-01/O-02/O-08；登记 O-03~O-10</td>
+</tr>
+<tr>
+<td>2026-09-23</td>
+<td>v1.1</td>
+<td>修复 <strong>O-03</strong>（新增 <code>ActuatorIpWhitelistFilter</code> 来源 IP 白名单 + <code>IpCidrMatcher</code> + 25 个单测，判定基于 TCP 对端地址、不采信 XFF）；修复 <strong>O-05</strong>（新增 <code>scripts/backup.sh</code>：一致性备份 + 三重校验 + 轮转 + <code>--restore-check</code> 恢复演练，已在真实 MySQL 8.4 实测，并用截断文件反例验证判据有效）；7.2 章节改写为脚本 + 定时任务注册 + 告警分级；附录 C 补 <code>DSSAD_ACTUATOR_ALLOWED_CIDRS</code>。测试规模 164 → <strong>200</strong> 用例</td>
+</tr>
+</tbody>
+</table></div>
+  </main>
+</div>
+<button id="to-top" type="button" title="回到顶部" aria-label="回到顶部">&#8593;</button>
+<script>
+
+(function () {
+  'use strict';
+
+  /* --- 1. 侧边栏滚动高亮当前章节 --- */
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  var targets = links
+    .map(function (a) {
+      var id = decodeURIComponent(a.getAttribute('href').slice(1));
+      var el = document.getElementById(id);
+      return el ? { link: a, el: el } : null;
+    })
+    .filter(Boolean);
+
+  function setActive(link) {
+    links.forEach(function (a) { a.classList.remove('active'); });
+    if (!link) return;
+    link.classList.add('active');
+    // 让高亮项始终留在侧边栏可视区内
+    var bar = document.querySelector('.sidebar');
+    if (!bar) return;
+    var r = link.getBoundingClientRect(), b = bar.getBoundingClientRect();
+    if (r.top < b.top + 60 || r.bottom > b.bottom - 40) {
+      bar.scrollTop += r.top - b.top - bar.clientHeight / 3;
+    }
+  }
+
+  var ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      ticking = false;
+      var best = null;
+      for (var i = 0; i < targets.length; i++) {
+        if (targets[i].el.getBoundingClientRect().top <= 120) best = targets[i];
+        else break;
+      }
+      if (best) setActive(best.link);
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* --- 2. 代码块复制按钮 --- */
+  document.querySelectorAll('.highlight').forEach(function (block) {
+    var code = block.querySelector('code');
+    if (!code) return;
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.addEventListener('click', function () {
+      var text = code.innerText;
+      var done = function () {
+        btn.textContent = '已复制';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = '复制';
+          btn.classList.remove('done');
+        }, 1400);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    block.appendChild(btn);
+  });
+
+  // file:// 下 navigator.clipboard 不可用时的兜底
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* 忽略 */ }
+    document.body.removeChild(ta);
+  }
+
+  /* --- 3. 回到顶部 --- */
+  var top = document.getElementById('to-top');
+  if (top) {
+    top.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    window.addEventListener('scroll', function () {
+      top.classList.toggle('show', window.scrollY > 500);
+    }, { passive: true });
+  }
+
+  /* --- 4. 窄屏侧边栏 --- */
+  var menuBtn = document.getElementById('menu-btn');
+  var sidebar = document.querySelector('.sidebar');
+  if (menuBtn && sidebar) {
+    menuBtn.addEventListener('click', function () { sidebar.classList.toggle('open'); });
+    sidebar.addEventListener('click', function (e) {
+      if (e.target.tagName === 'A') sidebar.classList.remove('open');
+    });
+  }
+})();
+
+</script>
+</body>
+</html>
