@@ -1282,7 +1282,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 <tr>
 <td><code>dssad.rate-limit.enabled</code> / <code>http-per-minute</code> / <code>mqtt-per-second</code></td>
 <td><code>true</code> / <code>100</code> / <code>10</code></td>
-<td>限流参数。⚠️ <strong>当前实现未接入请求链路，配置不生效</strong>（<code>F-01</code>，见《性能优化与压测报告》）</td>
+<td>限流参数。✅ HTTP 维度已接线（<code>EnterpriseRateLimitFilter</code>，企业侧按车辆限流，v1.3）；⚠️ MQTT 发布维度仍未接线（P-03 遗留）；管理端 <code>/api/v1/**</code> 按设计不限流</td>
 </tr>
 <tr>
 <td><code>dssad.audit.mode</code> / <code>sample-rate</code> / <code>retention-days</code></td>
@@ -1630,7 +1630,8 @@ bash<span class="w"> </span>scripts/build.sh<span class="w"> </span>--docker<spa
 <h3 id="73-覆盖率门槛本次已修复接线">7.3 覆盖率门槛（本次已修复接线）<a class="headerlink" href="#73-覆盖率门槛本次已修复接线" title="永久链接">#</a></h3>
 <p><code>pom.xml</code> 中声明了 <code>jacoco.line.coverage.min=0.60</code>，但<strong>原版本只有 <code>prepare-agent</code> 与 <code>report</code> 两个执行，
 没有 <code>check</code></strong> —— 也就是说这个门槛是<strong>死配置</strong>：覆盖率即便降到 10%，构建照样成功。
-这与《性能优化与压测报告》中的 <code>F-01</code>（限流器未接入）属于<strong>同一族问题</strong>：配置/代码存在，但从未被调用。</p>
+这与《性能优化与压测报告》中的 <code>F-01</code>（限流器未接入）属于<strong>同一族问题</strong>：配置/代码存在，但从未被调用。
+（<code>F-01</code> 的 HTTP 侧已于 v1.3 修复接入企业侧链路。）</p>
 <p>本次已接线：</p>
 <div class="highlight"><pre><span></span><code><span class="nt">&lt;execution&gt;</span>
 <span class="w">  </span><span class="nt">&lt;id&gt;</span>check-coverage<span class="nt">&lt;/id&gt;</span>
@@ -1955,7 +1956,7 @@ sudo<span class="w"> </span>nginx<span class="w"> </span>-t<span class="w"> </sp
 </tr>
 <tr>
 <td>登录接口单独 <code>limit_req zone=login_zone</code></td>
-<td>可被撞库。⚠️ 应用层限流当前未生效（<code>F-01</code>），<strong>入口层限流是目前唯一真实生效的一道</strong></td>
+<td>可被撞库。应用层限流已接入企业侧链路（<code>F-01</code> 已修复，v1.3），但登录接口属管理端 <code>/api/v1/**</code>、<strong>按设计不在「·车」配额内</strong>——因此 Nginx 这条 <code>limit_req</code> 仍是登录接口唯一的真实限流，不可删</td>
 </tr>
 <tr>
 <td><code>try_files $uri $uri/ /index.html;</code>（SPA 兜底）</td>
@@ -2542,7 +2543,7 @@ diff<span class="w"> </span>db/schema-mysql.generated.sql<span class="w"> </span
 <tr>
 <td><code>F-01</code></td>
 <td>性能报告</td>
-<td><strong>限流器未接入请求链路</strong>。本文 9.3 因此强调「Nginx 入口限流是当前唯一真实生效的一道」</td>
+<td>~~<strong>限流器未接入请求链路</strong>~~ ✅ <strong>已修复（v1.3）</strong>：企业侧 <code>EnterpriseRateLimitFilter</code> 接入；本文 9.3 的 Nginx 入口限流仍保留——登录等管理端接口不在「·车」配额内</td>
 </tr>
 <tr>
 <td><code>P-01</code></td>
@@ -2566,9 +2567,10 @@ diff<span class="w"> </span>db/schema-mysql.generated.sql<span class="w"> </span
 <code>P-02</code>（方法无调用方）、<code>E-01</code>（状态字段无人消费）、<code>O-02</code>（Prometheus 端点缺依赖）、<code>O-08</code>（优雅停机未配置）。
 共同特征是<strong>「写了、有注释、有配置，但没有任何调用方或消费者」</strong>。
 这类问题不会报错、不会被测试抓到，只能靠「逐条追问：它被谁调用？生效的证据是什么？」来发现。
-其中 4 例已在本次迭代中接线并实测（<code>E-03</code> / <code>E-01</code> / <code>O-02</code> / <code>O-08</code>）。
+其中 5 例已接线并实测（<code>E-03</code> / <code>E-01</code> / <code>O-02</code> / <code>O-08</code> / <code>F-01</code>），
+仅剩 <code>P-02</code>（在线状态回落，属 P2 待办）。
 建议在 CI 中增加一条检查：对关键能力（限流、覆盖率门槛、状态字段）做<strong>端到端行为断言</strong>，
-而不是只断言「类存在」。</p>
+而不是只断言「类存在」—— 限流的这组断言（<code>EnterpriseRateLimitFilterTest</code>）可作为模板。</p>
 </blockquote>
 <hr>
 <h2 id="附录-a-脚本速查">附录 A 脚本速查<a class="headerlink" href="#附录-a-脚本速查" title="永久链接">#</a></h2>
@@ -2999,6 +3001,11 @@ diff<span class="w"> </span>db/schema-mysql.generated.sql<span class="w"> </span
 <td>v1.2</td>
 <td>2026-09-23</td>
 <td>修复 <code>O-03</code>：<code>/actuator/**</code> 加装应用层<strong>来源 IP 白名单</strong>（<code>ActuatorIpWhitelistFilter</code> + <code>IpCidrMatcher</code>，fail-closed，判定基于 TCP 对端地址、不采信 XFF），接口权限表 / Nginx 收敛表 / 安全清单三处口径同步为「双层收敛」。新增 <code>scripts/backup.sh</code>（修复 <code>O-05</code>：一致性备份 + 三重校验 + 轮转 + <code>--restore-check</code>）。新增测试 28 例（<code>ActuatorAccessControlTest</code>），全套 <strong>200 用例 / 0 失败</strong>、行覆盖 73.39%。</td>
+</tr>
+<tr>
+<td>v1.3</td>
+<td>2026-09-23</td>
+<td><strong>修复 <code>F-01</code>（HTTP 侧）</strong>：限流真正接入企业侧请求链路——新增 <code>EnterpriseRateLimitFilter</code>（order 紧跟签名过滤器，VIN 取自请求体缓存；拒绝响应 HTTP 200 + <code>4001</code> + <code>Retry-After: 60</code>，按接口文档 2.7.1 契约），配置表 / Nginx 收敛表 / 缺陷交叉引用三处口径同步。新增测试 7 例（<code>EnterpriseRateLimitFilterTest</code> 行为断言，含反向对照），全套 <strong>207 用例 / 0 失败</strong>。<code>perf/rate_limit_probe.py</code> 升级为发布门禁（默认企业侧已接线路径，签名 POST，绕过本机代理）。MQTT 发布维度维持未接线并如实登记（P-03 遗留）。</td>
 </tr>
 </tbody>
 </table></div>

@@ -387,7 +387,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 <li><a href="#52-动态验证同一-vin-连打-130-次">5.2 动态验证：同一 VIN 连打 130 次</a></li>
 <li><a href="#53-静态核查零调用点">5.3 静态核查：零调用点</a></li>
 <li><a href="#54-影响评估缺陷-f-01">5.4 影响评估（缺陷 F-01）</a></li>
-<li><a href="#55-修复建议">5.5 修复建议</a></li>
+<li><a href="#55-修复方案已于-v11-落地">5.5 修复方案（已于 v1.1 落地）</a></li>
 </ul>
 </li>
 <li><a href="#6-写入链路纸面推演未实测">6 写入链路：纸面推演（未实测）</a><ul>
@@ -1513,6 +1513,10 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
 <td>限流器已实现、已配置、已单测，但<strong>未接入任何请求链路</strong>，实际完全不生效</td>
 </tr>
 <tr>
+<td><strong>状态</strong></td>
+<td>✅ <strong>已修复（本报告 v1.1，2026-09-23）</strong>：新增 <code>EnterpriseRateLimitFilter</code> 挂入企业侧请求链路（详见 5.5），<code>mvn clean verify</code> 207 用例全绿（含 7 个限流行为断言），<code>rate_limit_probe.py</code> 已升级为发布门禁脚本</td>
+</tr>
+<tr>
 <td><strong>影响</strong></td>
 <td>① 上游文档 9.1 承诺的「单车辆 HTTP 100 次/分钟」与「单车辆 MQTT 10 条/秒」<strong>没有任何一层在拦截</strong>；② 一台异常车端（故障循环重连、程序 bug 导致高频上报）可以无上限地占用消费线程与数据库写入能力；③ 监控端点<code>/api/v1/monitor/cache</code> 会如实报告 <code>enabled: true</code>，<strong>运维看到的是"已开启"，实际是"没接线"</strong> —— 这是最危险的组合</td>
 </tr>
@@ -1527,8 +1531,35 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
 </tbody>
 </table></div>
 <p><strong>佐证：这不是"限流阈值太高所以没触发"。</strong> 130 次请求 / 约 2 秒内完成，若限流生效，第 101 次必须返回 <code>4001</code>。且限流判定本应在业务处理<strong>之前</strong>（否则攻击者只要构造"处理很慢"的请求就能绕过），因此"车辆存在、业务成功"不构成绕过理由。</p>
-<h3 id="55-修复建议">5.5 修复建议<a class="headerlink" href="#55-修复建议" title="永久链接">#</a></h3>
-<p>最小改动、最小侵入的方案是在 <code>WebConfig</code> 已注册的拦截器链上加一个限流拦截器：</p>
+<h3 id="55-修复方案已于-v11-落地">5.5 修复方案（已于 v1.1 落地）<a class="headerlink" href="#55-修复方案已于-v11-落地" title="永久链接">#</a></h3>
+<blockquote>
+<p><strong>实际实现与本节当初的草案有两处关键差异</strong>，如实记录（草案保留在后供对照）：</p>
+<ol>
+<li>
+<p><strong>接线面不同：企业侧 <code>/enterprise/api/v1/**</code>，而非管理端 <code>/api/v1/**</code></strong>。
+   上游文档 9.1 的「·车」配额约束的是<strong>对接接口</strong>（企业按车辆发起的调用）；
+   管理端 <code>/api/v1/**</code> 是本平台自建的操作员界面，不在上游文档约定范围内，
+   其客户端是操作员而非车辆，按 VIN 限流语义不成立。
+   限流键 VIN 在企业侧 4 个接口的请求体里（<code>@NotBlank String vin</code>），
+   由已存在的 <code>CachedBodyRequestWrapper</code>（签名过滤器为防重放已实现 body 缓存）提取。</p>
+</li>
+<li>
+<p><strong>形态不同：Filter 而非 Interceptor</strong>——需要在进入业务层之前读 body 判定，
+   且签名过滤器本身就是 Filter，同一层内保持形态一致。
+   实际实现：<code>ratelimit/EnterpriseRateLimitFilter</code>（order = 签名过滤器 +1），
+   拒绝响应按接口文档 2.7.1 契约返回 HTTP 200 + body <code>4001</code>（非 429，
+   对端按 <code>body.code</code> 解析），附 <code>Retry-After: 60</code>。
+   <strong>接线时堵住了一个「静默失效」隐患</strong>：过滤器若因装配顺序变化拿不到已包装的
+   请求，会自行包装而不是跳过判定——否则限流会随过滤器顺序调整无声消失。</p>
+</li>
+</ol>
+</blockquote>
+<details>
+<summary>原草案（已被上述实现取代，保留供对照）</summary>
+
+最小改动、最小侵入的方案是在 `WebConfig` 已注册的拦截器链上加一个限流拦截器：
+
+
 <div class="highlight"><pre><span></span><code><span class="c1">// security/RateLimitInterceptor.java（新增）</span>
 <span class="nd">@Component</span>
 <span class="nd">@RequiredArgsConstructor</span>
@@ -1561,18 +1592,35 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
 <span class="p">}</span>
 </code></pre></div>
 
-<p>并在 <code>WebConfig</code> 注册（保持与令牌拦截器同一批路径，排除登录/健康检查）：</p>
+
+
+并在 `WebConfig` 注册（保持与令牌拦截器同一批路径，排除登录/健康检查）：
+
+
 <div class="highlight"><pre><span></span><code><span class="n">registry</span><span class="p">.</span><span class="na">addInterceptor</span><span class="p">(</span><span class="n">rateLimitInterceptor</span><span class="p">)</span>
 <span class="w">        </span><span class="p">.</span><span class="na">addPathPatterns</span><span class="p">(</span><span class="s">"/api/v1/**"</span><span class="p">)</span>
 <span class="w">        </span><span class="p">.</span><span class="na">excludePathPatterns</span><span class="p">(</span><span class="s">"/api/v1/auth/login"</span><span class="p">,</span><span class="w"> </span><span class="s">"/api/v1/monitor/health-check"</span><span class="p">,</span>
 <span class="w">                             </span><span class="s">"/api/v1/simulator/**"</span><span class="p">,</span><span class="w"> </span><span class="s">"/error"</span><span class="p">);</span>
 </code></pre></div>
 
-<p><strong>三个必须一并完成的配套动作</strong>（否则修了还是白修）：</p>
+
+
+</details>
+
+<p><strong>三个必须一并完成的配套动作</strong>（否则修了还是白修）——落地状态：</p>
 <ol>
-<li><strong>补一条"限流真的生效"的集成测试</strong>：MockMvc 连打 130 次同 VIN，断言第 101 次返回 <code>4001</code>。这是唯一能防止"接了一半又被改回去"的手段 —— 现有单测只测 <code>RateLimiter</code> 类本身，测不出"没人调用"。</li>
-<li><strong>入站 MQTT 报文同样接入</strong>（原 P-03）：在 <code>MqttMessageRouter</code> 中按发送方 VIN 限流，超限计数并丢弃，避免异常车端拖慢其他车辆。</li>
-<li><strong>监控端点补充"限流触发次数"指标</strong>：现在只有配置，没有"拦了多少次"。没有这个计数器，就只有在用户投诉时才知道限流在拦人（或没拦人）。</li>
+<li>✅ <strong>补一条"限流真的生效"的集成测试</strong>：<code>EnterpriseRateLimitFilterTest</code>（7 例，含
+   同 VIN 连打 limit+5 次断言出现 <code>4001</code>、<strong>反向对照</strong>（一辆车打满不影响其他车——
+   防止"拒绝所有"这种假修好）、<code>enabled=false</code> 不限流、窗口滑过后恢复、取不到 VIN
+   放行、multipart 跳过、<code>Retry-After</code> 头）。测试用 <code>StateStore#nowMillis()</code> 的
+   时钟注入口固定时间，消除滑动窗口跨分钟边界导致的用例抖动。</li>
+<li>⚠️ <strong>入站 MQTT 报文接入</strong>（原 P-03）→ <strong>按设计文档 6.4 维持"不限流"</strong>：
+   入站的兜底是队列容量保护（D-02），这是设计文档明确记录的决策而非遗漏；
+   但 6.4 中「单车辆 MQTT 发布（下行）✅」一行<strong>与事实不符</strong>——<code>tryAcquireMqttPublish</code>
+   同样零调用，已修正为「能力已备、未接线」并登记待办（其难点：下行发布的触发源
+   一半是 MQTT 入站事故报告，简单抛异常会引发对端整条报文重投，需单独设计失败模式）。</li>
+<li>⚠️ <strong>监控端点补充"限流触发次数"指标</strong>：<strong>仍未做</strong>。当前只能靠日志与
+   <code>rate_limit_probe.py</code> 观察拦截行为，建议在监控端点增加 <code>rateLimitedCount</code> 计数器。</li>
 </ol>
 <hr>
 <h2 id="6-写入链路纸面推演未实测">6 写入链路：纸面推演（未实测）<a class="headerlink" href="#6-写入链路纸面推演未实测" title="永久链接">#</a></h2>
@@ -1758,8 +1806,8 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
 </tr>
 <tr>
 <td>限流保护</td>
-<td><strong>已实测（反面）</strong></td>
-<td><strong>未接入，完全不生效（F-01，第 5 章）</strong></td>
+<td><strong>已实测（修复后正面）</strong></td>
+<td>✅ <strong>已接入企业侧链路并经行为断言验证（F-01 已修复，第 5 章）</strong>；管理端按设计不限流</td>
 </tr>
 <tr>
 <td>虚拟线程</td>
@@ -2045,11 +2093,13 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
 <li>为什么最可能：这是<strong>唯一随时间必然恶化的方向</strong>，其他问题都需要特定触发条件。</li>
 <li>前置信号：<code>data_length + index_length</code> 日增超预期（应约 14 GB/天）、<code>TelemetryRetentionService</code> 的清理日志耗时持续上升。</li>
 </ul>
-<p><strong>场景 2：一台异常车端打满消费能力（次可能，且因 F-01 而放大）</strong></p>
+<p><strong>场景 2：一台异常车端打满消费能力（次可能）</strong></p>
 <ul>
 <li>触发条件：某车端因程序缺陷以远高于 1Hz 的频率上报（如重连后循环补发）。</li>
 <li>表现：<code>InboundMessageQueue</code> 积压持续增长 → 开始丢弃、<code>droppedCount</code> 上升 → 其他车辆的处理延迟变长。</li>
-<li><strong>F-01 让这件事失去了第一道防线</strong>：设计的本意是"单车辆 10 条/秒"限流挡住它，但限流未接入。目前只剩入站队列容量（20000）作兜底，且兜底策略是"丢掉最旧的"——<strong>会连带丢掉正常车辆的数据</strong>。</li>
+<li>防线现状：入站报文按设计文档 6.4 <strong>刻意不限流</strong>（依赖入站队列容量兜底，丢最旧）——
+  该兜底<strong>会连带丢掉正常车辆的数据</strong>，因此本场景的真正解法是扩容消费线程或排查异常车端
+  （见前置信号），F-01 修复接入的是企业侧 HTTP 维度，对此场景无直接缓解。</li>
 <li>前置信号：<code>inboundQueueSize</code> / <code>inboundDropped</code> 持续增长，<code>mqttInboundQueue</code> 在大屏上不再归零。</li>
 </ul>
 <p><strong>场景 3：数据库连接池成为并发瓶颈（虚拟线程启用后）</strong></p>
@@ -2077,7 +2127,7 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
 <tr>
 <td>小规模</td>
 <td>50~300 台</td>
-<td>①修复 F-01；②按磁盘反推 <code>track-point-days</code>；③开启 Redis（L2 缓存 + 跨实例去重）</td>
+<td>~~①修复 F-01~~（✅ 已完成）；②按磁盘反推 <code>track-point-days</code>；③开启 Redis（L2 缓存 + 跨实例去重）</td>
 </tr>
 <tr>
 <td>中等</td>
@@ -2106,7 +2156,7 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
 <tbody>
 <tr>
 <td>1</td>
-<td><strong>接入限流（F-01）</strong>：新增 <code>RateLimitInterceptor</code>，注册到 <code>/api/v1/**</code>；补一条"130 次请求应被拒"的集成测试</td>
+<td>~~<strong>接入限流（F-01）</strong>~~ ✅ <strong>已完成（v1.1）</strong>：实际落地为 <code>EnterpriseRateLimitFilter</code>（企业侧，VIN 取自请求体），7 个行为断言用例；<code>rate_limit_probe.py</code> 已升级为发布门禁（见 5.5）</td>
 <td>第 5 章实测：限流完全不生效</td>
 <td>小（约 60 行 + 1 条测试）</td>
 </tr>
@@ -2469,7 +2519,7 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
 <td><strong>F-01</strong></td>
 <td><strong>高（P0）</strong></td>
 <td>限流器未接入任何请求链路，实际完全不生效</td>
-<td><strong>未修复</strong>（已给出方案）</td>
+<td>✅ <strong>已修复</strong>（v1.1，见 5.4/5.5）</td>
 <td>5.4</td>
 </tr>
 <tr>
@@ -2546,6 +2596,11 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
 <td>v1.0</td>
 <td>2026-09-23</td>
 <td>首版。含 3 个数据集（基线 / 缓存 A/B 对照 / 限流探针）的实测数据、写入链路推演、8 项优化手段核查、3 个"先崩"场景推演与扩容路径；新增限流探针脚本 <code>rate_limit_probe.py</code>；修复压测脚本 4 个会污染数据的缺陷；发现 P0 级缺陷 F-01</td>
+</tr>
+<tr>
+<td>v1.1</td>
+<td>2026-09-23</td>
+<td><strong>修复 F-01</strong>：新增 <code>EnterpriseRateLimitFilter</code>（企业侧，order 紧跟签名过滤器，VIN 取自请求体缓存；拒绝响应 HTTP 200 + <code>4001</code> + <code>Retry-After: 60</code>，按接口文档 2.7.1 契约），7 个行为断言用例（含反向对照），测试规模 200 → 207。探针脚本升级为发布门禁：默认打企业侧<strong>已接线路径</strong>（带签名 POST，绕过本机代理），管理端模式降为对照观察。同时修正 6.4 表「MQTT 发布 ✅」的不实表述（<code>tryAcquireMqttPublish</code> 仍零调用，登记待办）</td>
 </tr>
 </tbody>
 </table></div>

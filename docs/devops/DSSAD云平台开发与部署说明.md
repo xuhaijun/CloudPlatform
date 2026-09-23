@@ -289,7 +289,7 @@ bash scripts/check-env.sh --gen-secret 24
 | `dssad.cache.l1-max-size` | `10000`（local）/ `50000`（prod）| Caffeine 容量 |
 | `dssad.cache.l1-default-ttl-seconds` | `10`（local）/ `30`（prod）| L1 TTL |
 | `dssad.cache.l2-default-ttl-seconds` | `10`（local）/ `60`（prod）| L2 TTL（多实例跨实例一致性靠它）|
-| `dssad.rate-limit.enabled` / `http-per-minute` / `mqtt-per-second` | `true` / `100` / `10` | 限流参数。⚠️ **当前实现未接入请求链路，配置不生效**（`F-01`，见《性能优化与压测报告》）|
+| `dssad.rate-limit.enabled` / `http-per-minute` / `mqtt-per-second` | `true` / `100` / `10` | 限流参数。✅ HTTP 维度已接线（`EnterpriseRateLimitFilter`，企业侧按车辆限流，v1.3）；⚠️ MQTT 发布维度仍未接线（P-03 遗留）；管理端 `/api/v1/**` 按设计不限流 |
 | `dssad.audit.mode` / `sample-rate` / `retention-days` | `sampled` / `0.05` / `180` | 报文留痕策略 |
 | `dssad.retention.track-point-days` | `90` | 轨迹保留天数（每天 03:30 清理）|
 | `dssad.retention.state-snapshot-days` | `180` | 状态流水保留天数 |
@@ -534,6 +534,7 @@ cd cloud-platform-web && npm run type-check && npm run build
 `pom.xml` 中声明了 `jacoco.line.coverage.min=0.60`，但**原版本只有 `prepare-agent` 与 `report` 两个执行，
 没有 `check`** —— 也就是说这个门槛是**死配置**：覆盖率即便降到 10%，构建照样成功。
 这与《性能优化与压测报告》中的 `F-01`（限流器未接入）属于**同一族问题**：配置/代码存在，但从未被调用。
+（`F-01` 的 HTTP 侧已于 v1.3 修复接入企业侧链路。）
 
 本次已接线：
 
@@ -727,7 +728,7 @@ sudo nginx -t && sudo nginx -s reload
 | `client_max_body_size 210m;` | 200 MB 事故视频上传被 413 拒绝（文档 9.2 约定单文件 ≤ 200 MB）|
 | `proxy_read_timeout 120s;` | 长事务请求超时 |
 | `location /actuator/ { return 404; }` | `/actuator/metrics`、`/actuator/prometheus` 会暴露 JVM 堆、连接池等待数、接口耗时分布 —— 等于一份系统说明书。**用 404 而非 403**，让外部无法枚举端点是否存在。⚠️ 这只是**第一道**：应用层还有 `ActuatorIpWhitelistFilter` 的**来源 IP 白名单（fail-closed）**，二者叠加才能挡住「绕过 Nginx 的容器内/同宿主机直连」 |
-| 登录接口单独 `limit_req zone=login_zone` | 可被撞库。⚠️ 应用层限流当前未生效（`F-01`），**入口层限流是目前唯一真实生效的一道** |
+| 登录接口单独 `limit_req zone=login_zone` | 可被撞库。应用层限流已接入企业侧链路（`F-01` 已修复，v1.3），但登录接口属管理端 `/api/v1/**`、**按设计不在「·车」配额内**——因此 Nginx 这条 `limit_req` 仍是登录接口唯一的真实限流，不可删 |
 | `try_files $uri $uri/ /index.html;`（SPA 兜底）| 前端 history 路由（`/monitor`、`/events`）直接刷新会 404 |
 | `location = /index.html` 不缓存 + `/assets/` 长缓存 | 不加会导致发版后用户拿到旧壳；加错会导致用户拿到旧 JS |
 | `gzip off;` | 应用已开 `server.compression`，Nginx 再压是重复劳动 |
@@ -1045,7 +1046,7 @@ SELECT COUNT(*) FROM t_vehicle_track_point WHERE ts < UNIX_TIMESTAMP(DATE_SUB(NO
 
 | 编号 | 所属文档 | 与本文的关系 |
 |---|---|---|
-| `F-01` | 性能报告 | **限流器未接入请求链路**。本文 9.3 因此强调「Nginx 入口限流是当前唯一真实生效的一道」|
+| `F-01` | 性能报告 | ~~**限流器未接入请求链路**~~ ✅ **已修复（v1.3）**：企业侧 `EnterpriseRateLimitFilter` 接入；本文 9.3 的 Nginx 入口限流仍保留——登录等管理端接口不在「·车」配额内 |
 | `P-01` | 详细设计 | 多实例 `@Scheduled` 无分布式锁。本文 11.4 / 11.6 因此要求「多实例部署前必须先修」|
 | `P-02` | 详细设计 | `markOfflineVehicles` 无调用方 → 车辆 `online` 永不回落。与 `E-01` 同属「探活/状态字段不可信」的运维盲区 |
 | `D-01` | 数据库设计 | 遥测流水缺保留策略（已修复）。本文 11.5 的清理任务即其落地方案 |
@@ -1054,9 +1055,10 @@ SELECT COUNT(*) FROM t_vehicle_track_point WHERE ts < UNIX_TIMESTAMP(DATE_SUB(NO
 > `P-02`（方法无调用方）、`E-01`（状态字段无人消费）、`O-02`（Prometheus 端点缺依赖）、`O-08`（优雅停机未配置）。
 > 共同特征是**「写了、有注释、有配置，但没有任何调用方或消费者」**。
 > 这类问题不会报错、不会被测试抓到，只能靠「逐条追问：它被谁调用？生效的证据是什么？」来发现。
-> 其中 4 例已在本次迭代中接线并实测（`E-03` / `E-01` / `O-02` / `O-08`）。
+> 其中 5 例已接线并实测（`E-03` / `E-01` / `O-02` / `O-08` / `F-01`），
+> 仅剩 `P-02`（在线状态回落，属 P2 待办）。
 > 建议在 CI 中增加一条检查：对关键能力（限流、覆盖率门槛、状态字段）做**端到端行为断言**，
-> 而不是只断言「类存在」。
+> 而不是只断言「类存在」—— 限流的这组断言（`EnterpriseRateLimitFilterTest`）可作为模板。
 
 ---
 
@@ -1182,3 +1184,4 @@ SELECT COUNT(*) FROM t_vehicle_track_point WHERE ts < UNIX_TIMESTAMP(DATE_SUB(NO
 | v1.0 | 2026-09-23 | 首次发布。覆盖三条路径、拓扑、环境要求、配置体系、脚本、构建、容器与 systemd 两种部署方式、上线验收清单、运维手册、安全清单、排障 FAQ，并交付一套可直接执行的脚本与部署资产。本次实跑验证 10 项（EV-1~EV-10），发现部署级风险 6 项（`E-01`~`E-06`，其中 `E-03` 已修复、`E-04` 部分补齐），未验证项 8 项集中列于附录 C。 |
 | v1.1 | 2026-09-23 | 修复 `E-01`：新增 `GET /api/v1/monitor/mqtt-health`（DOWN → 503）、`MqttChannelProbe`（8 个单测）、`scripts/mqtt-watch.sh`；接口权限表与通道告警章节同步更新。更正两处与实际不符的表述：①「应用层 IP 白名单 fail-closed」—— 仓库内**不存在**该实现，实为仅靠 Nginx 收敛（登记为 O-03）；②「`/actuator/prometheus` 可被抓取」—— 修复前因缺 `micrometer-registry-prometheus` 实际 404（登记为 O-02，已修复）。完整运维方案见《DSSAD 云平台运维手册与告警预案》。 |
 | v1.2 | 2026-09-23 | 修复 `O-03`：`/actuator/**` 加装应用层**来源 IP 白名单**（`ActuatorIpWhitelistFilter` + `IpCidrMatcher`，fail-closed，判定基于 TCP 对端地址、不采信 XFF），接口权限表 / Nginx 收敛表 / 安全清单三处口径同步为「双层收敛」。新增 `scripts/backup.sh`（修复 `O-05`：一致性备份 + 三重校验 + 轮转 + `--restore-check`）。新增测试 28 例（`ActuatorAccessControlTest`），全套 **200 用例 / 0 失败**、行覆盖 73.39%。 |
+| v1.3 | 2026-09-23 | **修复 `F-01`（HTTP 侧）**：限流真正接入企业侧请求链路——新增 `EnterpriseRateLimitFilter`（order 紧跟签名过滤器，VIN 取自请求体缓存；拒绝响应 HTTP 200 + `4001` + `Retry-After: 60`，按接口文档 2.7.1 契约），配置表 / Nginx 收敛表 / 缺陷交叉引用三处口径同步。新增测试 7 例（`EnterpriseRateLimitFilterTest` 行为断言，含反向对照），全套 **207 用例 / 0 失败**。`perf/rate_limit_probe.py` 升级为发布门禁（默认企业侧已接线路径，签名 POST，绕过本机代理）。MQTT 发布维度维持未接线并如实登记（P-03 遗留）。 |

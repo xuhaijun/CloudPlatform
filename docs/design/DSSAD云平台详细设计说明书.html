@@ -3341,17 +3341,17 @@ TwoLevelCache（AbstractValueAdaptingCache 子类）
 <tr>
 <td>单车辆 HTTP（100/分钟）</td>
 <td>✅</td>
-<td><code>tryAcquireHttp(vin)</code></td>
+<td><code>tryAcquireHttp(vin)</code> —— <strong>已接线（v1.0.2）</strong>：<code>EnterpriseRateLimitFilter</code> 挂在签名过滤器之后，VIN 取自请求体缓存，拒绝返回 <code>4001</code> + <code>Retry-After: 60</code></td>
 </tr>
 <tr>
 <td>单车辆 MQTT 发布（10/秒）</td>
-<td>✅</td>
-<td><code>tryAcquireMqttPublish(vin)</code></td>
+<td>⚠️</td>
+<td><strong>能力已备、未接线</strong>：<code>tryAcquireMqttPublish(vin)</code> 仍零调用。难点：下行发布的触发源一半是 MQTT 入站事故报告（<code>AccidentMessageHandler</code>），抛异常会引发对端整条报文重投；需先设计好失败模式（延后入离线队列 or 仅对 HTTP 触发源生效）再接入。<strong>此前本行标 ✅ 与事实不符，已修正</strong></td>
 </tr>
 <tr>
 <td>单车辆上行报文（入站）</td>
 <td>❌</td>
-<td><strong>未限流</strong>——依赖入站队列容量保护（见 10 章 D-02）</td>
+<td><strong>未限流</strong>——依赖入站队列容量保护（见 10 章 D-02），刻意设计</td>
 </tr>
 <tr>
 <td>单企业对外 API 调用</td>
@@ -4541,9 +4541,9 @@ java<span class="w"> </span>-jar<span class="w"> </span>dssad-cloud-platform.jar
 <tr>
 <td><strong>P-03</strong></td>
 <td><strong>高</strong></td>
-<td><strong>限流器完全未接入请求链路</strong>（原描述为「入站报文无频率限流」，经《性能优化与压测报告》F-01 实测修正）：<code>RateLimiter</code> 的 <code>tryAcquireHttp</code> / <code>tryAcquireMqttPublish</code> 在全项目<strong>零调用点</strong>，仅被监控端点读取配置用于展示——即配置为「单车辆 HTTP 100 次/分钟、MQTT 10 条/秒」的限流<strong>一条都未生效</strong></td>
-<td>① 一台异常车端可无上限占用消费线程与数据库写入能力，入站队列只剩「容量满丢弃最旧」兜底（会连带丢弃正常车辆的报文）；② 监控端点仍如实报告 <code>enabled: true</code>，运维看到的是「已开启」而实际「没接线」，属最危险的组合</td>
-<td>新增 <code>RateLimitInterceptor</code> 并注册到 <code>/api/v1/**</code>（完整方案与配套测试见《性能优化与压测报告》5.5）；入站报文在 <code>MqttMessageRouter</code> 中按发送方 VIN 限流；监控端点补充「已拦截次数」计数器</td>
+<td>~~<strong>限流器完全未接入请求链路</strong>~~ ✅ <strong>已修复（HTTP 侧，v1.0.2）</strong>：原问题——<code>RateLimiter</code> 的 <code>tryAcquireHttp</code> / <code>tryAcquireMqttPublish</code> 在全项目<strong>零调用点</strong>，配置的「单车辆 HTTP 100 次/分钟」一条都未生效（经《性能优化与压测报告》F-01 实测确认）</td>
+<td>修复前：一台异常企业集成可无上限占用业务线程与数据库写入能力，且监控端点仍报告 <code>enabled: true</code>（「显示已开启、实际没接线」的最危险组合）</td>
+<td>✅ HTTP 侧已落地：新增 <code>EnterpriseRateLimitFilter</code>（企业侧 <code>/enterprise/api/v1/**</code>，order 紧跟签名过滤器，VIN 取自请求体缓存；拒绝响应 HTTP 200 + <code>4001</code> + <code>Retry-After: 60</code>，按接口文档 2.7.1 契约），7 个行为断言用例，探针升级为发布门禁（详见性能报告 5.5）。⚠️ 遗留：<code>tryAcquireMqttPublish</code>（下行发布维度）仍未接线——其触发源一半是 MQTT 入站事故报告，简单抛异常会引发对端整条报文重投，需单独设计失败模式后接入；入站报文按 6.4 维持不限流（队列容量兜底）</td>
 </tr>
 <tr>
 <td><strong>P-04</strong></td>
@@ -4925,6 +4925,11 @@ java<span class="w"> </span>-jar<span class="w"> </span>dssad-cloud-platform.jar
 <td>v1.0.1</td>
 <td>2026-09-23</td>
 <td>依据《性能优化与压测报告》F-01 的实测结论修订 P-03：原描述「入站报文无频率限流」不准确——实测（同 VIN 连打 130 次全部成功）+ 静态核查（<code>tryAcquireHttp</code>/<code>tryAcquireMqttPublish</code> 零调用点）表明<strong>三条限流均未接入请求链路</strong>；等级由「中」升为「高」，修复方案移入性能报告 5.5。</td>
+</tr>
+<tr>
+<td>v1.0.2</td>
+<td>2026-09-23</td>
+<td><strong>P-03 的 HTTP 侧修复落地</strong>：6.4 维度表更新（HTTP 行标注已接线 <code>EnterpriseRateLimitFilter</code>；「MQTT 发布 ✅」修正为「⚠️ 能力已备、未接线」——<code>tryAcquireMqttPublish</code> 实际零调用，此前标 ✅ 与事实不符）；P-03 状态同步，遗留 MQTT 发布维度并说明难点。测试规模 200 → 207。</td>
 </tr>
 </tbody>
 </table></div>

@@ -67,12 +67,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * {@code AppProperties}（切片上下文不加载该 bean）—— 不排除则整个上下文都起不来，
  * 表现为本类<b>所有</b>用例集体报 {@code Failed to load ApplicationContext}。
  * 该过滤器的行为由 {@code ActuatorAccessControlTest} 单独覆盖。
+ * {@link com.genvict.dssad.cloud.ratelimit.EnterpriseRateLimitFilter} 同因同果
+ * （依赖 {@code RateLimiter} → {@code AppProperties}），一并排除；
+ * 其行为由 {@code EnterpriseRateLimitFilterTest} 用真实限流器覆盖。
  */
 @WebMvcTest(controllers = EnterpriseApiController.class,
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
                 classes = {WebConfig.class, EnterpriseSignatureFilter.class, AdminTokenInterceptor.class,
-                        ActuatorIpWhitelistFilter.class}))
+                        ActuatorIpWhitelistFilter.class,
+                        com.genvict.dssad.cloud.ratelimit.EnterpriseRateLimitFilter.class}))
 @ActiveProfiles("test")
 class EnterpriseApiControllerTest {
 

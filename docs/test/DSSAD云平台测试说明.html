@@ -364,6 +364,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 <li><a href="#33-faultcodedictionarytest6-用例">3.3 FaultCodeDictionaryTest（6 用例）</a></li>
 <li><a href="#34-slidingwindowratelimitertest5-用例-securityandratelimittest-的限流分组">3.4 SlidingWindowRateLimiterTest（5 用例）+ SecurityAndRateLimitTest 的限流分组</a></li>
 <li><a href="#35-securityandratelimittest11-用例-3-组">3.5 SecurityAndRateLimitTest（11 用例 / 3 组）</a></li>
+<li><a href="#35a-enterpriseratelimitfiltertest7-用例">3.5a EnterpriseRateLimitFilterTest（7 用例）</a></li>
 <li><a href="#36-enterprisesignaturefiltertest10-用例">3.6 EnterpriseSignatureFilterTest（10 用例）</a></li>
 <li><a href="#37-twolevelcachetest10-用例-3-组">3.7 TwoLevelCacheTest（10 用例 / 3 组）</a></li>
 <li><a href="#38-commonutilstest19-用例-4-组">3.8 CommonUtilsTest（19 用例 / 4 组）</a></li>
@@ -483,7 +484,8 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 —— 每条测试背后都对应一类具体的、曾经踩过或极易踩到的故障。
 第 4 章与第 9 章同样重要：<strong>明确列出没有被测到的部分</strong>，以及本次发现的测试体系缺陷
 （编号 <code>T-xx</code>）。其中 <code>T-02</code> 解释了为什么一个 P0 缺陷（<code>F-01</code> 限流未接入）
-能在 200 个用例全绿的情况下潜伏至今。</p>
+能在 200 个用例全绿的情况下潜伏至今——该缺陷<strong>已于本说明 v1.2 修复并补上行为断言</strong>
+（<code>EnterpriseRateLimitFilterTest</code>，7 例），测试规模 200 → 207。</p>
 </blockquote>
 <hr>
 <h2 id="0-文档说明">0 文档说明<a class="headerlink" href="#0-文档说明" title="永久链接">#</a></h2>
@@ -941,8 +943,10 @@ allow ⟺ estimated &lt; limit
 <p>窗口边界的正确性体现在「跨窗前后的几毫秒」，用真实时钟测等于把结论交给调度器。
 因此本类给 <code>StateStore</code> 注入可控时钟，每次跨窗都精确可控、100% 确定性。</p>
 <blockquote>
-<p>⚠️ <strong>但这两组用例都只证明了「限流器算得对」，没有证明「限流器被调用过」</strong>。
-这正是 <code>F-01</code> 能潜伏的原因，见第 9 章 <code>T-02</code>。</p>
+<p>⚠️ ~~<strong>但这两组用例都只证明了「限流器算得对」，没有证明「限流器被调用过」</strong>~~
+（历史记录，正是 <code>F-01</code> 能潜伏的原因，见第 9 章 <code>T-02</code>）。
+<strong>该缺口已由 <code>EnterpriseRateLimitFilterTest</code>（3.5a 节）补上</strong>：它测的就是
+「请求打进来，限流真的会拦」，与算法测试分层互补。</p>
 </blockquote>
 <h3 id="35-securityandratelimittest11-用例-3-组">3.5 SecurityAndRateLimitTest（11 用例 / 3 组）<a class="headerlink" href="#35-securityandratelimittest11-用例-3-组" title="永久链接">#</a></h3>
 <div class="table-wrap"><table>
@@ -969,6 +973,52 @@ allow ⟺ estimated &lt; limit
 </table></div>
 <p><strong>降级方向是要测的</strong>：限流存储异常时<strong>宁可放行也不误杀</strong>，这个方向必须被断言钉住 ——
 否则某次「优化」把它改成 fail-closed，结果会是「Redis 抖动 → 全部车辆被限流」。</p>
+<h3 id="35a-enterpriseratelimitfiltertest7-用例">3.5a EnterpriseRateLimitFilterTest（7 用例）<a class="headerlink" href="#35a-enterpriseratelimitfiltertest7-用例" title="永久链接">#</a></h3>
+<p><strong>保护目标：限流能力真的被接进了请求链路（F-01 的行为断言，v1.2 新增）。</strong></p>
+<p>这组用例与 3.4/3.5 的算法测试<strong>分层互补</strong>：算法测试证明「算得对」，本类证明「真的在拦」。
+用 standalone MockMvc + 真实 <code>RateLimiter</code>（<code>InMemoryStateStore</code>）打真实过滤器：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>用例</th>
+<th>断言的行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>同 VIN 连打 <code>limit+5</code> 次</td>
+<td>前 100 次全放行（<code>0000</code>），之后连续拒绝（<code>4001</code>）—— T-02 ② 的验收口径</td>
+</tr>
+<tr>
+<td><strong>反向对照</strong></td>
+<td>一辆车打满配额后，另一辆车<strong>首次请求仍放行</strong> —— 防止「限流键写错成全局计数」这种「拒绝所有」式假修好</td>
+</tr>
+<tr>
+<td>窗口滑过恢复</td>
+<td>打满 → 被拒 → 时钟 +2 窗口 → 放行（被拒请求不计数、不会被永久封死）</td>
+</tr>
+<tr>
+<td><code>enabled=false</code></td>
+<td><code>limit+5</code> 次全部放行（配置开关真的能关）</td>
+</tr>
+<tr>
+<td>取不到 VIN</td>
+<td>畸形 JSON / 无 <code>vin</code> 字段 / 空 body / 空白 VIN 一律放行（限流是保护性旁路，fail-open）</td>
+</tr>
+<tr>
+<td>multipart 跳过</td>
+<td>媒体上传不限流（与签名过滤器同款豁免）</td>
+</tr>
+<tr>
+<td><code>Retry-After</code> 头</td>
+<td>被拒响应附 <code>Retry-After: 60</code>（限流窗口 1 分钟）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>为什么用固定时钟</strong>：滑动窗口判定依赖「当前窗 + 上窗加权」，真实时钟下测试若跨过
+分钟边界，上窗衰减权重会让「第 101 次应拒」漂移成「第 150 次才拒」—— 用例随机失败且
+极难复现。<code>StateStore#nowMillis()</code> 是接口特意留的时钟注入口（javadoc 原话：
+「便于实现方注入可控时钟做测试」），固定后所有请求落在同一窗口，100% 确定。</p>
 <h3 id="36-enterprisesignaturefiltertest10-用例">3.6 EnterpriseSignatureFilterTest（10 用例）<a class="headerlink" href="#36-enterprisesignaturefiltertest10-用例" title="永久链接">#</a></h3>
 <p><strong>保护目标：对外开放接口的防重放能力。</strong></p>
 <p>接口文档 6.3.1 把认证方式留给各企业自定，意味着<strong>没有任何外部规范兜底</strong>。
@@ -1377,8 +1427,8 @@ diff<span class="w"> </span>db/schema-mysql.generated.sql<span class="w"> </span
 </tr>
 <tr>
 <td>限流</td>
-<td><strong>弱</strong></td>
-<td>⚠️ 只测算法，<strong>未测是否接入链路</strong> → <code>T-02</code></td>
+<td><strong>强</strong></td>
+<td>✅ 算法（3.4/3.5）+ <strong>链路行为断言</strong>（3.5a，v1.2 新增，<code>T-02</code> 已闭合）</td>
 </tr>
 <tr>
 <td>遥测批量写入</td>
@@ -1418,7 +1468,7 @@ diff<span class="w"> </span>db/schema-mysql.generated.sql<span class="w"> </span
 <li>报告会生成，看起来「有做覆盖率」，但<strong>它不拦任何东西</strong>。</li>
 </ul>
 <p>这与《性能优化与压测报告》的 <code>F-01</code>（限流器未接入请求链路）属于<strong>同一族问题</strong>：
-<strong>配置/代码存在，但从未被调用</strong>。</p>
+<strong>配置/代码存在，但从未被调用</strong>。（<code>F-01</code> 已于性能报告 v1.1 修复。）</p>
 <h3 id="52-修复方案已实施并验证">5.2 修复方案（已实施并验证）<a class="headerlink" href="#52-修复方案已实施并验证" title="永久链接">#</a></h3>
 <div class="highlight"><pre><span></span><code><span class="nt">&lt;execution&gt;</span>
 <span class="w">  </span><span class="nt">&lt;id&gt;</span>check-coverage<span class="nt">&lt;/id&gt;</span>
@@ -1660,9 +1710,9 @@ mvn<span class="w"> </span>-B<span class="w"> </span><span class="nb">test</span
 </tr>
 <tr>
 <td><strong>限流是否生效</strong></td>
-<td><code>T-02</code>（重大盲区）</td>
-<td>目前只能用探针脚本手工验证 → <strong>建议补自动化</strong></td>
-<td>性能报告 <code>F-01</code></td>
+<td>~~<code>T-02</code>（重大盲区）~~ ✅ <strong>已补自动化</strong>（3.5a 行为断言 + 探针升级为发布门禁，<code>T-02</code> 闭合）</td>
+<td>单测层已覆盖；真实环境的门禁验证用 <code>perf/rate_limit_probe.py --mode enterprise</code></td>
+<td>性能报告 <code>F-01</code>（已修复）</td>
 </tr>
 <tr>
 <td><strong>真实 MySQL 上的 DDL</strong></td>
@@ -1697,10 +1747,10 @@ mvn<span class="w"> </span>-B<span class="w"> </span><span class="nb">test</span
 <tr>
 <td><strong>T-02</strong></td>
 <td><strong>高</strong></td>
-<td><strong>限流能力没有任何「行为断言」</strong>：<code>SlidingWindowRateLimiterTest</code> 与 <code>SecurityAndRateLimitTest</code> 测的是<strong>限流算法本身</strong>；全测试目录 <code>grep -rn "tryAcquireHttp|RATE_LIMITED|4001"</code> <strong>零命中</strong> —— 也就是说，「限流是否被接进请求链路」从未被验证</td>
+<td>~~<strong>限流能力没有任何「行为断言」</strong>~~ ✅ <strong>已修复（v1.2）</strong>：原问题——算法有单测，但「限流是否被接进请求链路」从未被验证（静态核查 <code>tryAcquireHttp</code> 零引用；实测同 VIN 130 次全部放行）</td>
 <td>静态核查：测试目录零引用；实测：同 VIN 连打 130 次全部放行（<code>F-01</code>）</td>
 <td><strong>这正是 P0 缺陷 <code>F-01</code> 能在 200 个用例全绿的情况下潜伏至今的直接原因</strong>。配置写着「100 次/分钟」，测试全绿，实际零限流</td>
-<td>① 先修 <code>F-01</code>（加 <code>RateLimitInterceptor</code>）；② 立刻补一条集成测试：MockMvc 同 VIN 连打 <code>http-per-minute + 5</code> 次 → <strong>断言出现 <code>4001</code></strong>；③ 把 <code>perf/rate_limit_probe.py</code> 的判据（「130 次应被拒」）纳入发布门禁；④ <strong>同类问题已按此原则补齐 2 例</strong>：<code>O-01</code>（通道探活）与 <code>O-03</code>（Actuator 访问控制）都已从「声明存在」升级为「行为断言」，见第 2 章</td>
+<td>① <code>F-01</code> 已修（<code>EnterpriseRateLimitFilter</code>，企业侧链路）；② ✅ 行为断言已补：<code>EnterpriseRateLimitFilterTest</code> 7 例（同 VIN <code>limit+5</code> 次断言出现 <code>4001</code> + 反向对照）；③ ✅ <code>perf/rate_limit_probe.py</code> 已升级为发布门禁（默认企业侧已接线路径，带签名 POST）；④ 同类问题已按此原则补齐 3 例：<code>O-01</code>（通道探活）、<code>O-03</code>（Actuator 访问控制）、本次限流</td>
 </tr>
 <tr>
 <td><strong>T-03</strong></td>
@@ -1765,7 +1815,7 @@ mvn<span class="w"> </span>-B<span class="w"> </span><span class="nb">test</span
 <tr>
 <td><code>F-01</code></td>
 <td>性能报告</td>
-<td>限流器<strong>写了 145 行实现 + 单测 + 配置</strong>，但 <code>tryAcquireHttp</code>/<code>tryAcquireMqttPublish</code> <strong>零调用点</strong></td>
+<td>限流器<strong>写了 145 行实现 + 单测 + 配置</strong>，但 <code>tryAcquireHttp</code>/<code>tryAcquireMqttPublish</code> <strong>零调用点</strong> —— ✅ HTTP 侧已修复（企业侧过滤器），MQTT 发布侧维持未接线（已如实登记）</td>
 </tr>
 <tr>
 <td><code>T-01</code> / <code>E-03</code></td>
@@ -1804,9 +1854,9 @@ mvn<span class="w"> </span>-B<span class="w"> </span><span class="nb">test</span
 </thead>
 <tbody>
 <tr>
-<td><strong>P0</strong></td>
-<td>修 <code>F-01</code> + 补限流行为断言（<code>T-02</code>）</td>
-<td>当前最大的「测试以为覆盖了、实际没覆盖」缺口</td>
+<td>✅ 已完成</td>
+<td>~~修 <code>F-01</code> + 补限流行为断言（<code>T-02</code>）~~（v1.2：<code>EnterpriseRateLimitFilter</code> + 7 例断言）</td>
+<td>~~当前最大的「测试以为覆盖了、实际没覆盖」缺口~~ 已闭合</td>
 </tr>
 <tr>
 <td><strong>P0</strong></td>
@@ -1962,6 +2012,11 @@ mvn<span class="w"> </span>-B<span class="w"> </span><span class="nb">test</span
 <td>v1.0</td>
 <td>2026-09-23</td>
 <td>首次发布。覆盖测试策略与分层依据、14 个测试类逐类详述（含「在保护什么风险」）、覆盖率实测与门槛策略、测试隔离与幽灵用例防治、未自动化覆盖清单、以及 8 项测试体系缺陷（<code>T-01</code>~<code>T-08</code>）。其中 <code>T-01</code> 已修复并验证；<code>T-02</code>（限流能力无行为断言）确认是 P0 缺陷 <code>F-01</code> 未被发现的直接原因。</td>
+</tr>
+<tr>
+<td>v1.2</td>
+<td>2026-09-23</td>
+<td><strong>修复 <code>T-02</code>/<code>F-01</code></strong>：新增 <code>EnterpriseRateLimitFilterTest</code>（3.5a 节，7 例行为断言：同 VIN <code>limit+5</code> 次断言出现 <code>4001</code>、反向对照、窗口恢复、开关关闭、fail-open、multipart 跳过、<code>Retry-After</code>），测试规模 200 → 207；探针脚本升级为发布门禁（默认企业侧已接线路径）。「同类问题行为断言化」累计 3 例（<code>O-01</code>/<code>O-03</code>/限流）。</td>
 </tr>
 <tr>
 <td>v1.1</td>
