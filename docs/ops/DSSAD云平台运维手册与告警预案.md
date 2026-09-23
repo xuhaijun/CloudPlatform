@@ -332,7 +332,7 @@ groups:
 * * * * * root /opt/dssad/scripts/mqtt-watch-export.sh > /var/lib/node_exporter/textfile/dssad_mqtt.prom
 ```
 
-> `mqtt-watch-export.sh` **本手册未提供**（属待补资产，见 10. 缺陷清单 O-05）：
+> `mqtt-watch-export.sh` **本手册未提供**（属待补资产，见 10. 缺陷清单 **O-04**）：
 > 它的实现要点是把 `mqtt-watch.sh --json` 的输出转成
 > `dssad_mqtt_queue_size{kind="inbound"} 0` 这类文本行，并在探针失败时输出 `dssad_mqtt_probe_success 0`。
 
