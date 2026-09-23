@@ -19,7 +19,8 @@
 > 第 4 章与第 9 章同样重要：**明确列出没有被测到的部分**，以及本次发现的测试体系缺陷
 > （编号 `T-xx`）。其中 `T-02` 解释了为什么一个 P0 缺陷（`F-01` 限流未接入）
 > 能在 200 个用例全绿的情况下潜伏至今——该缺陷**已于本说明 v1.2 修复并补上行为断言**
-> （`EnterpriseRateLimitFilterTest`，7 例），测试规模 200 → 207。
+> （`EnterpriseRateLimitFilterTest`，7 例），测试规模 200 → 207。**v1.3 继续接线 `P-01`/`P-02`
+> 并补齐行为断言（`DistributedTaskLockTest` / `VehicleOnlineSweeperTest`），当前规模 21 类 220 例。**
 
 ---
 
@@ -702,7 +703,7 @@ mvn -B test -Dtest=SchemaDdlGeneratorTest -Dddl.gen=true
 | **systemd 单元** | 开发机为 Windows | 服务器 `systemctl` 启停一次 | 部署说明 9.2 |
 | **前端渲染与交互** | 前端零测试资产（`T-06`）| 人工走查 + `vue-tsc` 类型检查 | — |
 | **性能与容量** | 单测不测性能 | 独立压测脚本 + 实测报告 | 性能报告第 3~6 章 |
-| **多实例行为** | 全部测试为单实例 | 需先修 `P-01`（`@Scheduled` 无分布式锁）后才能测 | 详细设计 `P-01` |
+| **多实例行为** | 全部测试为单实例（分布式锁的互斥/释放/异常语义由 `DistributedTaskLockTest` 在内存实现上验证） | 部署层验证：双实例同起，观察同一时刻仅一个实例输出任务日志 | 详细设计 `P-01`（已修复，v1.0.3）|
 | **限流是否生效** | ~~`T-02`（重大盲区）~~ ✅ **已补自动化**（3.5a 行为断言 + 探针升级为发布门禁，`T-02` 闭合） | 单测层已覆盖；真实环境的门禁验证用 `perf/rate_limit_probe.py --mode enterprise` | 性能报告 `F-01`（已修复）|
 | **真实 MySQL 上的 DDL** | 单测用 H2 | 已由部署说明 EV-5/EV-6/EV-8 覆盖（13 表/47 索引 + `validate` 反向探针）| 部署说明 6.3~6.5 |
 
@@ -727,7 +728,7 @@ mvn -B test -Dtest=SchemaDdlGeneratorTest -Dddl.gen=true
 |---|---|---|
 | `F-01` | 性能报告 | 限流器**写了 145 行实现 + 单测 + 配置**，但 `tryAcquireHttp`/`tryAcquireMqttPublish` **零调用点** —— ✅ HTTP 侧已修复（企业侧过滤器），MQTT 发布侧维持未接线（已如实登记） |
 | `T-01` / `E-03` | 本文 / 部署说明 | 覆盖率门槛**属性声明 + 报告生成**，但无 `check` 执行 → 从未生效 |
-| `P-02` | 详细设计 | `markOfflineVehicles` 有完整实现，但**无任何调用方** → 车辆 `online` 永不回落 |
+| `P-02` | 详细设计 | `markOfflineVehicles` 有完整实现，但**无任何调用方** → 车辆 `online` 永不回落 —— ✅ 已修复（`VehicleOnlineSweeper` 30s 扫描 + 分布式锁，含行为断言测试）|
 | `E-01` | 部署说明 | `health-check` **如实返回 `mqttConnected`**，但**没有任何探针或告警消费它** |
 
 **规律：写了、有注释、有配置，但没有任何调用方或消费者。**
@@ -751,7 +752,7 @@ mvn -B test -Dtest=SchemaDdlGeneratorTest -Dddl.gen=true
 | P1 | 补分支覆盖：队列丢弃 / 批量写失败 / 监管平台异常（`T-04`）| 降级路径是生产上最先出事的地方 |
 | P1 | 前端补路由守卫与接口契约测试（`T-06`）| 前端零门禁 |
 | P2 | 补 `RedisStateStore` 测试（`T-05`）| prod 默认启用却零覆盖 |
-| P2 | 增加「在线状态回落」行为断言（对应 `P-02`）| 同上族问题 |
+| ✅ 已完成 | ~~增加「在线状态回落」行为断言（对应 `P-02`）~~（v1.3：`P-02` 接线 `VehicleOnlineSweeper` + `VehicleOnlineSweeperTest` 3 例 + `DistributedTaskLockTest` 5 例）| 同上族问题，已闭合 |
 | P2 | 用 Testcontainers 引入真实 MySQL 的集成测试 | 覆盖 H2 与 MySQL 的行为差异（当前用 H2 `MODE=MySQL` 近似）|
 | P3 | 故障码含义映射断言（`T-07`）| 低风险但便宜 |
 
@@ -797,4 +798,5 @@ mvn -B test -Dtest=SchemaDdlGeneratorTest -Dddl.gen=true
 |---|---|---|
 | v1.0 | 2026-09-23 | 首次发布。覆盖测试策略与分层依据、14 个测试类逐类详述（含「在保护什么风险」）、覆盖率实测与门槛策略、测试隔离与幽灵用例防治、未自动化覆盖清单、以及 8 项测试体系缺陷（`T-01`~`T-08`）。其中 `T-01` 已修复并验证；`T-02`（限流能力无行为断言）确认是 P0 缺陷 `F-01` 未被发现的直接原因。 |
 | v1.2 | 2026-09-23 | **修复 `T-02`/`F-01`**：新增 `EnterpriseRateLimitFilterTest`（3.5a 节，7 例行为断言：同 VIN `limit+5` 次断言出现 `4001`、反向对照、窗口恢复、开关关闭、fail-open、multipart 跳过、`Retry-After`），测试规模 200 → 207；探针脚本升级为发布门禁（默认企业侧已接线路径）。「同类问题行为断言化」累计 3 例（`O-01`/`O-03`/限流）。 |
+| v1.3 | 2026-09-23 | **`P-01`/`P-02` 修复接线**：新增 `DistributedTaskLockTest`（5 例：互斥/跳过/释放/异常释放/键隔离）与 `VehicleOnlineSweeperTest`（3 例：统计累加/多轮累计/锁被占跳过）；限流触发计数断言并入 `SlidingWindowRateLimiterTest`（+2 例）；新增 `MqttMonitorControllerTest`（3 例，钉死 `httpRejectedTotal`/`mqttPublishRejectedTotal`/`lastRejectedAt`/`vehicleOnlineSweep` 监控字段契约）。测试规模 17 类 207 例 → **21 类 220 例**。「同类问题行为断言化」累计 5 例（+`P-01` 分布式锁、`P-02` 在线回落）。第 8 章「多实例行为」与 9 章族谱、10 章计划同步更新。 |
 | v1.1 | 2026-09-23 | 新增 2 个测试类共 **36 个用例**：`MqttChannelProbeTest`（8 例，`O-01` 通道探活的行为断言）、`ActuatorAccessControlTest`（28 例，`O-03` Actuator 访问控制，含「空白名单全拒 / 非法 CIDR 启动失败 / 伪造 XFF 不得绕过」三条安全语义钉死）。测试规模 14 类 164 例 → **16 类 200 例**；行覆盖 73.05% → **73.39%**。分层表与资产明细表按实测数据重算。 |

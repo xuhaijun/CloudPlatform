@@ -1,5 +1,6 @@
 package com.genvict.dssad.cloud.service;
 
+import com.genvict.dssad.cloud.common.schedule.DistributedTaskLock;
 import com.genvict.dssad.cloud.config.AppProperties;
 import com.genvict.dssad.cloud.domain.repository.VehicleStateSnapshotRepository;
 import com.genvict.dssad.cloud.domain.repository.VehicleTrackPointRepository;
@@ -49,24 +50,34 @@ public class TelemetryRetentionService {
     private final VehicleTrackPointRepository trackPointRepository;
     private final VehicleStateSnapshotRepository stateSnapshotRepository;
     private final AppProperties properties;
+    private final DistributedTaskLock taskLock;
 
     public TelemetryRetentionService(VehicleTrackPointRepository trackPointRepository,
                                      VehicleStateSnapshotRepository stateSnapshotRepository,
-                                     AppProperties properties) {
+                                     AppProperties properties,
+                                     DistributedTaskLock taskLock) {
         this.trackPointRepository = trackPointRepository;
         this.stateSnapshotRepository = stateSnapshotRepository;
         this.properties = properties;
+        this.taskLock = taskLock;
     }
 
-    /** 每天 03:30 执行一次（错开 00:05 地图拉取与 03:00 留痕清理）。 */
+    /**
+     * 每天 03:30 执行一次（错开 00:05 地图拉取与 03:00 留痕清理）。
+     *
+     * <p>多实例部署时用分布式锁保证只有一个实例执行（P-01）：
+     * 分批 DELETE 幂等，但 N 实例并发删同一张表会互相争抢行锁、放大主从延迟。
+     */
     @Scheduled(cron = "0 30 3 * * ?")
     public void scheduledPurge() {
-        PurgeResult result = purgeExpired();
-        if (result.deletedTrackPoints() == 0 && result.deletedStateSnapshots() == 0) {
-            // 无数据可清属正常情况（刚上线、或保留期设置得很长），用 debug 避免刷屏
-            log.debug("[保留策略] 本轮无需清理，轨迹表保留 {} 天、状态表保留 {} 天",
-                    result.trackPointRetentionDays(), result.stateSnapshotRetentionDays());
-        }
+        taskLock.runWithLock("telemetry-purge", java.time.Duration.ofMinutes(15), () -> {
+            PurgeResult result = purgeExpired();
+            if (result.deletedTrackPoints() == 0 && result.deletedStateSnapshots() == 0) {
+                // 无数据可清属正常情况（刚上线、或保留期设置得很长），用 debug 避免刷屏
+                log.debug("[保留策略] 本轮无需清理，轨迹表保留 {} 天、状态表保留 {} 天",
+                        result.trackPointRetentionDays(), result.stateSnapshotRetentionDays());
+            }
+        });
     }
 
     /**

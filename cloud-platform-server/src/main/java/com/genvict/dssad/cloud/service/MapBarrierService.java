@@ -1,6 +1,7 @@
 package com.genvict.dssad.cloud.service;
 
 import com.genvict.dssad.cloud.common.model.PageResult;
+import com.genvict.dssad.cloud.common.schedule.DistributedTaskLock;
 import com.genvict.dssad.cloud.common.util.JsonUtils;
 import com.genvict.dssad.cloud.common.util.TimeUtils;
 import com.genvict.dssad.cloud.config.AppProperties;
@@ -45,6 +46,7 @@ public class MapBarrierService {
     private final MapBarrierRepository barrierRepository;
     private final RegulatoryGateway regulatoryGateway;
     private final AppProperties properties;
+    private final DistributedTaskLock taskLock;
 
     /**
      * 处理 MQTT 推送的地图增强信息。
@@ -127,16 +129,23 @@ public class MapBarrierService {
         return count;
     }
 
-    /** 每日 00:05 拉取当日地图增强信息（推送通道的兜底）。 */
+    /**
+     * 每日 00:05 拉取当日地图增强信息（推送通道的兜底）。
+     *
+     * <p>多实例部署时用分布式锁保证只有一个实例出网拉取（P-01）：
+     * 重复拉取浪费监管平台配额，落库虽幂等但日志与 ACK 流量都会翻倍。
+     */
     @Scheduled(cron = "0 5 0 * * ?")
     public void scheduledPull() {
-        try {
-            // 区域编码为企业所在监管区域，生产环境应按车辆实际运营城市配置
-            String areaCode = System.getProperty("dssad.area-code", "");
-            pullToday(areaCode);
-        } catch (RuntimeException e) {
-            log.error("[地图增强] 定时拉取失败（将由下个周期重试）", e);
-        }
+        taskLock.runWithLock("map-barrier-pull", java.time.Duration.ofMinutes(10), () -> {
+            try {
+                // 区域编码为企业所在监管区域，生产环境应按车辆实际运营城市配置
+                String areaCode = System.getProperty("dssad.area-code", "");
+                pullToday(areaCode);
+            } catch (RuntimeException e) {
+                log.error("[地图增强] 定时拉取失败（将由下个周期重试）", e);
+            }
+        });
     }
 
     /** 查询指定日期的阻断点。 */

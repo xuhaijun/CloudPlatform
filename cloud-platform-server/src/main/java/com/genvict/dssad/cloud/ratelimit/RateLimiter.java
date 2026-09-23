@@ -6,6 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * 限流器（对应文档 9.1：MQTT 单车辆 10 条/秒、HTTP 单车辆 100 次/分钟）。
@@ -60,6 +63,21 @@ public class RateLimiter {
     private final StateStore stateStore;
     private final AppProperties.RateLimit config;
 
+    /**
+     * 限流触发计数（按 scope 分桶），供监控端点暴露。
+     *
+     * <p><b>为什么用进程内 {@link LongAdder} 而不是写 Redis</b>：
+     * 计数发生在<b>拒绝路径</b>上 —— 拒绝风暴（车端异常重试）恰恰是 Redis
+     * 压力最大的时刻，再往拒绝路径上挂一次网络写会放大故障。
+     * LongAdder 在多线程自增时分摊竞争，读侧汇总，零网络开销。
+     * 代价是计数为<b>实例级</b>（重启清零、多实例各自累计）：
+     * 全局视图由监控系统对各实例的指标求和，这是可观测性领域的标准分工。
+     */
+    private final Map<String, LongAdder> rejectedCounters = new ConcurrentHashMap<>();
+
+    /** 最近一次触发限流的时间戳（毫秒，0 表示从未触发；监控排障时判断「还在触发吗」）。 */
+    private volatile long lastRejectedAtMillis = 0L;
+
     public RateLimiter(StateStore stateStore, AppProperties properties) {
         this.stateStore = stateStore;
         this.config = properties.rateLimit();
@@ -93,6 +111,7 @@ public class RateLimiter {
         long estimated = previousWeighted + readCount(currentKey);
 
         if (estimated >= limit) {
+            recordRejection(scope);
             log.warn("[限流] 触发限制 scope={} id={} 当前窗口等效计数={} limit={}",
                     scope, id, estimated, limit);
             return false;
@@ -105,7 +124,11 @@ public class RateLimiter {
         }
         // 读计数 → 判定 → 自增之间存在竞态，极端并发下可能自增后才越界；
         // 此时拒绝本次请求，但**不回滚计数**（回滚本身又是一次竞态）。
-        return afterIncrement <= limit;
+        if (afterIncrement > limit) {
+            recordRejection(scope);
+            return false;
+        }
+        return true;
     }
 
     /** 车辆 HTTP 接口限流（文档 9.1：100 次/分钟）。 */
@@ -121,6 +144,33 @@ public class RateLimiter {
     /** 供监控端点读取当前配置。 */
     public AppProperties.RateLimit config() {
         return config;
+    }
+
+    /** 本实例累计触发限流次数（指定 scope，自启动起）。 */
+    public long rejectedCount(String scope) {
+        LongAdder adder = rejectedCounters.get(scope);
+        return adder == null ? 0L : adder.sum();
+    }
+
+    /** 本实例 HTTP 限流触发次数。 */
+    public long httpRejectedCount() {
+        return rejectedCount(SCOPE_HTTP);
+    }
+
+    /** 本实例 MQTT 发布限流触发次数。 */
+    public long mqttPublishRejectedCount() {
+        return rejectedCount(SCOPE_MQTT_PUBLISH);
+    }
+
+    /** 最近一次触发限流的时间戳（毫秒；0 表示从未触发）。 */
+    public long lastRejectedAtMillis() {
+        return lastRejectedAtMillis;
+    }
+
+    /** 记录一次限流触发（两个拒绝路径共用）。 */
+    private void recordRejection(String scope) {
+        rejectedCounters.computeIfAbsent(scope, ignored -> new LongAdder()).increment();
+        lastRejectedAtMillis = System.currentTimeMillis();
     }
 
     /**

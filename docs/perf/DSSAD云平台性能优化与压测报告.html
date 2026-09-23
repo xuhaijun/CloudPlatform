@@ -2132,7 +2132,7 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
 <tr>
 <td>中等</td>
 <td>300~1000 台</td>
-<td>①多实例（需先解决《详细设计说明书》P-01 的定时任务分布式锁）；②MySQL 主从读写分离；③<code>telemetryBuffered</code> / <code>inboundQueueSize</code> 配告警</td>
+<td>①多实例（定时任务分布式锁已具备——原 P-01 已修复，启用 Redis 即互斥）；②MySQL 主从读写分离；③<code>telemetryBuffered</code> / <code>inboundQueueSize</code> 配告警</td>
 </tr>
 <tr>
 <td>大规模</td>
@@ -2229,7 +2229,7 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
 </tr>
 <tr>
 <td>10</td>
-<td>多实例定时任务加分布式锁（原 P-01）</td>
+<td>~~多实例定时任务加分布式锁（原 P-01）~~ ✅ 已修复（<code>DistributedTaskLock</code>，见设计文档 v1.0.3）</td>
 <td>单实例部署时无影响</td>
 </tr>
 <tr>
@@ -2574,7 +2574,7 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
 </tr>
 <tr>
 <td>《详细设计说明书》P-01（多实例定时任务无锁）</td>
-<td>无补充。8.4 的扩容路径中已标明"多实例前必须先解决"</td>
+<td>✅ 已修复（<code>DistributedTaskLock</code>）。8.4 扩容路径中「多实例前必须先解决」的前置已解除</td>
 </tr>
 <tr>
 <td>《数据库设计说明书》D-01（新增遥测清理任务）</td>
@@ -2601,6 +2601,11 @@ python<span class="w"> </span>perf/rate_limit_probe.py<span class="w"> </span>--
 <td>v1.1</td>
 <td>2026-09-23</td>
 <td><strong>修复 F-01</strong>：新增 <code>EnterpriseRateLimitFilter</code>（企业侧，order 紧跟签名过滤器，VIN 取自请求体缓存；拒绝响应 HTTP 200 + <code>4001</code> + <code>Retry-After: 60</code>，按接口文档 2.7.1 契约），7 个行为断言用例（含反向对照），测试规模 200 → 207。探针脚本升级为发布门禁：默认打企业侧<strong>已接线路径</strong>（带签名 POST，绕过本机代理），管理端模式降为对照观察。同时修正 6.4 表「MQTT 发布 ✅」的不实表述（<code>tryAcquireMqttPublish</code> 仍零调用，登记待办）</td>
+</tr>
+<tr>
+<td>v1.2</td>
+<td>2026-09-23</td>
+<td><strong>P-01/P-02 修复落地 + 限流可观测</strong>：<code>DistributedTaskLock</code> 接入 4 个定时任务（扩容路径 ① 的前置解除）；<code>VehicleOnlineSweeper</code> 接线在线回落；限流触发计数（<code>httpRejectedTotal</code> / <code>mqttPublishRejectedTotal</code> / <code>lastRejectedAt</code>）暴露到 <code>/api/v1/monitor/cache</code>，压测时可直接观测「限流在真实触发」而不只是配置存在。测试规模 207 → 220</td>
 </tr>
 </tbody>
 </table></div>

@@ -58,7 +58,7 @@
 - **不覆盖容器镜像的实际构建与运行**。本机 Docker 守护进程未启动，`docker build` / `compose up` / `nginx -t` **均未真正执行过**，只做了 YAML 合法性与关键项静态核对（见附录 C）。这是本文最大的未验证面。
 - **不覆盖 HTTPS 端到端**。无证书、无域名、无公网入口，TLS 终止与 301/证书链行为未验证。
 - **不覆盖 systemd 单元的实际生效**。开发机为 Windows，`systemd-analyze verify` 未执行。
-- **不覆盖多实例部署**。本次全部为单实例；多实例下的定时任务重复执行问题属《详细设计说明书》`P-01`（无分布式锁），**当前状态是「多实例部署前必须先修」**。
+- 多实例部署的定时任务互斥已由 `DistributedTaskLock` 提供（原《详细设计说明书》`P-01`，已修复）：启用 `dssad.redis.enabled=true` 后 cron 任务自动互斥，无需部署层开关。秒级任务（遥测刷新 / ACK 重试）为实例本地内存任务，多实例各跑各的属预期行为。
 
 ---
 
@@ -896,8 +896,8 @@ diff db/schema-mysql.generated.sql db/schema-mysql.sql
 3. **回滚顺序**：先回滚应用，再评估是否回滚表结构。
    若新版本新增了列而旧版本 `ddl-auto=validate` 不认识该列，**Hibernate 校验不会因「多出列」失败**
    （只校验缺列/类型不符），所以回滚应用通常是安全的；但删列类变更无法自动回滚。
-4. 单实例部署可直接重启；**多实例部署前必须先解决 `P-01`（`@Scheduled` 无分布式锁）**，
-   否则滚动重启期间清理任务会在多个实例上同时执行。
+4. 单实例部署可直接重启；多实例部署的定时任务互斥已由 `DistributedTaskLock` 提供（v1.4，原 `P-01` 已修复）——
+   启用 Redis 后 cron 任务自动互斥，滚动重启期间不会再出现多实例同时清理。
 
 ### 11.5 数据清理
 
@@ -922,7 +922,7 @@ SELECT COUNT(*) FROM t_vehicle_track_point WHERE ts < UNIX_TIMESTAMP(DATE_SUB(NO
 1. **数据库先行**。连接池（`maximum-pool-size: 20`）是当前单实例的**唯一硬上限**：
    `prod` 开启了虚拟线程，Tomcat 的 `max-threads=200` 不再限制并发，真正的排队点变成连接池。
    因此扩容第一步是调连接池与 MySQL 规格，而不是加应用实例。
-2. **单实例 → 多实例**前必须先修 `P-01`（`@Scheduled` 无分布式锁，多实例会重复清理/重复拉取）。
+2. **单实例 → 多实例**：定时任务互斥已具备（原 `P-01` 已修复，`DistributedTaskLock`）。
    同时确认 `dssad.redis.enabled=true`（跨实例缓存一致性、去重、令牌共享都依赖它）。
 3. **轨迹表分区**：当前用「保留期分批 DELETE + `idx_track_ts`」。数据涨到十亿级时按
    `db/schema-mysql.sql` 文末附录 A 迁移为按月 RANGE 分区（需先把主键改为复合主键 `(ts, id)`，
@@ -1047,16 +1047,15 @@ SELECT COUNT(*) FROM t_vehicle_track_point WHERE ts < UNIX_TIMESTAMP(DATE_SUB(NO
 | 编号 | 所属文档 | 与本文的关系 |
 |---|---|---|
 | `F-01` | 性能报告 | ~~**限流器未接入请求链路**~~ ✅ **已修复（v1.3）**：企业侧 `EnterpriseRateLimitFilter` 接入；本文 9.3 的 Nginx 入口限流仍保留——登录等管理端接口不在「·车」配额内 |
-| `P-01` | 详细设计 | 多实例 `@Scheduled` 无分布式锁。本文 11.4 / 11.6 因此要求「多实例部署前必须先修」|
-| `P-02` | 详细设计 | `markOfflineVehicles` 无调用方 → 车辆 `online` 永不回落。与 `E-01` 同属「探活/状态字段不可信」的运维盲区 |
+| `P-01` | 详细设计 | ~~多实例 `@Scheduled` 无分布式锁~~ ✅ **已修复（v1.3）**：`DistributedTaskLock` 互斥 4 个定时任务，启用 Redis 即生效，本文 11.4 / 11.6 的「先修」前置已解除 |
+| `P-02` | 详细设计 | ~~`markOfflineVehicles` 无调用方 → 车辆 `online` 永不回落~~ ✅ **已修复（v1.3）**：`VehicleOnlineSweeper` 30s 扫描接线，与 `E-01` 同族的「状态字段不可信」盲区已闭合 |
 | `D-01` | 数据库设计 | 遥测流水缺保留策略（已修复）。本文 11.5 的清理任务即其落地方案 |
 
 > **一个值得注意的规律**：本项目已发现 6 例同类问题 —— `F-01`（限流未接线）、`E-03`（覆盖率门槛未接线）、
 > `P-02`（方法无调用方）、`E-01`（状态字段无人消费）、`O-02`（Prometheus 端点缺依赖）、`O-08`（优雅停机未配置）。
 > 共同特征是**「写了、有注释、有配置，但没有任何调用方或消费者」**。
 > 这类问题不会报错、不会被测试抓到，只能靠「逐条追问：它被谁调用？生效的证据是什么？」来发现。
-> 其中 5 例已接线并实测（`E-03` / `E-01` / `O-02` / `O-08` / `F-01`），
-> 仅剩 `P-02`（在线状态回落，属 P2 待办）。
+> ✅ 6 例已全部接线并实测（v1.3：`P-02` 由 `VehicleOnlineSweeper` 接线收尾，含行为断言测试）。
 > 建议在 CI 中增加一条检查：对关键能力（限流、覆盖率门槛、状态字段）做**端到端行为断言**，
 > 而不是只断言「类存在」—— 限流的这组断言（`EnterpriseRateLimitFilterTest`）可作为模板。
 
@@ -1126,7 +1125,7 @@ SELECT COUNT(*) FROM t_vehicle_track_point WHERE ts < UNIX_TIMESTAMP(DATE_SUB(NO
 | `nginx -t` 语法校验 | 本机无 nginx 二进制 | Nginx 配置的语法正确性 | 服务器上 `nginx -t` 后再 `reload` |
 | HTTPS 端到端、证书链、301 跳转 | 无证书、无域名、无公网入口 | TLS 行为、`X-Forwarded-Proto` 联动 | 用自签证书先跑一次（9.4）|
 | systemd 单元实际生效 | 开发机为 Windows | 9.2 全部内容 | 服务器 `systemctl daemon-reload` + 一次启停 |
-| 多实例部署 | 本次全部单实例 | 缓存一致性、分布式锁 | **先修 `P-01`** |
+| 多实例部署 | 本次全部单实例 | 缓存一致性、定时任务互斥（已具备：`DistributedTaskLock`） | 启用 Redis 后压测一轮 |
 | 真实 MQTT 吞吐与补发链路 | 无 Broker | 报文链路性能 | 有 Broker 的环境压测 |
 | 千车级数据量下的表现 | 本机数据量极小 | 容量、索引有效性 | 压测环境灌入生产量级数据 |
 | 前端在真实浏览器中的渲染 | 未做浏览器侧测量 | 首屏、地图渲染 | Lighthouse / Performance API |
@@ -1185,3 +1184,4 @@ SELECT COUNT(*) FROM t_vehicle_track_point WHERE ts < UNIX_TIMESTAMP(DATE_SUB(NO
 | v1.1 | 2026-09-23 | 修复 `E-01`：新增 `GET /api/v1/monitor/mqtt-health`（DOWN → 503）、`MqttChannelProbe`（8 个单测）、`scripts/mqtt-watch.sh`；接口权限表与通道告警章节同步更新。更正两处与实际不符的表述：①「应用层 IP 白名单 fail-closed」—— 仓库内**不存在**该实现，实为仅靠 Nginx 收敛（登记为 O-03）；②「`/actuator/prometheus` 可被抓取」—— 修复前因缺 `micrometer-registry-prometheus` 实际 404（登记为 O-02，已修复）。完整运维方案见《DSSAD 云平台运维手册与告警预案》。 |
 | v1.2 | 2026-09-23 | 修复 `O-03`：`/actuator/**` 加装应用层**来源 IP 白名单**（`ActuatorIpWhitelistFilter` + `IpCidrMatcher`，fail-closed，判定基于 TCP 对端地址、不采信 XFF），接口权限表 / Nginx 收敛表 / 安全清单三处口径同步为「双层收敛」。新增 `scripts/backup.sh`（修复 `O-05`：一致性备份 + 三重校验 + 轮转 + `--restore-check`）。新增测试 28 例（`ActuatorAccessControlTest`），全套 **200 用例 / 0 失败**、行覆盖 73.39%。 |
 | v1.3 | 2026-09-23 | **修复 `F-01`（HTTP 侧）**：限流真正接入企业侧请求链路——新增 `EnterpriseRateLimitFilter`（order 紧跟签名过滤器，VIN 取自请求体缓存；拒绝响应 HTTP 200 + `4001` + `Retry-After: 60`，按接口文档 2.7.1 契约），配置表 / Nginx 收敛表 / 缺陷交叉引用三处口径同步。新增测试 7 例（`EnterpriseRateLimitFilterTest` 行为断言，含反向对照），全套 **207 用例 / 0 失败**。`perf/rate_limit_probe.py` 升级为发布门禁（默认企业侧已接线路径，签名 POST，绕过本机代理）。MQTT 发布维度维持未接线并如实登记（P-03 遗留）。 |
+| v1.4 | 2026-09-23 | **修复 `P-01`/`P-02`**：新增 `DistributedTaskLock`（SETNX + token 比对释放，单机退化为无锁直通、Redis 多实例互斥），接入地图拉取/留痕清理/遥测清理/在线回落 4 个定时任务——11.4 / 11.6 的「多实例前必须先修」前置解除；新增 `VehicleOnlineSweeper`（30s 扫描 + 分布式锁）接线在线状态回落，「6 例同族缺陷」全部闭环。限流触发计数与回落统计暴露到监控端点（`/monitor/cache`、`/monitor/mqtt`）。新增测试 13 例（`DistributedTaskLockTest` 5 + `VehicleOnlineSweeperTest` 3 + `SlidingWindowRateLimiterTest` 2 + `MqttMonitorControllerTest` 3），全套 **220 用例 / 0 失败**、覆盖率门禁通过。 |

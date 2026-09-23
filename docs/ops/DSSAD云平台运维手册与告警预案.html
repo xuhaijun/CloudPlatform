@@ -415,7 +415,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 <li><a href="#附录-b日志与排障速查">附录 B：日志与排障速查</a><ul>
 <li><a href="#b1-位置">B.1 位置</a></li>
 <li><a href="#b2-高频排障-grep">B.2 高频排障 grep</a></li>
-<li><a href="#b3-定时任务时刻表多实例下需留意-o-07">B.3 定时任务时刻表（多实例下需留意 O-07）</a></li>
+<li><a href="#b3-定时任务时刻表o-07-已修复多实例互斥状态一览">B.3 定时任务时刻表（O-07 已修复：多实例互斥状态一览）</a></li>
 </ul>
 </li>
 <li><a href="#附录-c配置项速查生产必填">附录 C：配置项速查（生产必填）</a></li>
@@ -1398,8 +1398,9 @@ curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>
 <h3 id="剧本-o-09多实例重复执行定时任务">剧本 O-09：多实例重复执行定时任务<a class="headerlink" href="#剧本-o-09多实例重复执行定时任务" title="永久链接">#</a></h3>
 <ul>
 <li><strong>现象</strong>：清理任务日志在同一时刻出现多份；<code>MapBarrierService</code> 的每日任务重复执行。</li>
-<li><strong>背景</strong>：平台有 5 个 <code>@Scheduled</code> 任务（见附录 B.3），其中遥测刷新与 ACK 重试是秒级的、
-  只应在<strong>单实例</strong>语义下运行；当前<strong>没有分布式锁</strong>（缺陷 P-01）。</li>
+<li><strong>背景</strong>：平台有 5 个 <code>@Scheduled</code> 任务（见附录 B.3）。三个 cron 批处理（地图拉取、留痕清理、
+  遥测清理）与在线回落扫描已由 <code>DistributedTaskLock</code> 互斥（P-01 已修复）；
+  遥测刷新与 ACK 重试是秒级的<strong>实例本地内存任务</strong>，刻意不加全局锁（抢不到锁的实例缓冲会无人消费）。</li>
 <li><strong>处置</strong>：</li>
 <li>多实例部署时，用部署层规避：把秒级任务（<code>fixedDelay=1s</code> 的遥测刷新与 ACK 重试）
      限制为<strong>只在「主实例」开启</strong>（通过环境变量注入一个「是否启用定时任务」的开关，
@@ -1937,9 +1938,9 @@ GET /api/v1/monitor/health-check → 200（mqttConnected:false）  ← 原始 E-
 <tr>
 <td><strong>O-07</strong></td>
 <td>中</td>
-<td><strong>多实例 <code>@Scheduled</code> 无分布式锁</strong>（沿用设计文档 P-01）：5 个定时任务在多实例下会重复执行</td>
+<td>~~<strong>多实例 <code>@Scheduled</code> 无分布式锁</strong>~~（沿用设计文档 P-01）：cron 任务在多实例下会重复执行</td>
 <td>代码复核：5 处 <code>@Scheduled</code></td>
-<td>❌ 未修复：处置见剧本 O-09（清理幂等，ACK 重试需确认）</td>
+<td>✅ 已修复（v1.3）：<code>DistributedTaskLock</code> 互斥 4 个任务；秒级内存任务刻意不加锁（实例本地语义，见剧本 O-09）</td>
 </tr>
 <tr>
 <td><strong>O-08</strong></td>
@@ -2031,13 +2032,14 @@ grep<span class="w"> </span>-cE<span class="w"> </span><span class="s2">"ERROR"<
 grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"Schema-validation|APPLICATION FAILED TO START"</span><span class="w"> </span>/var/log/dssad/*.log<span class="w">        </span><span class="c1"># 启动失败</span>
 </code></pre></div>
 
-<h3 id="b3-定时任务时刻表多实例下需留意-o-07">B.3 定时任务时刻表（多实例下需留意 O-07）<a class="headerlink" href="#b3-定时任务时刻表多实例下需留意-o-07" title="永久链接">#</a></h3>
+<h3 id="b3-定时任务时刻表o-07-已修复多实例互斥状态一览">B.3 定时任务时刻表（O-07 已修复：多实例互斥状态一览）<a class="headerlink" href="#b3-定时任务时刻表o-07-已修复多实例互斥状态一览" title="永久链接">#</a></h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>任务</th>
 <th>触发</th>
 <th>作用</th>
+<th>多实例语义</th>
 </tr>
 </thead>
 <tbody>
@@ -2045,26 +2047,37 @@ grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"Schema-v
 <td>遥测刷新</td>
 <td>每 1 秒（<code>fixedDelay</code>）</td>
 <td>缓冲批量落库</td>
+<td>实例本地任务（消费本实例内存缓冲），<strong>刻意不加锁</strong></td>
 </tr>
 <tr>
 <td>ACK 重试扫描</td>
 <td>每 1 秒（<code>fixedDelay</code>）</td>
 <td>未确认消息重发</td>
+<td>实例本地任务（同上）</td>
 </tr>
 <tr>
 <td>留痕清理</td>
 <td><code>0 0 3 * * ?</code></td>
 <td>删除超期报文留痕</td>
+<td><code>DistributedTaskLock</code> 互斥（<code>mqtt-audit-purge</code>）</td>
 </tr>
 <tr>
 <td>遥测保留清理</td>
 <td><code>0 30 3 * * ?</code></td>
 <td>分批删除超期轨迹/状态（5000 行/批）</td>
+<td><code>DistributedTaskLock</code> 互斥（<code>telemetry-purge</code>）</td>
 </tr>
 <tr>
 <td>屏障地图刷新</td>
 <td><code>0 5 0 * * ?</code></td>
 <td>每日刷新地图屏障数据</td>
+<td><code>DistributedTaskLock</code> 互斥（<code>map-barrier-pull</code>）</td>
+</tr>
+<tr>
+<td>在线状态回落</td>
+<td>每 30 秒（<code>fixedDelay</code>）</td>
+<td>心跳超时车辆置离线（P-02）</td>
+<td><code>DistributedTaskLock</code> 互斥（<code>vehicle-offline-sweep</code>）</td>
 </tr>
 </tbody>
 </table></div>

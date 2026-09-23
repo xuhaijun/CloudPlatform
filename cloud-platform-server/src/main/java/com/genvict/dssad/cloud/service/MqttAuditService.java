@@ -1,6 +1,7 @@
 package com.genvict.dssad.cloud.service;
 
 import com.genvict.dssad.cloud.common.model.PageResult;
+import com.genvict.dssad.cloud.common.schedule.DistributedTaskLock;
 import com.genvict.dssad.cloud.common.store.StateStore;
 import com.genvict.dssad.cloud.common.util.SnowflakeIdGenerator;
 import com.genvict.dssad.cloud.common.util.TimeUtils;
@@ -57,15 +58,18 @@ public class MqttAuditService {
     private final StateStore stateStore;
     private final SnowflakeIdGenerator idGenerator;
     private final AppProperties.Audit auditConfig;
+    private final DistributedTaskLock taskLock;
 
     public MqttAuditService(MqttMessageLogRepository messageLogRepository,
                             StateStore stateStore,
                             SnowflakeIdGenerator idGenerator,
-                            AppProperties properties) {
+                            AppProperties properties,
+                            DistributedTaskLock taskLock) {
         this.messageLogRepository = messageLogRepository;
         this.stateStore = stateStore;
         this.idGenerator = idGenerator;
         this.auditConfig = properties.audit();
+        this.taskLock = taskLock;
     }
 
     /**
@@ -196,10 +200,18 @@ public class MqttAuditService {
      *
      * <p>分批删除而不是一条大 DELETE：千万级删除会长时间持锁并生成巨大 undo，
      * 分批（每批 5000）可让主从复制与业务查询平滑。
+     *
+     * <p>多实例部署时用分布式锁保证只有一个实例执行（P-01）：
+     * 并发分批 DELETE 同一张表会互相争抢行锁、放大主从延迟。
      */
     @Scheduled(cron = "0 0 3 * * ?")
     @Transactional
     public void purgeExpired() {
+        taskLock.runWithLock("mqtt-audit-purge", java.time.Duration.ofMinutes(15), this::doPurge);
+    }
+
+    /** 清理本体（锁内执行；释放与事务提交的微小时序差由 DELETE 幂等兜底）。 */
+    private void doPurge() {
         Instant before = Instant.now().minus(Duration.ofDays(auditConfig.retentionDays()));
         int total = 0;
         int batch;

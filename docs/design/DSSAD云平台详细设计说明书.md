@@ -812,7 +812,7 @@ int touchOnline(@Param("vin") String vin, @Param("at") Instant at);
 int markOfflineBefore(@Param("deadline") Instant deadline);
 ```
 
-一条 SQL 处理所有超时车辆，而不是每台车一次 UPDATE。注意此方法的调用方（`markOfflineVehicles`）目前没有 `@Scheduled` 注解——**在线状态实际上主要由 `touchOnline` 置位、由前端按 `lastBaseAt` 判定存量**。这是一个已知的可改进点（见第 10 章 D-01）。
+一条 SQL 处理所有超时车辆，而不是每台车一次 UPDATE。该方法现由 `VehicleOnlineSweeper` 每 30 秒调度一次（v1.0.3 接线，多实例下带 `DistributedTaskLock` 互斥），车辆离线状态最迟约 2.5 分钟回落；执行统计暴露在 `/api/v1/monitor/mqtt` 的 `vehicleOnlineSweep` 节点。
 
 **计数自增用 SQL 而非读改写**：
 
@@ -2093,8 +2093,8 @@ server {
 
 | 编号 | 等级 | 问题 | 影响 | 建议方案 |
 |---|---|---|---|---|
-| **P-01** | **高** | **多实例部署时定时任务会在每个实例重复执行**：`scheduledPurge`（清理）、`scheduledPull`（地图拉取）无分布式锁 | ① 两个实例同时执行 `DELETE ... LIMIT` 会相互等待甚至死锁；② 地图拉取重复执行（业务幂等，无实质危害）；③ 清理任务重复执行只是浪费 IO | 引入基于 Redis 的简单分布式锁（`SET NX PX` + 续期），或改用 `ShedLock` 这类成熟组件。**若明确单实例部署可降级为文档说明** |
-| **P-02** | **高** | **车辆上下线状态缺少定时刷新**：`VehicleService.markOfflineVehicles()` 已实现批量置离线，但**没有 `@Scheduled` 注解**，实际从未被调用 | 车辆断连后 `online` 字段永远保持 `true`，只能靠前端按 `lastBaseAt` 自行判定；大屏「在线车辆数」会持续偏高 | 加 `@Scheduled(fixedDelay = 30_000)`；或把在线判定彻底改为「按 `lastBaseAt` 动态计算」并移除 `online` 字段（更彻底但改动大） |
+| **P-01** | **高** | ~~**多实例部署时定时任务会在每个实例重复执行**~~ ✅ **已修复（v1.0.3）**：新增 `DistributedTaskLock`（`common/schedule` 包，基于 `StateStore` 的 SETNX + token 比对释放），已接入 4 个定时任务——地图拉取（`map-barrier-pull`）、留痕清理（`mqtt-audit-purge`）、遥测清理（`telemetry-purge`）、在线回落扫描（`vehicle-offline-sweep`，随 P-02 新增）| 修复前：两个实例同时执行 `DELETE ... LIMIT` 会相互争抢行锁；地图拉取重复消耗监管平台配额 | ✅ 已落地：单机（内存 StateStore）恒可获锁、退化为无锁直通行为不变；Redis 多实例时互斥。刻意不引入 Redisson/ShedLock：释放非原子与无续期两个不严格处由「任务幂等 + TTL ≫ 最坏耗时」兜底（详见类 Javadoc）。⚠️ 两个秒级任务（ACK 重试、遥测刷盘）消费**实例本地内存缓冲**，**刻意不加全局锁**——加了会让抢不到锁的实例缓冲无人消费 |
+| **P-02** | **高** | ~~**车辆上下线状态缺少定时刷新**~~ ✅ **已修复（v1.0.3）**：新增 `VehicleOnlineSweeper`（`fixedDelay = 30s` + 分布式锁），每 30 秒调用一次 `markOfflineVehicles()`，离线判定最迟滞后约 2.5 分钟（2 分钟阈值 + 30 秒扫描间隔）| 修复前：车辆断连后 `online` 字段永远保持 `true`，大屏「在线车辆数」持续偏高 | ✅ 已落地：批量 UPDATE 幂等；执行统计（轮数 / 累计置离线 / 最近执行时间）暴露在 `/api/v1/monitor/mqtt` 的 `vehicleOnlineSweep` 节点，掉线速率与链路健康同屏对照；行为断言见 `VehicleOnlineSweeperTest` |
 | **P-03** | **高** | ~~**限流器完全未接入请求链路**~~ ✅ **已修复（HTTP 侧，v1.0.2）**：原问题——`RateLimiter` 的 `tryAcquireHttp` / `tryAcquireMqttPublish` 在全项目**零调用点**，配置的「单车辆 HTTP 100 次/分钟」一条都未生效（经《性能优化与压测报告》F-01 实测确认）| 修复前：一台异常企业集成可无上限占用业务线程与数据库写入能力，且监控端点仍报告 `enabled: true`（「显示已开启、实际没接线」的最危险组合）| ✅ HTTP 侧已落地：新增 `EnterpriseRateLimitFilter`（企业侧 `/enterprise/api/v1/**`，order 紧跟签名过滤器，VIN 取自请求体缓存；拒绝响应 HTTP 200 + `4001` + `Retry-After: 60`，按接口文档 2.7.1 契约），7 个行为断言用例，探针升级为发布门禁（详见性能报告 5.5）。⚠️ 遗留：`tryAcquireMqttPublish`（下行发布维度）仍未接线——其触发源一半是 MQTT 入站事故报告，简单抛异常会引发对端整条报文重投，需单独设计失败模式后接入；入站报文按 6.4 维持不限流（队列容量兜底） |
 | **P-04** | 中 | **远驾接管配对依赖「最近一条未结束记录」**：协议未提供接管单号 | 同一车辆短时间内连续两次接管且第一次的结束报文丢失时，第二次的「结束」会错误配到第一次的「发起」上，产生错误的时长 | ① 平台侧生成接管单号并在上报时带回（需上游支持）；② 或增加「结束时间必须晚于发起时间 + 最短接管时长」的合理性校验，异常时落孤儿记录 |
 | **P-05** | 中 | **离线队列为进程内队列，重启即丢** | 重启前恰好未发出的下行指令丢失（任务/远驾） | 序列化到 Redis List 或本地 WAL；或用 `clean_session=false` + QoS 1 让 Broker 承担（当前已部分覆盖） |
@@ -2106,7 +2106,7 @@ server {
 | **P-11** | 低 | **无链路追踪（traceId）** | 跨 MQTT/HTTP/定时任务的调用链无法关联；日志格式已预留占位 | 接入 Micrometer Tracing + OTel，日志 pattern 已含占位可直接填 |
 | **P-12** | 提示 | **`groute-resp` 作用域与协议不一致**（详见 3.1.1） | `high_speed` 车型可能收不到 ACK | 待上游澄清；已做兼容处理，澄清后改一处枚举即可 |
 
-**关于 P-01 与 P-02 的说明**：这两条从「代码看起来是完整的」角度最难发现——P-01 需要意识到 Spring 的 `@Scheduled` 是进程级的；P-02 需要发现「方法存在但从无调用方」。这类问题无法通过阅读单个类发现，只能靠**全局检索注解与调用关系**（本次评审即通过 `grep -rn "@Scheduled"` 与检查调用方发现）。
+**关于 P-01 与 P-02 的说明**：这两条从「代码看起来是完整的」角度最难发现——P-01 需要意识到 Spring 的 `@Scheduled` 是进程级的；P-02 需要发现「方法存在但从无调用方」。这类问题无法通过阅读单个类发现，只能靠**全局检索注解与调用关系**（本次评审即通过 `grep -rn "@Scheduled"` 与检查调用方发现）。✅ 两条均已于 v1.0.3 修复（`DistributedTaskLock` + `VehicleOnlineSweeper`）；修复时对每个新组件都补了「谁调用它」的行为断言测试，防同一族问题复发。
 
 ---
 
@@ -2194,6 +2194,7 @@ server {
 | v1.0.0 | 2026-09-23 | 首次发布。覆盖系统架构、线程模型、MQTT 通道、10 个业务模块、安全、缓存、可靠性、前端、部署，并给出 12 项待改进清单（P-01~P-12）。 |
 | v1.0.1 | 2026-09-23 | 依据《性能优化与压测报告》F-01 的实测结论修订 P-03：原描述「入站报文无频率限流」不准确——实测（同 VIN 连打 130 次全部成功）+ 静态核查（`tryAcquireHttp`/`tryAcquireMqttPublish` 零调用点）表明**三条限流均未接入请求链路**；等级由「中」升为「高」，修复方案移入性能报告 5.5。 |
 | v1.0.2 | 2026-09-23 | **P-03 的 HTTP 侧修复落地**：6.4 维度表更新（HTTP 行标注已接线 `EnterpriseRateLimitFilter`；「MQTT 发布 ✅」修正为「⚠️ 能力已备、未接线」——`tryAcquireMqttPublish` 实际零调用，此前标 ✅ 与事实不符）；P-03 状态同步，遗留 MQTT 发布维度并说明难点。测试规模 200 → 207。 |
+| v1.0.3 | 2026-09-23 | **P-01 / P-02 修复落地**：新增 `DistributedTaskLock`（`common/schedule`，SETNX + token 比对释放；单机退化无锁直通、Redis 多实例互斥，刻意不引入 Redisson 的取舍见类 Javadoc），接入 4 个定时任务；新增 `VehicleOnlineSweeper`（30s + 分布式锁）接线 `markOfflineVehicles`，在线回落闭环；限流触发计数（`httpRejectedTotal` / `mqttPublishRejectedTotal` / `lastRejectedAt`，毫秒口径）与回落统计（`vehicleOnlineSweep`）暴露到监控端点。测试规模 207 → 220。 |
 
 ---
 

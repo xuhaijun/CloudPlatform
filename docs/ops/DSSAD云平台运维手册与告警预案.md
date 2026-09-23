@@ -513,8 +513,9 @@ curl -s -o /dev/null -w '%{http_code}\n' --noproxy '*' http://127.0.0.1:8080/api
 ### 剧本 O-09：多实例重复执行定时任务
 
 - **现象**：清理任务日志在同一时刻出现多份；`MapBarrierService` 的每日任务重复执行。
-- **背景**：平台有 5 个 `@Scheduled` 任务（见附录 B.3），其中遥测刷新与 ACK 重试是秒级的、
-  只应在**单实例**语义下运行；当前**没有分布式锁**（缺陷 P-01）。
+- **背景**：平台有 5 个 `@Scheduled` 任务（见附录 B.3）。三个 cron 批处理（地图拉取、留痕清理、
+  遥测清理）与在线回落扫描已由 `DistributedTaskLock` 互斥（P-01 已修复）；
+  遥测刷新与 ACK 重试是秒级的**实例本地内存任务**，刻意不加全局锁（抢不到锁的实例缓冲会无人消费）。
 - **处置**：
   1. 多实例部署时，用部署层规避：把秒级任务（`fixedDelay=1s` 的遥测刷新与 ACK 重试）
      限制为**只在「主实例」开启**（通过环境变量注入一个「是否启用定时任务」的开关，
@@ -818,7 +819,7 @@ GET /api/v1/monitor/health-check → 200（mqttConnected:false）  ← 原始 E-
 | **O-04** | 中 | **无 Prometheus 抓取与告警落地**：4.4 的规则未在真实 Prometheus 校验；积压/丢弃计数**未导出为 Prometheus 指标**，只能靠脚本采集 | 本机无 Prometheus/promtool | ⚠️ **部分**：规则模板已给；`mqtt-watch-export.sh`（textfile 导出）**待补** |
 | **O-05** | 中 | ~~无自动备份：仓库内无备份脚本与定时任务~~ | 仓库复核 | ✅ **已修复（脚本）**：新增 `scripts/backup.sh` —— 一致性备份（`--single-transaction` 不锁表）+ **三重校验**（gzip 完整性 / `Dump completed` 收尾标记 / `CREATE TABLE` 计数与库中表数比对）+ 轮转 + 可选 `--restore-check` 真恢复演练；退出码分级（10/20/30/40/45/50/60）便于告警分类。**遗留**：生产上的 cron / systemd timer 需人工注册（本机沙箱无法代注册计划任务） |
 | **O-06** | 低 | **本地档位无文件日志**：`logging.file.name` 只在 prod profile 配置，local 仅控制台 | 配置复核 | ⚠️ 设计如此（本地看控制台更方便），但**容器化时若忘了设置 `DSSAD_LOG_DIR` 会丢失文件日志** |
-| **O-07** | 中 | **多实例 `@Scheduled` 无分布式锁**（沿用设计文档 P-01）：5 个定时任务在多实例下会重复执行 | 代码复核：5 处 `@Scheduled` | ❌ 未修复：处置见剧本 O-09（清理幂等，ACK 重试需确认） |
+| **O-07** | 中 | ~~**多实例 `@Scheduled` 无分布式锁**~~（沿用设计文档 P-01）：cron 任务在多实例下会重复执行 | 代码复核：5 处 `@Scheduled` | ✅ 已修复（v1.3）：`DistributedTaskLock` 互斥 4 个任务；秒级内存任务刻意不加锁（实例本地语义，见剧本 O-09） |
 | **O-08** | 中 | **优雅停机未生效**：`server.shutdown` 未配置 → 默认 `immediate`，SIGTERM 会切断在途请求（如 ≤200MB 的事故视频上传），客户端看到连接重置、服务端留半个文件 | 配置复核：`grep shutdown` 无结果 | ✅ **已修复**：`server.shutdown=graceful` + `spring.lifecycle.timeout-per-shutdown-phase=30s`（小于 systemd `TimeoutStopSec=60`） |
 | **O-09** | 低 | **保留期被误设为 0 会静默关闭清理**：`retentionDays <= 0` 时跳过清理且只打 `debug` 日志 | 代码复核：`TelemetryRetentionService` | ⚠️ 已纳入巡检（2.1 第 7 项：确认每日有清理日志） |
 | **O-10** | 低 | **限流算法口径**：`/api/v1/monitor/cache` 已显式暴露 `algorithm=sliding-window-counter`，但接口文档写的仍是「100 次/分钟」的固定窗口直觉 | 代码复核 | ⚠️ 建议接口文档补充算法说明（滑动窗口允许约 2 倍突发） |
@@ -878,15 +879,16 @@ grep -cE "ERROR"              /var/log/dssad/dssad-cloud-platform.log           
 grep -E "Schema-validation|APPLICATION FAILED TO START" /var/log/dssad/*.log        # 启动失败
 ```
 
-### B.3 定时任务时刻表（多实例下需留意 O-07）
+### B.3 定时任务时刻表（O-07 已修复：多实例互斥状态一览）
 
-| 任务 | 触发 | 作用 |
-|------|------|------|
-| 遥测刷新 | 每 1 秒（`fixedDelay`） | 缓冲批量落库 |
-| ACK 重试扫描 | 每 1 秒（`fixedDelay`） | 未确认消息重发 |
-| 留痕清理 | `0 0 3 * * ?` | 删除超期报文留痕 |
-| 遥测保留清理 | `0 30 3 * * ?` | 分批删除超期轨迹/状态（5000 行/批） |
-| 屏障地图刷新 | `0 5 0 * * ?` | 每日刷新地图屏障数据 |
+| 任务 | 触发 | 作用 | 多实例语义 |
+|------|------|------|------|
+| 遥测刷新 | 每 1 秒（`fixedDelay`） | 缓冲批量落库 | 实例本地任务（消费本实例内存缓冲），**刻意不加锁** |
+| ACK 重试扫描 | 每 1 秒（`fixedDelay`） | 未确认消息重发 | 实例本地任务（同上） |
+| 留痕清理 | `0 0 3 * * ?` | 删除超期报文留痕 | `DistributedTaskLock` 互斥（`mqtt-audit-purge`） |
+| 遥测保留清理 | `0 30 3 * * ?` | 分批删除超期轨迹/状态（5000 行/批） | `DistributedTaskLock` 互斥（`telemetry-purge`） |
+| 屏障地图刷新 | `0 5 0 * * ?` | 每日刷新地图屏障数据 | `DistributedTaskLock` 互斥（`map-barrier-pull`） |
+| 在线状态回落 | 每 30 秒（`fixedDelay`） | 心跳超时车辆置离线（P-02） | `DistributedTaskLock` 互斥（`vehicle-offline-sweep`） |
 
 ## 附录 C：配置项速查（生产必填）
 

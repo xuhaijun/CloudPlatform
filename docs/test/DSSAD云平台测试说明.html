@@ -485,7 +485,8 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 第 4 章与第 9 章同样重要：<strong>明确列出没有被测到的部分</strong>，以及本次发现的测试体系缺陷
 （编号 <code>T-xx</code>）。其中 <code>T-02</code> 解释了为什么一个 P0 缺陷（<code>F-01</code> 限流未接入）
 能在 200 个用例全绿的情况下潜伏至今——该缺陷<strong>已于本说明 v1.2 修复并补上行为断言</strong>
-（<code>EnterpriseRateLimitFilterTest</code>，7 例），测试规模 200 → 207。</p>
+（<code>EnterpriseRateLimitFilterTest</code>，7 例），测试规模 200 → 207。<strong>v1.3 继续接线 <code>P-01</code>/<code>P-02</code>
+并补齐行为断言（<code>DistributedTaskLockTest</code> / <code>VehicleOnlineSweeperTest</code>），当前规模 21 类 220 例。</strong></p>
 </blockquote>
 <hr>
 <h2 id="0-文档说明">0 文档说明<a class="headerlink" href="#0-文档说明" title="永久链接">#</a></h2>
@@ -1704,9 +1705,9 @@ mvn<span class="w"> </span>-B<span class="w"> </span><span class="nb">test</span
 </tr>
 <tr>
 <td><strong>多实例行为</strong></td>
-<td>全部测试为单实例</td>
-<td>需先修 <code>P-01</code>（<code>@Scheduled</code> 无分布式锁）后才能测</td>
-<td>详细设计 <code>P-01</code></td>
+<td>全部测试为单实例（分布式锁的互斥/释放/异常语义由 <code>DistributedTaskLockTest</code> 在内存实现上验证）</td>
+<td>部署层验证：双实例同起，观察同一时刻仅一个实例输出任务日志</td>
+<td>详细设计 <code>P-01</code>（已修复，v1.0.3）</td>
 </tr>
 <tr>
 <td><strong>限流是否生效</strong></td>
@@ -1825,7 +1826,7 @@ mvn<span class="w"> </span>-B<span class="w"> </span><span class="nb">test</span
 <tr>
 <td><code>P-02</code></td>
 <td>详细设计</td>
-<td><code>markOfflineVehicles</code> 有完整实现，但<strong>无任何调用方</strong> → 车辆 <code>online</code> 永不回落</td>
+<td><code>markOfflineVehicles</code> 有完整实现，但<strong>无任何调用方</strong> → 车辆 <code>online</code> 永不回落 —— ✅ 已修复（<code>VehicleOnlineSweeper</code> 30s 扫描 + 分布式锁，含行为断言测试）</td>
 </tr>
 <tr>
 <td><code>E-01</code></td>
@@ -1884,9 +1885,9 @@ mvn<span class="w"> </span>-B<span class="w"> </span><span class="nb">test</span
 <td>prod 默认启用却零覆盖</td>
 </tr>
 <tr>
-<td>P2</td>
-<td>增加「在线状态回落」行为断言（对应 <code>P-02</code>）</td>
-<td>同上族问题</td>
+<td>✅ 已完成</td>
+<td>~~增加「在线状态回落」行为断言（对应 <code>P-02</code>）~~（v1.3：<code>P-02</code> 接线 <code>VehicleOnlineSweeper</code> + <code>VehicleOnlineSweeperTest</code> 3 例 + <code>DistributedTaskLockTest</code> 5 例）</td>
+<td>同上族问题，已闭合</td>
 </tr>
 <tr>
 <td>P2</td>
@@ -2017,6 +2018,11 @@ mvn<span class="w"> </span>-B<span class="w"> </span><span class="nb">test</span
 <td>v1.2</td>
 <td>2026-09-23</td>
 <td><strong>修复 <code>T-02</code>/<code>F-01</code></strong>：新增 <code>EnterpriseRateLimitFilterTest</code>（3.5a 节，7 例行为断言：同 VIN <code>limit+5</code> 次断言出现 <code>4001</code>、反向对照、窗口恢复、开关关闭、fail-open、multipart 跳过、<code>Retry-After</code>），测试规模 200 → 207；探针脚本升级为发布门禁（默认企业侧已接线路径）。「同类问题行为断言化」累计 3 例（<code>O-01</code>/<code>O-03</code>/限流）。</td>
+</tr>
+<tr>
+<td>v1.3</td>
+<td>2026-09-23</td>
+<td><strong><code>P-01</code>/<code>P-02</code> 修复接线</strong>：新增 <code>DistributedTaskLockTest</code>（5 例：互斥/跳过/释放/异常释放/键隔离）与 <code>VehicleOnlineSweeperTest</code>（3 例：统计累加/多轮累计/锁被占跳过）；限流触发计数断言并入 <code>SlidingWindowRateLimiterTest</code>（+2 例）；新增 <code>MqttMonitorControllerTest</code>（3 例，钉死 <code>httpRejectedTotal</code>/<code>mqttPublishRejectedTotal</code>/<code>lastRejectedAt</code>/<code>vehicleOnlineSweep</code> 监控字段契约）。测试规模 17 类 207 例 → <strong>21 类 220 例</strong>。「同类问题行为断言化」累计 5 例（+<code>P-01</code> 分布式锁、<code>P-02</code> 在线回落）。第 8 章「多实例行为」与 9 章族谱、10 章计划同步更新。</td>
 </tr>
 <tr>
 <td>v1.1</td>

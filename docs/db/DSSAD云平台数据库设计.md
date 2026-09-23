@@ -879,7 +879,7 @@ diff <(grep -E '^\s{4}(create table|[a-z_]+ )' db/schema-mysql.generated.sql) \
 
 `schema-mysql.sql` 的注释写着"当前版本采用「保留策略定时 DELETE + idx_track_ts」方案（见 `TelemetryService` 的清理任务）"，但 `TelemetryService` **只有刷盘、没有任何清理逻辑**，全项目除报文留痕外没有第二处删除。后果：轨迹表 1000 台车规模下 **14.3 GB/天无上限增长**，约 5 周后单表过 30 亿行，查询、备份、DDL 全部失效，最终只能停机人工清理。
 
-**已修复**：新增 `TelemetryRetentionService`（第 6 章）+ 两个仓储的 native 分批删除方法 + `AppProperties.Retention` 配置 + 4 个集成测试；同时修正 DDL 注释指向正确的类名。修复后全量测试**通过、0 失败**（修复当时为 164 个用例；随测试体系扩充，现为 **207** 个）。
+**已修复**：新增 `TelemetryRetentionService`（第 6 章）+ 两个仓储的 native 分批删除方法 + `AppProperties.Retention` 配置 + 4 个集成测试；同时修正 DDL 注释指向正确的类名。修复后全量测试**通过、0 失败**（修复当时为 164 个用例；随测试体系扩充，现为 **220** 个）。
 
 ### 7.3 变更流程（改表必守）
 

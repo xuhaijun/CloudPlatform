@@ -653,7 +653,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 <li><strong>不覆盖容器镜像的实际构建与运行</strong>。本机 Docker 守护进程未启动，<code>docker build</code> / <code>compose up</code> / <code>nginx -t</code> <strong>均未真正执行过</strong>，只做了 YAML 合法性与关键项静态核对（见附录 C）。这是本文最大的未验证面。</li>
 <li><strong>不覆盖 HTTPS 端到端</strong>。无证书、无域名、无公网入口，TLS 终止与 301/证书链行为未验证。</li>
 <li><strong>不覆盖 systemd 单元的实际生效</strong>。开发机为 Windows，<code>systemd-analyze verify</code> 未执行。</li>
-<li><strong>不覆盖多实例部署</strong>。本次全部为单实例；多实例下的定时任务重复执行问题属《详细设计说明书》<code>P-01</code>（无分布式锁），<strong>当前状态是「多实例部署前必须先修」</strong>。</li>
+<li>多实例部署的定时任务互斥已由 <code>DistributedTaskLock</code> 提供（原《详细设计说明书》<code>P-01</code>，已修复）：启用 <code>dssad.redis.enabled=true</code> 后 cron 任务自动互斥，无需部署层开关。秒级任务（遥测刷新 / ACK 重试）为实例本地内存任务，多实例各跑各的属预期行为。</li>
 </ul>
 <hr>
 <h2 id="1-三条路径辨析最容易出错的地方">1 三条路径辨析（最容易出错的地方）<a class="headerlink" href="#1-三条路径辨析最容易出错的地方" title="永久链接">#</a></h2>
@@ -2333,8 +2333,8 @@ diff<span class="w"> </span>db/schema-mysql.generated.sql<span class="w"> </span
 <li><strong>回滚顺序</strong>：先回滚应用，再评估是否回滚表结构。
    若新版本新增了列而旧版本 <code>ddl-auto=validate</code> 不认识该列，<strong>Hibernate 校验不会因「多出列」失败</strong>
    （只校验缺列/类型不符），所以回滚应用通常是安全的；但删列类变更无法自动回滚。</li>
-<li>单实例部署可直接重启；<strong>多实例部署前必须先解决 <code>P-01</code>（<code>@Scheduled</code> 无分布式锁）</strong>，
-   否则滚动重启期间清理任务会在多个实例上同时执行。</li>
+<li>单实例部署可直接重启；多实例部署的定时任务互斥已由 <code>DistributedTaskLock</code> 提供（v1.4，原 <code>P-01</code> 已修复）——
+   启用 Redis 后 cron 任务自动互斥，滚动重启期间不会再出现多实例同时清理。</li>
 </ol>
 <h3 id="115-数据清理">11.5 数据清理<a class="headerlink" href="#115-数据清理" title="永久链接">#</a></h3>
 <div class="table-wrap"><table>
@@ -2389,7 +2389,7 @@ diff<span class="w"> </span>db/schema-mysql.generated.sql<span class="w"> </span
 <li><strong>数据库先行</strong>。连接池（<code>maximum-pool-size: 20</code>）是当前单实例的<strong>唯一硬上限</strong>：
    <code>prod</code> 开启了虚拟线程，Tomcat 的 <code>max-threads=200</code> 不再限制并发，真正的排队点变成连接池。
    因此扩容第一步是调连接池与 MySQL 规格，而不是加应用实例。</li>
-<li><strong>单实例 → 多实例</strong>前必须先修 <code>P-01</code>（<code>@Scheduled</code> 无分布式锁，多实例会重复清理/重复拉取）。
+<li><strong>单实例 → 多实例</strong>：定时任务互斥已具备（原 <code>P-01</code> 已修复，<code>DistributedTaskLock</code>）。
    同时确认 <code>dssad.redis.enabled=true</code>（跨实例缓存一致性、去重、令牌共享都依赖它）。</li>
 <li><strong>轨迹表分区</strong>：当前用「保留期分批 DELETE + <code>idx_track_ts</code>」。数据涨到十亿级时按
    <code>db/schema-mysql.sql</code> 文末附录 A 迁移为按月 RANGE 分区（需先把主键改为复合主键 <code>(ts, id)</code>，
@@ -2548,12 +2548,12 @@ diff<span class="w"> </span>db/schema-mysql.generated.sql<span class="w"> </span
 <tr>
 <td><code>P-01</code></td>
 <td>详细设计</td>
-<td>多实例 <code>@Scheduled</code> 无分布式锁。本文 11.4 / 11.6 因此要求「多实例部署前必须先修」</td>
+<td>~~多实例 <code>@Scheduled</code> 无分布式锁~~ ✅ <strong>已修复（v1.3）</strong>：<code>DistributedTaskLock</code> 互斥 4 个定时任务，启用 Redis 即生效，本文 11.4 / 11.6 的「先修」前置已解除</td>
 </tr>
 <tr>
 <td><code>P-02</code></td>
 <td>详细设计</td>
-<td><code>markOfflineVehicles</code> 无调用方 → 车辆 <code>online</code> 永不回落。与 <code>E-01</code> 同属「探活/状态字段不可信」的运维盲区</td>
+<td>~~<code>markOfflineVehicles</code> 无调用方 → 车辆 <code>online</code> 永不回落~~ ✅ <strong>已修复（v1.3）</strong>：<code>VehicleOnlineSweeper</code> 30s 扫描接线，与 <code>E-01</code> 同族的「状态字段不可信」盲区已闭合</td>
 </tr>
 <tr>
 <td><code>D-01</code></td>
@@ -2567,8 +2567,7 @@ diff<span class="w"> </span>db/schema-mysql.generated.sql<span class="w"> </span
 <code>P-02</code>（方法无调用方）、<code>E-01</code>（状态字段无人消费）、<code>O-02</code>（Prometheus 端点缺依赖）、<code>O-08</code>（优雅停机未配置）。
 共同特征是<strong>「写了、有注释、有配置，但没有任何调用方或消费者」</strong>。
 这类问题不会报错、不会被测试抓到，只能靠「逐条追问：它被谁调用？生效的证据是什么？」来发现。
-其中 5 例已接线并实测（<code>E-03</code> / <code>E-01</code> / <code>O-02</code> / <code>O-08</code> / <code>F-01</code>），
-仅剩 <code>P-02</code>（在线状态回落，属 P2 待办）。
+✅ 6 例已全部接线并实测（v1.3：<code>P-02</code> 由 <code>VehicleOnlineSweeper</code> 接线收尾，含行为断言测试）。
 建议在 CI 中增加一条检查：对关键能力（限流、覆盖率门槛、状态字段）做<strong>端到端行为断言</strong>，
 而不是只断言「类存在」—— 限流的这组断言（<code>EnterpriseRateLimitFilterTest</code>）可作为模板。</p>
 </blockquote>
@@ -2816,8 +2815,8 @@ diff<span class="w"> </span>db/schema-mysql.generated.sql<span class="w"> </span
 <tr>
 <td>多实例部署</td>
 <td>本次全部单实例</td>
-<td>缓存一致性、分布式锁</td>
-<td><strong>先修 <code>P-01</code></strong></td>
+<td>缓存一致性、定时任务互斥（已具备：<code>DistributedTaskLock</code>）</td>
+<td>启用 Redis 后压测一轮</td>
 </tr>
 <tr>
 <td>真实 MQTT 吞吐与补发链路</td>
@@ -3006,6 +3005,11 @@ diff<span class="w"> </span>db/schema-mysql.generated.sql<span class="w"> </span
 <td>v1.3</td>
 <td>2026-09-23</td>
 <td><strong>修复 <code>F-01</code>（HTTP 侧）</strong>：限流真正接入企业侧请求链路——新增 <code>EnterpriseRateLimitFilter</code>（order 紧跟签名过滤器，VIN 取自请求体缓存；拒绝响应 HTTP 200 + <code>4001</code> + <code>Retry-After: 60</code>，按接口文档 2.7.1 契约），配置表 / Nginx 收敛表 / 缺陷交叉引用三处口径同步。新增测试 7 例（<code>EnterpriseRateLimitFilterTest</code> 行为断言，含反向对照），全套 <strong>207 用例 / 0 失败</strong>。<code>perf/rate_limit_probe.py</code> 升级为发布门禁（默认企业侧已接线路径，签名 POST，绕过本机代理）。MQTT 发布维度维持未接线并如实登记（P-03 遗留）。</td>
+</tr>
+<tr>
+<td>v1.4</td>
+<td>2026-09-23</td>
+<td><strong>修复 <code>P-01</code>/<code>P-02</code></strong>：新增 <code>DistributedTaskLock</code>（SETNX + token 比对释放，单机退化为无锁直通、Redis 多实例互斥），接入地图拉取/留痕清理/遥测清理/在线回落 4 个定时任务——11.4 / 11.6 的「多实例前必须先修」前置解除；新增 <code>VehicleOnlineSweeper</code>（30s 扫描 + 分布式锁）接线在线状态回落，「6 例同族缺陷」全部闭环。限流触发计数与回落统计暴露到监控端点（<code>/monitor/cache</code>、<code>/monitor/mqtt</code>）。新增测试 13 例（<code>DistributedTaskLockTest</code> 5 + <code>VehicleOnlineSweeperTest</code> 3 + <code>SlidingWindowRateLimiterTest</code> 2 + <code>MqttMonitorControllerTest</code> 3），全套 <strong>220 用例 / 0 失败</strong>、覆盖率门禁通过。</td>
 </tr>
 </tbody>
 </table></div>

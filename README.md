@@ -82,7 +82,7 @@ CloudPlatform/
 │   │   └── common/                     响应体、错误码、二级缓存、状态存储、工具
 │   ├── db/schema-mysql.sql             生产建表脚本（13 表 / 47 索引）
 │   ├── perf/                           压测与限流探针脚本、实测数据存档
-│   └── src/test/                       207 个用例（17 个测试类）
+│   └── src/test/                       220 个用例（21 个测试类）
 ├── cloud-platform-web/                 管理前端（Vue 3 + Vite）
 ├── scripts/                            开发与运维脚本（见下）
 ├── deploy/                             nginx / systemd / mosquitto 部署资产

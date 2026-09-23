@@ -149,6 +149,47 @@ class SlidingWindowRateLimiterTest {
                 "A 车被限流不得影响 B 车");
     }
 
+    @Test
+    @DisplayName("触发计数：只有被拒绝的请求计数，放行不计；不同 scope 分桶")
+    void rejectionCountersOnlyCountRejections() {
+        FakeStateStore store = new FakeStateStore();
+        RateLimiter limiter = new RateLimiter(store, TestProperties.defaults());
+        int limit = 5;
+
+        store.setClock(1_000);
+        for (int i = 0; i < limit; i++) {
+            assertTrue(limiter.tryAcquire("http", "VIN-A", limit, MINUTE), "前 " + limit + " 次应放行");
+        }
+        assertFalse(limiter.tryAcquire("http", "VIN-A", limit, MINUTE));
+        assertFalse(limiter.tryAcquire("http", "VIN-A", limit, MINUTE));
+        // 另一主体正常放行 + 另一 scope 被拒：确认计数分桶正确
+        assertTrue(limiter.tryAcquire("http", "VIN-B", limit, MINUTE));
+        store.setClock(1_500);
+        for (int i = 0; i < 10; i++) {
+            limiter.tryAcquire("mqttpub", "VIN-A", 2, Duration.ofSeconds(1));
+        }
+
+        assertEquals(2, limiter.httpRejectedCount(), "HTTP 只应计 2 次拒绝（放行不计）");
+        assertTrue(limiter.mqttPublishRejectedCount() >= 1, "MQTT scope 计数独立分桶");
+        assertTrue(limiter.lastRejectedAtMillis() > 0, "触发后必须记录最近触发时间");
+    }
+
+    @Test
+    @DisplayName("未触发限流时计数保持为 0、最近触发时间为 0")
+    void noRejectionLeavesCountersAtZero() {
+        FakeStateStore store = new FakeStateStore();
+        RateLimiter limiter = new RateLimiter(store, TestProperties.defaults());
+
+        store.setClock(1_000);
+        for (int i = 0; i < 50; i++) {
+            assertTrue(limiter.tryAcquire("http", "VIN-C", 100, MINUTE));
+        }
+
+        assertEquals(0, limiter.httpRejectedCount());
+        assertEquals(0, limiter.mqttPublishRejectedCount());
+        assertEquals(0, limiter.lastRejectedAtMillis());
+    }
+
     /**
      * 可控时钟的内存 {@link StateStore}。
      *

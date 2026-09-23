@@ -2153,7 +2153,7 @@ java<span class="w"> </span>-jar<span class="w"> </span>...<span class="w"> </sp
 <span class="kt">int</span><span class="w"> </span><span class="nf">markOfflineBefore</span><span class="p">(</span><span class="nd">@Param</span><span class="p">(</span><span class="s">"deadline"</span><span class="p">)</span><span class="w"> </span><span class="n">Instant</span><span class="w"> </span><span class="n">deadline</span><span class="p">);</span>
 </code></pre></div>
 
-<p>一条 SQL 处理所有超时车辆，而不是每台车一次 UPDATE。注意此方法的调用方（<code>markOfflineVehicles</code>）目前没有 <code>@Scheduled</code> 注解——<strong>在线状态实际上主要由 <code>touchOnline</code> 置位、由前端按 <code>lastBaseAt</code> 判定存量</strong>。这是一个已知的可改进点（见第 10 章 D-01）。</p>
+<p>一条 SQL 处理所有超时车辆，而不是每台车一次 UPDATE。该方法现由 <code>VehicleOnlineSweeper</code> 每 30 秒调度一次（v1.0.3 接线，多实例下带 <code>DistributedTaskLock</code> 互斥），车辆离线状态最迟约 2.5 分钟回落；执行统计暴露在 <code>/api/v1/monitor/mqtt</code> 的 <code>vehicleOnlineSweep</code> 节点。</p>
 <p><strong>计数自增用 SQL 而非读改写</strong>：</p>
 <div class="highlight"><pre><span></span><code><span class="nd">@Query</span><span class="p">(</span><span class="s">"update Vehicle v set v.accidentCount = v.accidentCount + 1 where v.vin = :vin"</span><span class="p">)</span>
 <span class="kt">int</span><span class="w"> </span><span class="nf">increaseAccidentCount</span><span class="p">(</span><span class="nd">@Param</span><span class="p">(</span><span class="s">"vin"</span><span class="p">)</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">vin</span><span class="p">);</span>
@@ -4527,16 +4527,16 @@ java<span class="w"> </span>-jar<span class="w"> </span>dssad-cloud-platform.jar
 <tr>
 <td><strong>P-01</strong></td>
 <td><strong>高</strong></td>
-<td><strong>多实例部署时定时任务会在每个实例重复执行</strong>：<code>scheduledPurge</code>（清理）、<code>scheduledPull</code>（地图拉取）无分布式锁</td>
-<td>① 两个实例同时执行 <code>DELETE ... LIMIT</code> 会相互等待甚至死锁；② 地图拉取重复执行（业务幂等，无实质危害）；③ 清理任务重复执行只是浪费 IO</td>
-<td>引入基于 Redis 的简单分布式锁（<code>SET NX PX</code> + 续期），或改用 <code>ShedLock</code> 这类成熟组件。<strong>若明确单实例部署可降级为文档说明</strong></td>
+<td>~~<strong>多实例部署时定时任务会在每个实例重复执行</strong>~~ ✅ <strong>已修复（v1.0.3）</strong>：新增 <code>DistributedTaskLock</code>（<code>common/schedule</code> 包，基于 <code>StateStore</code> 的 SETNX + token 比对释放），已接入 4 个定时任务——地图拉取（<code>map-barrier-pull</code>）、留痕清理（<code>mqtt-audit-purge</code>）、遥测清理（<code>telemetry-purge</code>）、在线回落扫描（<code>vehicle-offline-sweep</code>，随 P-02 新增）</td>
+<td>修复前：两个实例同时执行 <code>DELETE ... LIMIT</code> 会相互争抢行锁；地图拉取重复消耗监管平台配额</td>
+<td>✅ 已落地：单机（内存 StateStore）恒可获锁、退化为无锁直通行为不变；Redis 多实例时互斥。刻意不引入 Redisson/ShedLock：释放非原子与无续期两个不严格处由「任务幂等 + TTL ≫ 最坏耗时」兜底（详见类 Javadoc）。⚠️ 两个秒级任务（ACK 重试、遥测刷盘）消费<strong>实例本地内存缓冲</strong>，<strong>刻意不加全局锁</strong>——加了会让抢不到锁的实例缓冲无人消费</td>
 </tr>
 <tr>
 <td><strong>P-02</strong></td>
 <td><strong>高</strong></td>
-<td><strong>车辆上下线状态缺少定时刷新</strong>：<code>VehicleService.markOfflineVehicles()</code> 已实现批量置离线，但<strong>没有 <code>@Scheduled</code> 注解</strong>，实际从未被调用</td>
-<td>车辆断连后 <code>online</code> 字段永远保持 <code>true</code>，只能靠前端按 <code>lastBaseAt</code> 自行判定；大屏「在线车辆数」会持续偏高</td>
-<td>加 <code>@Scheduled(fixedDelay = 30_000)</code>；或把在线判定彻底改为「按 <code>lastBaseAt</code> 动态计算」并移除 <code>online</code> 字段（更彻底但改动大）</td>
+<td>~~<strong>车辆上下线状态缺少定时刷新</strong>~~ ✅ <strong>已修复（v1.0.3）</strong>：新增 <code>VehicleOnlineSweeper</code>（<code>fixedDelay = 30s</code> + 分布式锁），每 30 秒调用一次 <code>markOfflineVehicles()</code>，离线判定最迟滞后约 2.5 分钟（2 分钟阈值 + 30 秒扫描间隔）</td>
+<td>修复前：车辆断连后 <code>online</code> 字段永远保持 <code>true</code>，大屏「在线车辆数」持续偏高</td>
+<td>✅ 已落地：批量 UPDATE 幂等；执行统计（轮数 / 累计置离线 / 最近执行时间）暴露在 <code>/api/v1/monitor/mqtt</code> 的 <code>vehicleOnlineSweep</code> 节点，掉线速率与链路健康同屏对照；行为断言见 <code>VehicleOnlineSweeperTest</code></td>
 </tr>
 <tr>
 <td><strong>P-03</strong></td>
@@ -4610,7 +4610,7 @@ java<span class="w"> </span>-jar<span class="w"> </span>dssad-cloud-platform.jar
 </tr>
 </tbody>
 </table></div>
-<p><strong>关于 P-01 与 P-02 的说明</strong>：这两条从「代码看起来是完整的」角度最难发现——P-01 需要意识到 Spring 的 <code>@Scheduled</code> 是进程级的；P-02 需要发现「方法存在但从无调用方」。这类问题无法通过阅读单个类发现，只能靠<strong>全局检索注解与调用关系</strong>（本次评审即通过 <code>grep -rn "@Scheduled"</code> 与检查调用方发现）。</p>
+<p><strong>关于 P-01 与 P-02 的说明</strong>：这两条从「代码看起来是完整的」角度最难发现——P-01 需要意识到 Spring 的 <code>@Scheduled</code> 是进程级的；P-02 需要发现「方法存在但从无调用方」。这类问题无法通过阅读单个类发现，只能靠<strong>全局检索注解与调用关系</strong>（本次评审即通过 <code>grep -rn "@Scheduled"</code> 与检查调用方发现）。✅ 两条均已于 v1.0.3 修复（<code>DistributedTaskLock</code> + <code>VehicleOnlineSweeper</code>）；修复时对每个新组件都补了「谁调用它」的行为断言测试，防同一族问题复发。</p>
 <hr>
 <h2 id="附录-a-关键类索引">附录 A 关键类索引<a class="headerlink" href="#附录-a-关键类索引" title="永久链接">#</a></h2>
 <h3 id="a1-按对外接口定位入口类">A.1 按对外接口定位入口类<a class="headerlink" href="#a1-按对外接口定位入口类" title="永久链接">#</a></h3>
@@ -4930,6 +4930,11 @@ java<span class="w"> </span>-jar<span class="w"> </span>dssad-cloud-platform.jar
 <td>v1.0.2</td>
 <td>2026-09-23</td>
 <td><strong>P-03 的 HTTP 侧修复落地</strong>：6.4 维度表更新（HTTP 行标注已接线 <code>EnterpriseRateLimitFilter</code>；「MQTT 发布 ✅」修正为「⚠️ 能力已备、未接线」——<code>tryAcquireMqttPublish</code> 实际零调用，此前标 ✅ 与事实不符）；P-03 状态同步，遗留 MQTT 发布维度并说明难点。测试规模 200 → 207。</td>
+</tr>
+<tr>
+<td>v1.0.3</td>
+<td>2026-09-23</td>
+<td><strong>P-01 / P-02 修复落地</strong>：新增 <code>DistributedTaskLock</code>（<code>common/schedule</code>，SETNX + token 比对释放；单机退化无锁直通、Redis 多实例互斥，刻意不引入 Redisson 的取舍见类 Javadoc），接入 4 个定时任务；新增 <code>VehicleOnlineSweeper</code>（30s + 分布式锁）接线 <code>markOfflineVehicles</code>，在线回落闭环；限流触发计数（<code>httpRejectedTotal</code> / <code>mqttPublishRejectedTotal</code> / <code>lastRejectedAt</code>，毫秒口径）与回落统计（<code>vehicleOnlineSweep</code>）暴露到监控端点。测试规模 207 → 220。</td>
 </tr>
 </tbody>
 </table></div>

@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -61,6 +62,7 @@ public class MqttMonitorController {
     private final AppProperties properties;
     private final CacheManager cacheManager;
     private final RateLimiter rateLimiter;
+    private final com.genvict.dssad.cloud.service.VehicleOnlineSweeper onlineSweeper;
 
     /**
      * 健康检查（供负载均衡/探针调用，不返回敏感信息）。
@@ -141,6 +143,16 @@ public class MqttMonitorController {
         data.put("telemetryDropped", telemetryService.droppedCount());
         data.put("trackPointsPersisted", telemetryService.persistedTrackPoints());
         data.put("stateSnapshotsPersisted", telemetryService.persistedStateSnapshots());
+
+        // 车辆在线状态回落（P-02）：放在链路总览里，因为「在线数虚高」最常见的
+        // 根因就是本任务没跑（如调度线程被阻塞）—— 掉线速率与链路健康同屏对照更直观
+        Map<String, Object> onlineSweep = new LinkedHashMap<>();
+        onlineSweep.put("sweepCount", onlineSweeper.sweepCount());
+        onlineSweep.put("offlineTotal", onlineSweeper.offlineTotal());
+        onlineSweep.put("lastOfflineCount", onlineSweeper.lastOfflineCount());
+        Instant lastSweepAt = onlineSweeper.lastSweepAt();
+        onlineSweep.put("lastSweepAt", lastSweepAt == null ? null : lastSweepAt.toEpochMilli());
+        data.put("vehicleOnlineSweep", onlineSweep);
         return ApiResponse.ok(data);
     }
 
@@ -204,6 +216,14 @@ public class MqttMonitorController {
         // 算法标识显式暴露：固定窗口与滑动窗口的突发容忍度不同，
         // 压测时若不知道实际算法，很容易把「文档口径被突破」误判成缺陷
         rateLimit.put("algorithm", "sliding-window-counter");
+        // 触发计数（实例级：重启清零、多实例各自累计，全局视图由监控系统求和）。
+        // 只有配置没有计数时，运维无法区分「配置了但没流量」和「一直在触发但没人看见」；
+        // 触发次数持续 > 0 是「车端异常重试」或「阈值配小了」的第一信号。
+        rateLimit.put("httpRejectedTotal", rateLimiter.httpRejectedCount());
+        rateLimit.put("mqttPublishRejectedTotal", rateLimiter.mqttPublishRejectedCount());
+        // 13 位毫秒时间戳（0 = 从未触发）。刻意用 long 而非 Instant：
+        // Jackson 默认把 Instant 序列化成秒级时间戳（实测），会破坏「所有时间戳 13 位毫秒」的接口口径
+        rateLimit.put("lastRejectedAt", rateLimiter.lastRejectedAtMillis());
         data.put("rateLimit", rateLimit);
         return ApiResponse.ok(data);
     }

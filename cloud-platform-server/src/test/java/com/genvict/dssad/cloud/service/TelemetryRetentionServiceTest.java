@@ -1,5 +1,7 @@
 package com.genvict.dssad.cloud.service;
 
+import com.genvict.dssad.cloud.common.schedule.DistributedTaskLock;
+import com.genvict.dssad.cloud.common.store.InMemoryStateStore;
 import com.genvict.dssad.cloud.common.util.SnowflakeIdGenerator;
 import com.genvict.dssad.cloud.config.AppProperties;
 import com.genvict.dssad.cloud.domain.entity.VehicleStateSnapshot;
@@ -127,7 +129,9 @@ class TelemetryRetentionServiceTest {
 
     private TelemetryRetentionService serviceWithRetention(int trackDays, int stateDays, int batchSize) {
         AppProperties properties = TestProperties.withRetention(trackDays, stateDays, batchSize);
-        return new TelemetryRetentionService(trackPointRepository, stateSnapshotRepository, properties);
+        // 测试直接调用 purgeExpired()（业务方法，不带锁）；锁组件配内存实现即可
+        return new TelemetryRetentionService(trackPointRepository, stateSnapshotRepository, properties,
+                new DistributedTaskLock(new InMemoryStateStore()));
     }
 
     /** 插入 {@code count} 条 {@code daysAgo} 天前的轨迹点。 */
