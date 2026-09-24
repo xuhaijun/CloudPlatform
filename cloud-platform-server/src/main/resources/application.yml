@@ -120,6 +120,8 @@ dssad:
     mapehn-path: /manager/api/v1/event/mapehn
     # 文档 5.2.2.1.1：secret = SHA256(clientId + "CMAT")
     secret-salt: CMAT
+    # 企业所在监管区域编码（地图拉取用，P-06）：按企业实际运营城市配置；为空拉取结果为空
+    area-code: ""
     timeout-millis: 30000
     retry-delays-millis: 1000,2000,4000
   storage:

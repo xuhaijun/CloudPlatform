@@ -159,7 +159,15 @@ public class OperationService {
      * 处理远驾接管报文。
      *
      * <p>协议未提供接管单号，故「结束」报文通过「该车最近一条未结束的发起记录」配对。
-     * 若找不到（如平台重启导致丢失），仍落一条结束记录并把数据保留下来。
+     * 为缓解该配对方式的缺陷（P-04），在这里做两道防御：
+     * <ol>
+     *   <li><b>发起侧防悬挂</b>：新发起时若仍存在未闭合的旧接管（其结束报文已丢失），
+     *       先把它按「异常结束」闭合 —— 否则旧记录会永久挂起（前端一直显示进行中），
+     *       且干扰后续配对；每车同时至多一条未结束记录，配对不再有歧义；</li>
+     *   <li><b>结束侧合理性校验</b>：结束时间早于发起时间（时钟偏差/乱序重投）时
+     *       拒绝配对、按孤儿记录落库，绝不把负时长写进监管台账。</li>
+     * </ol>
+     * 若找不到配对（如平台重启导致丢失），仍落一条结束记录并把数据保留下来。
      */
     @Transactional
     public RemoteDrivingRecord onRemoteDriving(EnterpriseUpMessages.RemoteDriving payload) {
@@ -169,6 +177,18 @@ public class OperationService {
         vehicleService.ensureVehicle(payload.vin(), null);
 
         if (isStart) {
+            // P-04 防悬挂：闭合「结束报文已丢失」的旧接管
+            remoteDrivingRepository
+                    .findFirstByVinAndClosedFalseOrderByOccurredAtDesc(payload.vin())
+                    .ifPresent(stale -> {
+                        long staleSeconds = Math.max(
+                                java.time.Duration.between(stale.getOccurredAt(), occurredAt).getSeconds(), 0);
+                        stale.setClosed(Boolean.TRUE);
+                        stale.setDurationSeconds(staleSeconds);
+                        remoteDrivingRepository.save(stale);
+                        log.warn("[远驾] 新接管发起时存在未闭合旧记录（其结束报文疑似丢失），已按异常结束闭合 "
+                                        + "vin={} 旧记录id={} 悬挂时长={}s", payload.vin(), stale.getId(), staleSeconds);
+                    });
             RemoteDrivingRecord record = new RemoteDrivingRecord();
             record.setEnterpriseId(payload.enterpriseId());
             record.setVin(payload.vin());
@@ -184,16 +204,27 @@ public class OperationService {
             return remoteDrivingRepository.save(record);
         }
 
-        RemoteDrivingRecord record = remoteDrivingRepository
+        RemoteDrivingRecord paired = remoteDrivingRepository
                 .findFirstByVinAndClosedFalseOrderByOccurredAtDesc(payload.vin())
-                .orElseGet(() -> {
-                    RemoteDrivingRecord orphan = new RemoteDrivingRecord();
-                    orphan.setEnterpriseId(payload.enterpriseId());
-                    orphan.setVin(payload.vin());
-                    orphan.setOccurredAt(occurredAt);
-                    log.warn("[远驾] 收到结束报文但无进行中的接管记录 vin={}", payload.vin());
-                    return orphan;
-                });
+                .orElse(null);
+        // P-04 合理性校验：结束必须晚于发起，否则按孤儿记录落库（保数据不丢，不污染发起记录）
+        if (paired != null && java.time.Duration.between(paired.getOccurredAt(), occurredAt).isNegative()) {
+            log.warn("[远驾] 结束报文早于发起时间（时钟偏差或乱序重投），拒绝配对、按孤儿记录落库 "
+                            + "vin={} 发起时间={} 结束时间={}",
+                    payload.vin(), TimeUtils.format(paired.getOccurredAt()), TimeUtils.format(occurredAt));
+            paired = null;
+        }
+
+        RemoteDrivingRecord record;
+        if (paired != null) {
+            record = paired;
+        } else {
+            record = new RemoteDrivingRecord();
+            record.setEnterpriseId(payload.enterpriseId());
+            record.setVin(payload.vin());
+            record.setOccurredAt(occurredAt);
+            log.warn("[远驾] 收到结束报文但无进行中的接管记录 vin={}", payload.vin());
+        }
         record.setDrivingType(payload.type());
         record.setClosed(Boolean.TRUE);
         record.setDurationSeconds(java.time.Duration.between(record.getOccurredAt(), occurredAt).getSeconds());

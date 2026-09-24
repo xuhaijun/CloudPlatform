@@ -73,6 +73,8 @@ dssad:
     subscribe-car-uplink: ${DSSAD_MQTT_SUBSCRIBE_CAR:false}
   regulatory:
     base-url: ${DSSAD_REGULATORY_BASE_URL}
+    # 地图拉取区域编码（P-06）：必须按企业实际运营城市配置
+    area-code: ${DSSAD_REGULATORY_AREA_CODE:}
   storage:
     type: ${DSSAD_STORAGE_TYPE:local}
     local-root: ${DSSAD_STORAGE_ROOT:/data/dssad/media}

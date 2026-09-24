@@ -49,6 +49,7 @@ public final class TestProperties {
                         "/passport/api/v1/auth/access-token",
                         "/manager/api/v1/event/mapehn",
                         "CMAT",
+                        "TEST-AREA-01",
                         500,
                         new long[]{10, 20}),
                 new AppProperties.Storage(

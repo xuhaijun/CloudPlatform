@@ -98,9 +98,13 @@ public class MapBarrierService {
      */
     @Transactional
     public int pullToday(String areaCode) {
-        RegulatoryDtos.MapehnResponse response = regulatoryGateway.fetchTodayMapehn(areaCode);
+        // P-06：区域编码改为正式配置项（dssad.regulatory.area-code）。
+        // 手动拉取未传参时回落到配置值，避免把 null/空串发给上游拉到空结果
+        String code = (areaCode == null || areaCode.isBlank())
+                ? properties.regulatory().areaCode() : areaCode;
+        RegulatoryDtos.MapehnResponse response = regulatoryGateway.fetchTodayMapehn(code);
         if (response == null || response.barriers() == null) {
-            log.info("[地图增强] 平台未返回今日阻断点 areaCode={}", areaCode);
+            log.info("[地图增强] 平台未返回今日阻断点 areaCode={}", code);
             return 0;
         }
         LocalDate today = LocalDate.now(TimeUtils.ZONE_CN);
@@ -110,7 +114,7 @@ public class MapBarrierService {
                     .findByBarrierIdAndEffectiveDate(item.barrierId(), today)
                     .orElseGet(MapBarrier::new);
             barrier.setEnterpriseId(properties.enterpriseId());
-            barrier.setAreaCode(response.areaCode() == null ? areaCode : response.areaCode());
+            barrier.setAreaCode(response.areaCode() == null ? code : response.areaCode());
             barrier.setBarrierId(item.barrierId());
             barrier.setBarrierType(item.barrierType());
             barrier.setBarrierName(item.barrierName());
@@ -139,9 +143,9 @@ public class MapBarrierService {
     public void scheduledPull() {
         taskLock.runWithLock("map-barrier-pull", java.time.Duration.ofMinutes(10), () -> {
             try {
-                // 区域编码为企业所在监管区域，生产环境应按车辆实际运营城市配置
-                String areaCode = System.getProperty("dssad.area-code", "");
-                pullToday(areaCode);
+                // P-06：区域编码来自正式配置项 dssad.regulatory.area-code（原 System.getProperty
+                // 在生产环境无法通过 yml/环境变量配置，且默认空串会静默拉到空结果）
+                pullToday(properties.regulatory().areaCode());
             } catch (RuntimeException e) {
                 log.error("[地图增强] 定时拉取失败（将由下个周期重试）", e);
             }

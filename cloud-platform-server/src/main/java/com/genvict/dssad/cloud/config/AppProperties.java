@@ -110,6 +110,8 @@ public record AppProperties(
      * @param tokenPath       换取平台临时 token，文档 6.2.2.1.2
      * @param mapehnPath      今日地图增强信息，文档 6.2.2.2.1
      * @param secretSalt      密钥生成盐，文档为 {@code SHA256(clientId + "CMAT")}
+     * @param areaCode        企业所在监管区域编码（地图拉取用，P-06）。定时任务以此为准；
+     *                        手动拉取接口未传参时也回落到该值。为空时拉取将得到空结果
      * @param timeoutMillis   单次请求超时（文档 8.3：30s）
      * @param retryDelaysMillis 重试间隔（文档 8.3：1s, 2s, 4s）
      */
@@ -119,6 +121,7 @@ public record AppProperties(
             @DefaultValue("/passport/api/v1/auth/access-token") String tokenPath,
             @DefaultValue("/manager/api/v1/event/mapehn") String mapehnPath,
             @DefaultValue("CMAT") String secretSalt,
+            @DefaultValue("") String areaCode,
             @DefaultValue("30000") int timeoutMillis,
             @DefaultValue({"1000", "2000", "4000"}) long[] retryDelaysMillis) {
     }
