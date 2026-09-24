@@ -94,13 +94,17 @@ onMounted(() => {
       <div class="tips">
         <p>
           <el-icon><InfoFilled /></el-icon>
-          令牌通过 <code>X-Token</code> 请求头传递；失效时接口返回 HTTP 200 + 业务码
-          <code>2001</code>，区别于 HTTP 401。
+          <span class="tip-text">
+            令牌通过 <code>X-Token</code> 请求头传递；失效时接口返回 HTTP 200 + 业务码
+            <code>2001</code>，区别于 HTTP 401。
+          </span>
         </p>
         <p>
           <el-icon><Key /></el-icon>
-          生产口令必须通过环境变量 <code>DSSAD_ADMIN_USER</code> /
-          <code>DSSAD_ADMIN_PASSWORD</code> 注入，禁止使用开发默认值。
+          <span class="tip-text">
+            生产口令必须通过环境变量 <code>DSSAD_ADMIN_USER</code> /
+            <code>DSSAD_ADMIN_PASSWORD</code> 注入，禁止使用开发默认值。
+          </span>
         </p>
       </div>
     </div>
@@ -184,6 +188,13 @@ onMounted(() => {
   color: var(--dssad-text-dim);
 }
 
+/* 文字必须是唯一可伸缩子项：否则每个文本节点/`<code>` 都会变成独立 flex 子项，
+   被长英文（如 DSSAD_ADMIN_USER）挤压成一字一行的竖排窄条 */
+.tip-text {
+  flex: 1;
+  min-width: 0;
+}
+
 .tips p:last-child {
   margin-bottom: 0;
 }
@@ -194,5 +205,6 @@ onMounted(() => {
   background: var(--dssad-panel-2);
   color: #79c0ff;
   font-family: 'JetBrains Mono', Consolas, monospace;
+  word-break: break-all; /* 长环境变量名允许断行，防止撑破卡片 */
 }
 </style>

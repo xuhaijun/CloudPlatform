@@ -112,6 +112,20 @@ body {
   margin-top: 16px;
 }
 
+/* 堆叠间距只属于纵向流式布局：grid 容器里并排的 panel 是同一行的单元格，
+   相邻兄弟的 margin-top 会把右列整体压低（顶部错位的根源）——
+   栅格间距统一由 gap 负责，这里强制归零 */
+:where(.chart-grid-2, .grid-2, .barrier-layout) > .panel + .panel {
+  margin-top: 0;
+}
+
+/* 区块级统计卡行与后续区块的间距：stat-grid 自身不带外边距，
+   后面直接跟 panel/栅格时会贴死（零间距）。
+   只作用于 .page 直子级 —— panel 内嵌的 stat-grid（如车辆详情）不受影响 */
+.page > .stat-grid {
+  margin-bottom: 16px;
+}
+
 .panel-title {
   margin: 0 0 14px;
   font-size: 14px;
@@ -143,6 +157,9 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
   gap: 16px;
   margin-top: 16px;
+  /* 图表行之后紧跟 .panel（如总览「链路健康」、监控「缓存与限流」）时也要有间距；
+     与下方相邻区块的 margin-top 会自然塌陷取 max，不会叠加 */
+  margin-bottom: 16px;
 }
 
 .muted {
