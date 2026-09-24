@@ -4548,23 +4548,23 @@ java<span class="w"> </span>-jar<span class="w"> </span>dssad-cloud-platform.jar
 <tr>
 <td><strong>P-04</strong></td>
 <td>中</td>
-<td><strong>远驾接管配对依赖「最近一条未结束记录」</strong>：协议未提供接管单号</td>
-<td>同一车辆短时间内连续两次接管且第一次的结束报文丢失时，第二次的「结束」会错误配到第一次的「发起」上，产生错误的时长</td>
-<td>① 平台侧生成接管单号并在上报时带回（需上游支持）；② 或增加「结束时间必须晚于发起时间 + 最短接管时长」的合理性校验，异常时落孤儿记录</td>
+<td>~~<strong>远驾接管配对依赖「最近一条未结束记录」</strong>~~ ✅ <strong>已部分修复（v1.0.5，方案②）</strong>：协议未提供接管单号，在 <code>OperationService.onRemoteDriving</code> 加两道防御——① <strong>发起侧防悬挂</strong>：新发起时若存在未闭合旧接管（其结束报文已丢失），自动按「异常结束」闭合（时长取发起间隔、下限 0），每车同时至多一条未结束记录，配对不再有歧义；② <strong>结束侧合理性校验</strong>：结束时间早于发起时间（时钟偏差/乱序重投）时拒绝配对、按孤儿记录落库，不把负时长写进监管台账</td>
+<td>修复前：结束报文丢失的旧接管会永久挂起（前端一直显示进行中）；结束早于发起的乱序报文会产生负时长污染台账</td>
+<td>方案①（平台生成接管单号、车端回带）需上游协议支持，仍登记于《需求规格说明书》FR-15；行为语义由现有用例覆盖回归</td>
 </tr>
 <tr>
 <td><strong>P-05</strong></td>
 <td>中</td>
 <td><strong>离线队列为进程内队列，重启即丢</strong></td>
 <td>重启前恰好未发出的下行指令丢失（任务/远驾）</td>
-<td>序列化到 Redis List 或本地 WAL；或用 <code>clean_session=false</code> + QoS 1 让 Broker 承担（当前已部分覆盖）</td>
+<td>序列化到 Redis List 或本地 WAL；或用 <code>clean_session=false</code> + QoS 1 让 Broker 承担（当前已部分覆盖）。<strong>待评审</strong>：方案对比见《技术选型与架构决策记录》T-01</td>
 </tr>
 <tr>
 <td><strong>P-06</strong></td>
 <td>中</td>
-<td><strong>地图拉取的 <code>areaCode</code> 用 <code>System.getProperty</code> 读取</strong></td>
-<td>生产环境无法通过 <code>application.yml</code> 或环境变量配置；默认空字符串会导致拉取到空结果</td>
-<td>改为 <code>AppProperties</code> 中的正式配置项（<code>dssad.regulatory.area-code</code>）</td>
+<td>~~<strong>地图拉取的 <code>areaCode</code> 用 <code>System.getProperty</code> 读取</strong>~~ ✅ <strong>已修复（v1.0.5）</strong>：改为 <code>AppProperties</code> 正式配置项 <code>dssad.regulatory.area-code</code>（环境变量 <code>DSSAD_REGULATORY_AREA_CODE</code>，已补入 prod yml 与 <code>.env.example</code>）；<code>pullToday</code> 对手动调用未传参的情况回落到配置值，避免把空串发给上游</td>
+<td>修复前：生产无法经 yml/环境变量配置，默认空串静默拉到空结果且无告警</td>
+<td>✅ 已落地：<code>scheduledPull</code> 直读配置；<code>application.yml</code> / <code>application-prod.yml</code> / <code>env.example</code> 三处同步</td>
 </tr>
 <tr>
 <td><strong>P-07</strong></td>

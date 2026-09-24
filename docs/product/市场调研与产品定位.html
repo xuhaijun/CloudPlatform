@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>车路通 DSSAD 产品云平台 — 市场调研与产品定位</title>
+<meta name="generator" content="scripts/md2html.py">
+<style>
+
+:root{
+  --bg:#0d1117;
+  --bg-side:#090c11;
+  --bg-elev:#161b22;
+  --bg-code:#161b22;
+  --border:#21262d;
+  --border-soft:#1a1f27;
+  --text:#c9d1d9;
+  --text-strong:#e6edf3;
+  --text-dim:#8b949e;
+  --accent:#58a6ff;
+  --accent-soft:rgba(88,166,255,.12);
+  --green:#3fb950;
+  --orange:#d29922;
+  --red:#f85149;
+  --purple:#bc8cff;
+  --sidebar-w:308px;
+  --radius:8px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+              "Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15.5px;line-height:1.78;
+  -webkit-font-smoothing:antialiased;
+}
+code,pre,kbd,.mono{
+  font-family:"JetBrains Mono","Cascadia Code",Consolas,"Courier New",monospace;
+  font-variant-ligatures:none;
+}
+
+/* ---------- 布局：左固定 TOC / 右正文 ---------- */
+.layout{display:flex;align-items:flex-start;min-height:100vh}
+
+.sidebar{
+  width:var(--sidebar-w);flex:0 0 var(--sidebar-w);
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  background:var(--bg-side);border-right:1px solid var(--border);
+  padding:22px 0 60px;
+}
+.sidebar-brand{
+  padding:0 20px 16px;margin-bottom:14px;border-bottom:1px solid var(--border-soft);
+}
+.sidebar-brand .t{font-size:14px;font-weight:600;color:var(--text-strong);letter-spacing:.2px}
+.sidebar-brand .s{font-size:12px;color:var(--text-dim);margin-top:4px}
+
+.toc{padding:0 10px}
+.toc ul{list-style:none;margin:0;padding:0}
+.toc > ul > li{margin:2px 0}
+.toc a{
+  display:block;padding:6px 10px;border-radius:6px;
+  color:var(--text-dim);text-decoration:none;font-size:13.5px;
+  border-left:2px solid transparent;transition:all .15s ease;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.toc > ul > li > a{color:var(--text);font-weight:500}
+.toc a:hover{background:var(--bg-elev);color:var(--text-strong)}
+.toc a.active{
+  color:var(--accent);background:var(--accent-soft);
+  border-left-color:var(--accent);font-weight:600;
+}
+.toc ul ul{margin-left:12px}
+.toc ul ul a{font-size:12.8px;padding:4px 10px}
+
+/* ---------- 正文 ---------- */
+.content{
+  flex:1 1 auto;min-width:0;max-width:1000px;
+  padding:44px 56px 120px;
+}
+.content > *:first-child{margin-top:0}
+
+/* 页头 */
+.doc-header{margin-bottom:34px;padding-bottom:22px;border-bottom:1px solid var(--border)}
+h1{
+  font-size:30px;line-height:1.35;margin:0 0 16px;color:var(--text-strong);
+  font-weight:700;letter-spacing:-.3px;
+}
+.doc-meta{font-size:12.5px;color:var(--text-dim);display:flex;gap:14px;flex-wrap:wrap}
+.doc-meta span{display:inline-flex;align-items:center;gap:5px}
+.doc-meta code{font-size:12px;color:var(--text-dim);background:transparent;padding:0}
+
+/* 「定位说明」摘要卡（md 中紧跟 h1 的引用块） */
+.doc-lead{
+  background:linear-gradient(180deg,rgba(88,166,255,.07),rgba(88,166,255,.02));
+  border:1px solid rgba(88,166,255,.22);border-left:3px solid var(--accent);
+  border-radius:var(--radius);padding:14px 18px;margin:0 0 30px;
+  font-size:14px;color:var(--text-dim);line-height:1.8;
+}
+.doc-lead p{margin:0 0 8px}
+.doc-lead p:last-child{margin-bottom:0}
+.doc-lead strong{color:var(--text-strong)}
+.doc-lead code{font-size:12.5px;color:var(--accent);background:rgba(88,166,255,.1);padding:1px 5px;border-radius:4px}
+
+/* 标题层级 */
+h2{
+  font-size:23px;font-weight:650;color:var(--text-strong);
+  margin:56px 0 18px;padding:0 0 10px 0;
+  border-bottom:1px solid var(--border);position:relative;
+}
+h2::before{
+  content:"";position:absolute;left:-56px;top:6px;width:3px;height:20px;
+  background:var(--accent);border-radius:2px;
+}
+h3{
+  font-size:18px;font-weight:600;color:var(--accent);
+  margin:34px 0 12px;padding-left:0;
+}
+h4{font-size:15.5px;font-weight:600;color:var(--text-strong);margin:24px 0 10px}
+h5,h6{font-size:14.5px;font-weight:600;color:var(--text-dim);margin:20px 0 8px}
+
+/* 标题锚点链接（hover 显现） */
+.headerlink{
+  color:var(--text-dim);text-decoration:none;opacity:0;
+  margin-left:8px;font-size:.75em;transition:opacity .15s ease;
+}
+h2:hover .headerlink,h3:hover .headerlink,h4:hover .headerlink{opacity:.7}
+.headerlink:hover{opacity:1;color:var(--accent)}
+
+p{margin:0 0 15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+
+strong{color:var(--text-strong);font-weight:650}
+em{color:var(--text-strong)}
+hr{border:0;border-top:1px solid var(--border);margin:38px 0}
+
+ul,ol{margin:0 0 15px;padding-left:26px}
+li{margin:5px 0}
+li > ul,li > ol{margin:5px 0}
+ul li::marker{color:var(--text-dim)}
+ol li::marker{color:var(--accent);font-weight:600}
+
+/* 引用块（除 .doc-lead 外的） */
+blockquote{
+  margin:0 0 16px;padding:12px 18px;
+  background:var(--bg-elev);border-left:3px solid var(--border);
+  border-radius:0 var(--radius) var(--radius) 0;color:var(--text-dim);
+}
+blockquote p:last-child{margin-bottom:0}
+
+/* 行内代码 */
+code{
+  font-size:13px;background:rgba(110,118,129,.18);color:#79c0ff;
+  padding:2px 6px;border-radius:5px;white-space:nowrap;
+}
+pre code{background:none;padding:0;color:inherit;white-space:pre;font-size:13.2px}
+pre{
+  margin:0;padding:16px 18px;overflow-x:auto;
+  background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);
+  line-height:1.62;
+}
+
+/* 代码块容器 + 复制按钮 */
+.highlight{
+  position:relative;margin:0 0 18px;
+  background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;
+}
+.highlight pre{border:0;border-radius:0;background:transparent}
+.copy-btn{
+  position:absolute;top:8px;right:8px;z-index:2;
+  background:rgba(110,118,129,.22);color:var(--text-dim);
+  border:1px solid var(--border);border-radius:6px;
+  padding:3px 9px;font-size:11.5px;cursor:pointer;
+  font-family:inherit;opacity:0;transition:opacity .15s ease,background .15s ease;
+}
+.highlight:hover .copy-btn{opacity:1}
+.copy-btn:hover{background:rgba(88,166,255,.22);color:var(--accent);border-color:rgba(88,166,255,.4)}
+.copy-btn.done{color:var(--green);border-color:rgba(63,185,80,.45)}
+
+/* 任务列表（- [ ] / - [x]）*/
+li.task{list-style:none;margin-left:-22px;display:flex;align-items:flex-start;gap:9px}
+li.task > p{display:contents}
+li.task .cb{
+  flex:0 0 auto;width:14px;height:14px;margin-top:6px;
+  border:1.5px solid var(--text-dim);border-radius:3px;
+}
+li.task.done .cb{background:var(--green);border-color:var(--green)}
+li.task.done{color:var(--text-dim)}
+
+/* 表格 */
+.table-wrap{overflow-x:auto;margin:0 0 18px}
+table{
+  border-collapse:collapse;width:100%;font-size:14px;
+  border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;
+}
+thead th{
+  background:var(--bg-elev);color:var(--text-strong);font-weight:600;
+  text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+tbody td{padding:9px 14px;border-bottom:1px solid var(--border-soft);vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:rgba(255,255,255,.014)}
+tbody tr:hover{background:rgba(88,166,255,.05)}
+td code,th code{font-size:12.5px}
+
+/* 回到顶部 */
+#to-top{
+  position:fixed;right:26px;bottom:26px;z-index:10;
+  width:40px;height:40px;border-radius:50%;
+  background:var(--bg-elev);color:var(--text-dim);
+  border:1px solid var(--border);cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:all .2s ease;
+}
+#to-top.show{opacity:1;pointer-events:auto}
+#to-top:hover{color:var(--accent);border-color:var(--accent);transform:translateY(-2px)}
+
+/* 窄屏：侧边栏收起 */
+#menu-btn{
+  display:none;position:fixed;top:14px;left:14px;z-index:20;
+  width:38px;height:38px;border-radius:8px;
+  background:var(--bg-elev);border:1px solid var(--border);
+  color:var(--text);cursor:pointer;font-size:17px;
+}
+@media (max-width:960px){
+  #menu-btn{display:block}
+  .sidebar{
+    position:fixed;left:0;top:0;z-index:15;height:100vh;
+    transform:translateX(-100%);transition:transform .22s ease;
+    box-shadow:0 0 40px rgba(0,0,0,.5);
+  }
+  .sidebar.open{transform:translateX(0)}
+  .content{padding:70px 22px 100px}
+  h2::before{display:none}
+}
+@media print{
+  .sidebar,#to-top,#menu-btn,.copy-btn{display:none}
+  body{background:#fff;color:#111}
+  .content{max-width:none;padding:0}
+}
+
+/* ---------- pygments 语法高亮（github-dark） ---------- */
+pre { line-height: 125%; }
+td.linenos .normal { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+.highlight .hll { background-color: #6e7681 }
+.highlight { background: transparent; }
+.highlight .c { color: #8B949E; font-style: italic } /* Comment */
+.highlight .err { color: #F85149 } /* Error */
+.highlight .esc { color: #E6EDF3 } /* Escape */
+.highlight .g { color: #E6EDF3 } /* Generic */
+.highlight .k { color: #FF7B72 } /* Keyword */
+.highlight .l { color: #A5D6FF } /* Literal */
+.highlight .n { color: #E6EDF3 } /* Name */
+.highlight .o { color: #FF7B72; font-weight: bold } /* Operator */
+.highlight .x { color: #E6EDF3 } /* Other */
+.highlight .p { color: #E6EDF3 } /* Punctuation */
+.highlight .ch { color: #8B949E; font-style: italic } /* Comment.Hashbang */
+.highlight .cm { color: #8B949E; font-style: italic } /* Comment.Multiline */
+.highlight .cp { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Preproc */
+.highlight .cpf { color: #8B949E; font-style: italic } /* Comment.PreprocFile */
+.highlight .c1 { color: #8B949E; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Special */
+.highlight .gd { color: #FFA198; background-color: #490202 } /* Generic.Deleted */
+.highlight .ge { color: #E6EDF3; font-style: italic } /* Generic.Emph */
+.highlight .ges { color: #E6EDF3; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.highlight .gr { color: #FFA198 } /* Generic.Error */
+.highlight .gh { color: #79C0FF; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #56D364; background-color: #0F5323 } /* Generic.Inserted */
+.highlight .go { color: #8B949E } /* Generic.Output */
+.highlight .gp { color: #8B949E } /* Generic.Prompt */
+.highlight .gs { color: #E6EDF3; font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #79C0FF } /* Generic.Subheading */
+.highlight .gt { color: #FF7B72 } /* Generic.Traceback */
+.highlight .g-Underline { color: #E6EDF3; text-decoration: underline } /* Generic.Underline */
+.highlight .kc { color: #79C0FF } /* Keyword.Constant */
+.highlight .kd { color: #FF7B72 } /* Keyword.Declaration */
+.highlight .kn { color: #FF7B72 } /* Keyword.Namespace */
+.highlight .kp { color: #79C0FF } /* Keyword.Pseudo */
+.highlight .kr { color: #FF7B72 } /* Keyword.Reserved */
+.highlight .kt { color: #FF7B72 } /* Keyword.Type */
+.highlight .ld { color: #79C0FF } /* Literal.Date */
+.highlight .m { color: #A5D6FF } /* Literal.Number */
+.highlight .s { color: #A5D6FF } /* Literal.String */
+.highlight .na { color: #E6EDF3 } /* Name.Attribute */
+.highlight .nb { color: #E6EDF3 } /* Name.Builtin */
+.highlight .nc { color: #F0883E; font-weight: bold } /* Name.Class */
+.highlight .no { color: #79C0FF; font-weight: bold } /* Name.Constant */
+.highlight .nd { color: #D2A8FF; font-weight: bold } /* Name.Decorator */
+.highlight .ni { color: #FFA657 } /* Name.Entity */
+.highlight .ne { color: #F0883E; font-weight: bold } /* Name.Exception */
+.highlight .nf { color: #D2A8FF; font-weight: bold } /* Name.Function */
+.highlight .nl { color: #79C0FF; font-weight: bold } /* Name.Label */
+.highlight .nn { color: #FF7B72 } /* Name.Namespace */
+.highlight .nx { color: #E6EDF3 } /* Name.Other */
+.highlight .py { color: #79C0FF } /* Name.Property */
+.highlight .nt { color: #7EE787 } /* Name.Tag */
+.highlight .nv { color: #79C0FF } /* Name.Variable */
+.highlight .ow { color: #FF7B72; font-weight: bold } /* Operator.Word */
+.highlight .pm { color: #E6EDF3 } /* Punctuation.Marker */
+.highlight .w { color: #6E7681 } /* Text.Whitespace */
+.highlight .mb { color: #A5D6FF } /* Literal.Number.Bin */
+.highlight .mf { color: #A5D6FF } /* Literal.Number.Float */
+.highlight .mh { color: #A5D6FF } /* Literal.Number.Hex */
+.highlight .mi { color: #A5D6FF } /* Literal.Number.Integer */
+.highlight .mo { color: #A5D6FF } /* Literal.Number.Oct */
+.highlight .sa { color: #79C0FF } /* Literal.String.Affix */
+.highlight .sb { color: #A5D6FF } /* Literal.String.Backtick */
+.highlight .sc { color: #A5D6FF } /* Literal.String.Char */
+.highlight .dl { color: #79C0FF } /* Literal.String.Delimiter */
+.highlight .sd { color: #A5D6FF } /* Literal.String.Doc */
+.highlight .s2 { color: #A5D6FF } /* Literal.String.Double */
+.highlight .se { color: #79C0FF } /* Literal.String.Escape */
+.highlight .sh { color: #79C0FF } /* Literal.String.Heredoc */
+.highlight .si { color: #A5D6FF } /* Literal.String.Interpol */
+.highlight .sx { color: #A5D6FF } /* Literal.String.Other */
+.highlight .sr { color: #79C0FF } /* Literal.String.Regex */
+.highlight .s1 { color: #A5D6FF } /* Literal.String.Single */
+.highlight .ss { color: #A5D6FF } /* Literal.String.Symbol */
+.highlight .bp { color: #E6EDF3 } /* Name.Builtin.Pseudo */
+.highlight .fm { color: #D2A8FF; font-weight: bold } /* Name.Function.Magic */
+.highlight .vc { color: #79C0FF } /* Name.Variable.Class */
+.highlight .vg { color: #79C0FF } /* Name.Variable.Global */
+.highlight .vi { color: #79C0FF } /* Name.Variable.Instance */
+.highlight .vm { color: #79C0FF } /* Name.Variable.Magic */
+.highlight .il { color: #A5D6FF } /* Literal.Number.Integer.Long */
+.highlight .l-Scalar, .highlight .l-Scalar-Plain { color:#A5D6FF }
+.highlight .p-Indicator { color:#E6EDF3 }
+.highlight .highlight { background: transparent; }
+</style>
+</head>
+<body>
+<button id="menu-btn" type="button" aria-label="目录">&#9776;</button>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="t">车路通 DSSAD 产品云平台 — 市场调研与产品定位</div>
+      <div class="s">docs/product/市场调研与产品定位.md</div>
+    </div>
+    <nav class="toc">
+<div class="toc">
+<ul>
+<li><a href="#1-背景政策与行业驱动">1. 背景：政策与行业驱动</a><ul>
+<li><a href="#11-监管侧的刚性需求">1.1 监管侧的刚性需求</a></li>
+<li><a href="#12-行业侧的现实痛点">1.2 行业侧的现实痛点</a></li>
+</ul>
+</li>
+<li><a href="#2-目标客户与用户画像">2. 目标客户与用户画像</a></li>
+<li><a href="#3-竞争格局-待验证">3. 竞争格局 [待验证]</a><ul>
+<li><a href="#31-差异化要点">3.1 差异化要点</a></li>
+</ul>
+</li>
+<li><a href="#4-市场规模推算-待验证">4. 市场规模推算 [待验证]</a></li>
+<li><a href="#5-商业模式建议-待决策">5. 商业模式建议 [待决策]</a></li>
+<li><a href="#6-风险与对策">6. 风险与对策</a></li>
+<li><a href="#7-缺陷与待办清单">7. 缺陷与待办清单</a></li>
+</ul>
+</div>
+
+    </nav>
+  </aside>
+  <main class="content">
+    <header class="doc-header">
+      <h1>车路通 DSSAD 产品云平台 — 市场调研与产品定位</h1>
+      <div class="doc-meta">
+        <span>源文件 <code>docs/product/市场调研与产品定位.md</code></span>
+        <span>由 scripts/md2html.py 生成</span>
+      </div>
+    </header>
+    <div class="doc-lead">
+<blockquote>
+<p>文档目的：回答「这个产品为什么存在、卖给谁、凭什么赢」。
+功能清单见《需求规格说明书》，技术实现见《详细设计说明书》与《技术选型与架构决策记录》。</p>
+<p>⚠️ 本文档中标注 <strong>[待验证]</strong> 的市场数据为项目组内部推算，未经第三方机构核实，
+不得直接用于对外商务材料。</p>
+</blockquote>
+</div>
+<hr>
+<h2 id="1-背景政策与行业驱动">1. 背景：政策与行业驱动<a class="headerlink" href="#1-背景政策与行业驱动" title="永久链接">#</a></h2>
+<h3 id="11-监管侧的刚性需求">1.1 监管侧的刚性需求<a class="headerlink" href="#11-监管侧的刚性需求" title="永久链接">#</a></h3>
+<p>智能网联汽车（尤其低速自动驾驶：环卫、物流配送、园区接驳、矿山等封闭/半封闭场景）
+在准入与上路试点中普遍被要求具备：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>要求</th>
+<th>来源</th>
+<th>对本产品的意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>自动驾驶数据存储系统（DSSAD）</td>
+<td>GB 汽车数据安全系列标准、准入试点通知</td>
+<td>车端记录能力，本产品是<strong>云端延伸</strong></td>
+</tr>
+<tr>
+<td>事故后数据取证与回传</td>
+<td>各地智能网联汽车管理条例</td>
+<td><strong>事故取证链路是本产品的核心卖点</strong></td>
+</tr>
+<tr>
+<td>车辆运行状态上传监管平台</td>
+<td>准入试点运行管理要求</td>
+<td>云云对接（MQTT + HMAC）是准入的硬门槛</td>
+</tr>
+<tr>
+<td>远程接管能力与接管记录</td>
+<td>示范应用管理规范</td>
+<td>远驾接管台账属于强监管数据</td>
+</tr>
+</tbody>
+</table></div>
+<p>结论：这不是「锦上添花」的增值功能市场，而是<strong>合规准入的必备件市场</strong>——
+不接入就上不了牌、拿不到示范应用资质，需求刚性极强。</p>
+<h3 id="12-行业侧的现实痛点">1.2 行业侧的现实痛点<a class="headerlink" href="#12-行业侧的现实痛点" title="永久链接">#</a></h3>
+<p>低速自动驾驶运营企业普遍面临：</p>
+<ul>
+<li><strong>多源协议碎片化</strong>：车端由不同 Tier1 供货，报文格式各自为政，自研接入成本高；</li>
+<li><strong>自建平台重</strong>：小体量运营企业养不起一个完整的车联网平台团队；</li>
+<li><strong>取证被动</strong>：事故发生后数据在车端、云端、监管平台三处割裂，整理一次取证材料动辄数天。</li>
+</ul>
+<hr>
+<h2 id="2-目标客户与用户画像">2. 目标客户与用户画像<a class="headerlink" href="#2-目标客户与用户画像" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>角色</th>
+<th>画像</th>
+<th>核心诉求</th>
+<th>本产品对应能力</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>运营企业车队长/安全员</td>
+<td>园区/环卫项目现场管理</td>
+<td>知道每台车在哪、有没有出事、证照链路齐不齐</td>
+<td>运营总览、车辆管理、事件中心</td>
+</tr>
+<tr>
+<td>运营企业 IT 负责人</td>
+<td>技术选型与对接</td>
+<td>快速接入监管平台、少养运维</td>
+<td>标准云云对接 + 开箱即用部署资产</td>
+</tr>
+<tr>
+<td>监管平台（系统对系统）</td>
+<td>政府侧数据接收</td>
+<td>数据按协议送达、可审计</td>
+<td>HMAC 签名云云接口、报文留痕</td>
+</tr>
+<tr>
+<td>交巡警/远驾舱驾驶员</td>
+<td>事故现场处置</td>
+<td>一键接管、能拿到四方向视频</td>
+<td>远驾接管、视频取证</td>
+</tr>
+<tr>
+<td>平台运维人员</td>
+<td>企业内部</td>
+<td>好部署、好排障、告警准</td>
+<td>部署资产、运维手册、三层探活</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="3-竞争格局-待验证">3. 竞争格局 <strong>[待验证]</strong><a class="headerlink" href="#3-竞争格局-待验证" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>竞品类型</th>
+<th>代表形态</th>
+<th>优势</th>
+<th>劣势（本产品的机会）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>车企自建 TSP</td>
+<td>乘用车厂的车联网平台</td>
+<td>与车端深度耦合</td>
+<td>面向 C 端体验，不满足 DSSAD 监管口径</td>
+</tr>
+<tr>
+<td>通用车联网 PaaS</td>
+<td>大厂物联网平台</td>
+<td>生态全、扩展强</td>
+<td>需要客户自己开发合规层，「买平台 ≠ 合规」</td>
+</tr>
+<tr>
+<td>监管对接中间件小厂</td>
+<td>单点对接工具</td>
+<td>便宜、快</td>
+<td>只做通道不做运营，取证与远驾能力缺失</td>
+</tr>
+<tr>
+<td>运营企业自研</td>
+<td>各家自建</td>
+<td>贴合自身业务</td>
+<td>成本高、协议跟进慢、人员流动即断档</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>本产品定位</strong>：面向低速自动驾驶运营企业的<strong>「合规网关 + 运营平台」一体机</strong>——
+按《平台数据对接接口文档》实现标准化云云对接（准入即用），
+同时交付事故取证、远驾接管、地图阻断等<strong>强监管业务闭环</strong>，而非裸通道。</p>
+<h3 id="31-差异化要点">3.1 差异化要点<a class="headerlink" href="#31-差异化要点" title="永久链接">#</a></h3>
+<ol>
+<li><strong>协议对齐即卖点</strong>：与上游 PDF 接口文档逐条对齐并留有偏差记录（接口文档附录），
+   接入验收不会卡在协议理解分歧上；</li>
+<li><strong>取证链路完整</strong>：事故 → 下发取证请求 → 四方向视频归档 → 待归档催办（超时提醒），
+   证据链每一环都有审计状态；</li>
+<li><strong>零依赖可落地</strong>：本地 profile（H2 文件库 + MQTT 关闭 + 报文模拟器）让售前 POC
+   可以「克隆即跑」，不依赖客户先备好 MySQL/Redis/Broker；</li>
+<li><strong>运维友好</strong>：探针退出码分级、备份三重校验 + 真恢复演练、应急剧本，
+   面向「没有专职运维的小团队」设计。</li>
+</ol>
+<hr>
+<h2 id="4-市场规模推算-待验证">4. 市场规模推算 <strong>[待验证]</strong><a class="headerlink" href="#4-市场规模推算-待验证" title="永久链接">#</a></h2>
+<p>推算口径（内部推演，需商务侧校准）：</p>
+<ul>
+<li>低速自动驾驶示范城市数量 × 每城市运营企业数 × 单企业接入车辆数
+  → 潜在接入车辆盘子；</li>
+<li>按单车年化接入服务费（含云云对接 + 取证存储）定价区间估算年市场规模；</li>
+<li>敏感结论不在本文档展开，另见商务内部材料。</li>
+</ul>
+<hr>
+<h2 id="5-商业模式建议-待决策">5. 商业模式建议 <strong>[待决策]</strong><a class="headerlink" href="#5-商业模式建议-待决策" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>模式</th>
+<th>说明</th>
+<th>适配场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>项目制交付</td>
+<td>按企业/项目一次性交付 + 年维保</td>
+<td>现阶段最现实</td>
+</tr>
+<tr>
+<td>按车订阅</td>
+<td>单车/年接入费，含存储与升级</td>
+<td>车辆规模稳定后</td>
+</tr>
+<tr>
+<td>存储阶梯计费</td>
+<td>取证视频按存储容量/保留期分档</td>
+<td>与《数据库设计》保留策略天然对齐</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="6-风险与对策">6. 风险与对策<a class="headerlink" href="#6-风险与对策" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>风险</th>
+<th>影响</th>
+<th>对策</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>上游协议版本变更</td>
+<td>云云对接返工</td>
+<td>接口文档已建立「偏差记录 + 兼容层」机制（如 groute-resp 作用域 P-12），变更时改一处枚举</td>
+</tr>
+<tr>
+<td>各地监管平台实现差异</td>
+<td>一地对接 ≠ 全国通吃</td>
+<td>协议适配层隔离（RegulatoryGateway 单点收口）</td>
+</tr>
+<tr>
+<td>取证视频存储成本</td>
+<td>毛利被存储吃掉</td>
+<td>保留策略可配（<code>DSSAD_TRACK_RETENTION_DAYS</code> 等）+ 生命周期清理任务</td>
+</tr>
+<tr>
+<td>单一角色无权限分级（P-08）</td>
+<td>大客户安全审计过不了</td>
+<td>列入路线图：RBAC + 高危操作二次确认</td>
+</tr>
+</tbody>
+</table></div>
+<hr>
+<h2 id="7-缺陷与待办清单">7. 缺陷与待办清单<a class="headerlink" href="#7-缺陷与待办清单" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>编号</th>
+<th>优先级</th>
+<th>事项</th>
+<th>状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T-01</td>
+<td>高</td>
+<td>市场规模与竞品份额数据未经第三方核实（本文标注 [待验证]）</td>
+<td>待商务侧补充</td>
+</tr>
+<tr>
+<td>T-02</td>
+<td>高</td>
+<td>商业模式与定价未决策</td>
+<td>待决策</td>
+</tr>
+<tr>
+<td>T-03</td>
+<td>中</td>
+<td>各地监管平台实现差异清单未建立</td>
+<td>待运营输入</td>
+</tr>
+<tr>
+<td>T-04</td>
+<td>中</td>
+<td>售前 POC 环境与演示脚本未沉淀</td>
+<td>可基于 <code>scripts/dev.sh</code> + <code>health.sh</code> 整理</td>
+</tr>
+<tr>
+<td>T-05</td>
+<td>低</td>
+<td>竞品报价信息缺失</td>
+<td>持续收集</td>
+</tr>
+</tbody>
+</table></div>
+  </main>
+</div>
+<button id="to-top" type="button" title="回到顶部" aria-label="回到顶部">&#8593;</button>
+<script>
+
+(function () {
+  'use strict';
+
+  /* --- 1. 侧边栏滚动高亮当前章节 --- */
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  var targets = links
+    .map(function (a) {
+      var id = decodeURIComponent(a.getAttribute('href').slice(1));
+      var el = document.getElementById(id);
+      return el ? { link: a, el: el } : null;
+    })
+    .filter(Boolean);
+
+  function setActive(link) {
+    links.forEach(function (a) { a.classList.remove('active'); });
+    if (!link) return;
+    link.classList.add('active');
+    // 让高亮项始终留在侧边栏可视区内
+    var bar = document.querySelector('.sidebar');
+    if (!bar) return;
+    var r = link.getBoundingClientRect(), b = bar.getBoundingClientRect();
+    if (r.top < b.top + 60 || r.bottom > b.bottom - 40) {
+      bar.scrollTop += r.top - b.top - bar.clientHeight / 3;
+    }
+  }
+
+  var ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      ticking = false;
+      var best = null;
+      for (var i = 0; i < targets.length; i++) {
+        if (targets[i].el.getBoundingClientRect().top <= 120) best = targets[i];
+        else break;
+      }
+      if (best) setActive(best.link);
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* --- 2. 代码块复制按钮 --- */
+  document.querySelectorAll('.highlight').forEach(function (block) {
+    var code = block.querySelector('code');
+    if (!code) return;
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.addEventListener('click', function () {
+      var text = code.innerText;
+      var done = function () {
+        btn.textContent = '已复制';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = '复制';
+          btn.classList.remove('done');
+        }, 1400);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    block.appendChild(btn);
+  });
+
+  // file:// 下 navigator.clipboard 不可用时的兜底
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* 忽略 */ }
+    document.body.removeChild(ta);
+  }
+
+  /* --- 3. 回到顶部 --- */
+  var top = document.getElementById('to-top');
+  if (top) {
+    top.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    window.addEventListener('scroll', function () {
+      top.classList.toggle('show', window.scrollY > 500);
+    }, { passive: true });
+  }
+
+  /* --- 4. 窄屏侧边栏 --- */
+  var menuBtn = document.getElementById('menu-btn');
+  var sidebar = document.querySelector('.sidebar');
+  if (menuBtn && sidebar) {
+    menuBtn.addEventListener('click', function () { sidebar.classList.toggle('open'); });
+    sidebar.addEventListener('click', function (e) {
+      if (e.target.tagName === 'A') sidebar.classList.remove('open');
+    });
+  }
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DSSAD 云平台 · 用户操作手册</title>
+<meta name="generator" content="scripts/md2html.py">
+<style>
+
+:root{
+  --bg:#0d1117;
+  --bg-side:#090c11;
+  --bg-elev:#161b22;
+  --bg-code:#161b22;
+  --border:#21262d;
+  --border-soft:#1a1f27;
+  --text:#c9d1d9;
+  --text-strong:#e6edf3;
+  --text-dim:#8b949e;
+  --accent:#58a6ff;
+  --accent-soft:rgba(88,166,255,.12);
+  --green:#3fb950;
+  --orange:#d29922;
+  --red:#f85149;
+  --purple:#bc8cff;
+  --sidebar-w:308px;
+  --radius:8px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+              "Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15.5px;line-height:1.78;
+  -webkit-font-smoothing:antialiased;
+}
+code,pre,kbd,.mono{
+  font-family:"JetBrains Mono","Cascadia Code",Consolas,"Courier New",monospace;
+  font-variant-ligatures:none;
+}
+
+/* ---------- 布局：左固定 TOC / 右正文 ---------- */
+.layout{display:flex;align-items:flex-start;min-height:100vh}
+
+.sidebar{
+  width:var(--sidebar-w);flex:0 0 var(--sidebar-w);
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  background:var(--bg-side);border-right:1px solid var(--border);
+  padding:22px 0 60px;
+}
+.sidebar-brand{
+  padding:0 20px 16px;margin-bottom:14px;border-bottom:1px solid var(--border-soft);
+}
+.sidebar-brand .t{font-size:14px;font-weight:600;color:var(--text-strong);letter-spacing:.2px}
+.sidebar-brand .s{font-size:12px;color:var(--text-dim);margin-top:4px}
+
+.toc{padding:0 10px}
+.toc ul{list-style:none;margin:0;padding:0}
+.toc > ul > li{margin:2px 0}
+.toc a{
+  display:block;padding:6px 10px;border-radius:6px;
+  color:var(--text-dim);text-decoration:none;font-size:13.5px;
+  border-left:2px solid transparent;transition:all .15s ease;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.toc > ul > li > a{color:var(--text);font-weight:500}
+.toc a:hover{background:var(--bg-elev);color:var(--text-strong)}
+.toc a.active{
+  color:var(--accent);background:var(--accent-soft);
+  border-left-color:var(--accent);font-weight:600;
+}
+.toc ul ul{margin-left:12px}
+.toc ul ul a{font-size:12.8px;padding:4px 10px}
+
+/* ---------- 正文 ---------- */
+.content{
+  flex:1 1 auto;min-width:0;max-width:1000px;
+  padding:44px 56px 120px;
+}
+.content > *:first-child{margin-top:0}
+
+/* 页头 */
+.doc-header{margin-bottom:34px;padding-bottom:22px;border-bottom:1px solid var(--border)}
+h1{
+  font-size:30px;line-height:1.35;margin:0 0 16px;color:var(--text-strong);
+  font-weight:700;letter-spacing:-.3px;
+}
+.doc-meta{font-size:12.5px;color:var(--text-dim);display:flex;gap:14px;flex-wrap:wrap}
+.doc-meta span{display:inline-flex;align-items:center;gap:5px}
+.doc-meta code{font-size:12px;color:var(--text-dim);background:transparent;padding:0}
+
+/* 「定位说明」摘要卡（md 中紧跟 h1 的引用块） */
+.doc-lead{
+  background:linear-gradient(180deg,rgba(88,166,255,.07),rgba(88,166,255,.02));
+  border:1px solid rgba(88,166,255,.22);border-left:3px solid var(--accent);
+  border-radius:var(--radius);padding:14px 18px;margin:0 0 30px;
+  font-size:14px;color:var(--text-dim);line-height:1.8;
+}
+.doc-lead p{margin:0 0 8px}
+.doc-lead p:last-child{margin-bottom:0}
+.doc-lead strong{color:var(--text-strong)}
+.doc-lead code{font-size:12.5px;color:var(--accent);background:rgba(88,166,255,.1);padding:1px 5px;border-radius:4px}
+
+/* 标题层级 */
+h2{
+  font-size:23px;font-weight:650;color:var(--text-strong);
+  margin:56px 0 18px;padding:0 0 10px 0;
+  border-bottom:1px solid var(--border);position:relative;
+}
+h2::before{
+  content:"";position:absolute;left:-56px;top:6px;width:3px;height:20px;
+  background:var(--accent);border-radius:2px;
+}
+h3{
+  font-size:18px;font-weight:600;color:var(--accent);
+  margin:34px 0 12px;padding-left:0;
+}
+h4{font-size:15.5px;font-weight:600;color:var(--text-strong);margin:24px 0 10px}
+h5,h6{font-size:14.5px;font-weight:600;color:var(--text-dim);margin:20px 0 8px}
+
+/* 标题锚点链接（hover 显现） */
+.headerlink{
+  color:var(--text-dim);text-decoration:none;opacity:0;
+  margin-left:8px;font-size:.75em;transition:opacity .15s ease;
+}
+h2:hover .headerlink,h3:hover .headerlink,h4:hover .headerlink{opacity:.7}
+.headerlink:hover{opacity:1;color:var(--accent)}
+
+p{margin:0 0 15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+
+strong{color:var(--text-strong);font-weight:650}
+em{color:var(--text-strong)}
+hr{border:0;border-top:1px solid var(--border);margin:38px 0}
+
+ul,ol{margin:0 0 15px;padding-left:26px}
+li{margin:5px 0}
+li > ul,li > ol{margin:5px 0}
+ul li::marker{color:var(--text-dim)}
+ol li::marker{color:var(--accent);font-weight:600}
+
+/* 引用块（除 .doc-lead 外的） */
+blockquote{
+  margin:0 0 16px;padding:12px 18px;
+  background:var(--bg-elev);border-left:3px solid var(--border);
+  border-radius:0 var(--radius) var(--radius) 0;color:var(--text-dim);
+}
+blockquote p:last-child{margin-bottom:0}
+
+/* 行内代码 */
+code{
+  font-size:13px;background:rgba(110,118,129,.18);color:#79c0ff;
+  padding:2px 6px;border-radius:5px;white-space:nowrap;
+}
+pre code{background:none;padding:0;color:inherit;white-space:pre;font-size:13.2px}
+pre{
+  margin:0;padding:16px 18px;overflow-x:auto;
+  background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);
+  line-height:1.62;
+}
+
+/* 代码块容器 + 复制按钮 */
+.highlight{
+  position:relative;margin:0 0 18px;
+  background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;
+}
+.highlight pre{border:0;border-radius:0;background:transparent}
+.copy-btn{
+  position:absolute;top:8px;right:8px;z-index:2;
+  background:rgba(110,118,129,.22);color:var(--text-dim);
+  border:1px solid var(--border);border-radius:6px;
+  padding:3px 9px;font-size:11.5px;cursor:pointer;
+  font-family:inherit;opacity:0;transition:opacity .15s ease,background .15s ease;
+}
+.highlight:hover .copy-btn{opacity:1}
+.copy-btn:hover{background:rgba(88,166,255,.22);color:var(--accent);border-color:rgba(88,166,255,.4)}
+.copy-btn.done{color:var(--green);border-color:rgba(63,185,80,.45)}
+
+/* 任务列表（- [ ] / - [x]）*/
+li.task{list-style:none;margin-left:-22px;display:flex;align-items:flex-start;gap:9px}
+li.task > p{display:contents}
+li.task .cb{
+  flex:0 0 auto;width:14px;height:14px;margin-top:6px;
+  border:1.5px solid var(--text-dim);border-radius:3px;
+}
+li.task.done .cb{background:var(--green);border-color:var(--green)}
+li.task.done{color:var(--text-dim)}
+
+/* 表格 */
+.table-wrap{overflow-x:auto;margin:0 0 18px}
+table{
+  border-collapse:collapse;width:100%;font-size:14px;
+  border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;
+}
+thead th{
+  background:var(--bg-elev);color:var(--text-strong);font-weight:600;
+  text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+tbody td{padding:9px 14px;border-bottom:1px solid var(--border-soft);vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:rgba(255,255,255,.014)}
+tbody tr:hover{background:rgba(88,166,255,.05)}
+td code,th code{font-size:12.5px}
+
+/* 回到顶部 */
+#to-top{
+  position:fixed;right:26px;bottom:26px;z-index:10;
+  width:40px;height:40px;border-radius:50%;
+  background:var(--bg-elev);color:var(--text-dim);
+  border:1px solid var(--border);cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:all .2s ease;
+}
+#to-top.show{opacity:1;pointer-events:auto}
+#to-top:hover{color:var(--accent);border-color:var(--accent);transform:translateY(-2px)}
+
+/* 窄屏：侧边栏收起 */
+#menu-btn{
+  display:none;position:fixed;top:14px;left:14px;z-index:20;
+  width:38px;height:38px;border-radius:8px;
+  background:var(--bg-elev);border:1px solid var(--border);
+  color:var(--text);cursor:pointer;font-size:17px;
+}
+@media (max-width:960px){
+  #menu-btn{display:block}
+  .sidebar{
+    position:fixed;left:0;top:0;z-index:15;height:100vh;
+    transform:translateX(-100%);transition:transform .22s ease;
+    box-shadow:0 0 40px rgba(0,0,0,.5);
+  }
+  .sidebar.open{transform:translateX(0)}
+  .content{padding:70px 22px 100px}
+  h2::before{display:none}
+}
+@media print{
+  .sidebar,#to-top,#menu-btn,.copy-btn{display:none}
+  body{background:#fff;color:#111}
+  .content{max-width:none;padding:0}
+}
+
+/* ---------- pygments 语法高亮（github-dark） ---------- */
+pre { line-height: 125%; }
+td.linenos .normal { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+.highlight .hll { background-color: #6e7681 }
+.highlight { background: transparent; }
+.highlight .c { color: #8B949E; font-style: italic } /* Comment */
+.highlight .err { color: #F85149 } /* Error */
+.highlight .esc { color: #E6EDF3 } /* Escape */
+.highlight .g { color: #E6EDF3 } /* Generic */
+.highlight .k { color: #FF7B72 } /* Keyword */
+.highlight .l { color: #A5D6FF } /* Literal */
+.highlight .n { color: #E6EDF3 } /* Name */
+.highlight .o { color: #FF7B72; font-weight: bold } /* Operator */
+.highlight .x { color: #E6EDF3 } /* Other */
+.highlight .p { color: #E6EDF3 } /* Punctuation */
+.highlight .ch { color: #8B949E; font-style: italic } /* Comment.Hashbang */
+.highlight .cm { color: #8B949E; font-style: italic } /* Comment.Multiline */
+.highlight .cp { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Preproc */
+.highlight .cpf { color: #8B949E; font-style: italic } /* Comment.PreprocFile */
+.highlight .c1 { color: #8B949E; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Special */
+.highlight .gd { color: #FFA198; background-color: #490202 } /* Generic.Deleted */
+.highlight .ge { color: #E6EDF3; font-style: italic } /* Generic.Emph */
+.highlight .ges { color: #E6EDF3; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.highlight .gr { color: #FFA198 } /* Generic.Error */
+.highlight .gh { color: #79C0FF; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #56D364; background-color: #0F5323 } /* Generic.Inserted */
+.highlight .go { color: #8B949E } /* Generic.Output */
+.highlight .gp { color: #8B949E } /* Generic.Prompt */
+.highlight .gs { color: #E6EDF3; font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #79C0FF } /* Generic.Subheading */
+.highlight .gt { color: #FF7B72 } /* Generic.Traceback */
+.highlight .g-Underline { color: #E6EDF3; text-decoration: underline } /* Generic.Underline */
+.highlight .kc { color: #79C0FF } /* Keyword.Constant */
+.highlight .kd { color: #FF7B72 } /* Keyword.Declaration */
+.highlight .kn { color: #FF7B72 } /* Keyword.Namespace */
+.highlight .kp { color: #79C0FF } /* Keyword.Pseudo */
+.highlight .kr { color: #FF7B72 } /* Keyword.Reserved */
+.highlight .kt { color: #FF7B72 } /* Keyword.Type */
+.highlight .ld { color: #79C0FF } /* Literal.Date */
+.highlight .m { color: #A5D6FF } /* Literal.Number */
+.highlight .s { color: #A5D6FF } /* Literal.String */
+.highlight .na { color: #E6EDF3 } /* Name.Attribute */
+.highlight .nb { color: #E6EDF3 } /* Name.Builtin */
+.highlight .nc { color: #F0883E; font-weight: bold } /* Name.Class */
+.highlight .no { color: #79C0FF; font-weight: bold } /* Name.Constant */
+.highlight .nd { color: #D2A8FF; font-weight: bold } /* Name.Decorator */
+.highlight .ni { color: #FFA657 } /* Name.Entity */
+.highlight .ne { color: #F0883E; font-weight: bold } /* Name.Exception */
+.highlight .nf { color: #D2A8FF; font-weight: bold } /* Name.Function */
+.highlight .nl { color: #79C0FF; font-weight: bold } /* Name.Label */
+.highlight .nn { color: #FF7B72 } /* Name.Namespace */
+.highlight .nx { color: #E6EDF3 } /* Name.Other */
+.highlight .py { color: #79C0FF } /* Name.Property */
+.highlight .nt { color: #7EE787 } /* Name.Tag */
+.highlight .nv { color: #79C0FF } /* Name.Variable */
+.highlight .ow { color: #FF7B72; font-weight: bold } /* Operator.Word */
+.highlight .pm { color: #E6EDF3 } /* Punctuation.Marker */
+.highlight .w { color: #6E7681 } /* Text.Whitespace */
+.highlight .mb { color: #A5D6FF } /* Literal.Number.Bin */
+.highlight .mf { color: #A5D6FF } /* Literal.Number.Float */
+.highlight .mh { color: #A5D6FF } /* Literal.Number.Hex */
+.highlight .mi { color: #A5D6FF } /* Literal.Number.Integer */
+.highlight .mo { color: #A5D6FF } /* Literal.Number.Oct */
+.highlight .sa { color: #79C0FF } /* Literal.String.Affix */
+.highlight .sb { color: #A5D6FF } /* Literal.String.Backtick */
+.highlight .sc { color: #A5D6FF } /* Literal.String.Char */
+.highlight .dl { color: #79C0FF } /* Literal.String.Delimiter */
+.highlight .sd { color: #A5D6FF } /* Literal.String.Doc */
+.highlight .s2 { color: #A5D6FF } /* Literal.String.Double */
+.highlight .se { color: #79C0FF } /* Literal.String.Escape */
+.highlight .sh { color: #79C0FF } /* Literal.String.Heredoc */
+.highlight .si { color: #A5D6FF } /* Literal.String.Interpol */
+.highlight .sx { color: #A5D6FF } /* Literal.String.Other */
+.highlight .sr { color: #79C0FF } /* Literal.String.Regex */
+.highlight .s1 { color: #A5D6FF } /* Literal.String.Single */
+.highlight .ss { color: #A5D6FF } /* Literal.String.Symbol */
+.highlight .bp { color: #E6EDF3 } /* Name.Builtin.Pseudo */
+.highlight .fm { color: #D2A8FF; font-weight: bold } /* Name.Function.Magic */
+.highlight .vc { color: #79C0FF } /* Name.Variable.Class */
+.highlight .vg { color: #79C0FF } /* Name.Variable.Global */
+.highlight .vi { color: #79C0FF } /* Name.Variable.Instance */
+.highlight .vm { color: #79C0FF } /* Name.Variable.Magic */
+.highlight .il { color: #A5D6FF } /* Literal.Number.Integer.Long */
+.highlight .l-Scalar, .highlight .l-Scalar-Plain { color:#A5D6FF }
+.highlight .p-Indicator { color:#E6EDF3 }
+.highlight .highlight { background: transparent; }
+</style>
+</head>
+<body>
+<button id="menu-btn" type="button" aria-label="目录">&#9776;</button>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="t">DSSAD 云平台 · 用户操作手册</div>
+      <div class="s">docs/ops/用户操作手册.md</div>
+    </div>
+    <nav class="toc">
+<div class="toc">
+<ul>
+<li><a href="#1-登录与退出">1. 登录与退出</a></li>
+<li><a href="#2-运营总览首页">2. 运营总览（首页）</a></li>
+<li><a href="#3-车辆管理">3. 车辆管理</a></li>
+<li><a href="#4-事件中心事故-故障">4. 事件中心（事故 / 故障）</a></li>
+<li><a href="#5-远程驾驶">5. 远程驾驶</a></li>
+<li><a href="#6-地图阻断">6. 地图阻断</a></li>
+<li><a href="#7-视频取证">7. 视频取证</a></li>
+<li><a href="#8-链路监控进阶">8. 链路监控（进阶）</a></li>
+<li><a href="#9-常见问题">9. 常见问题</a></li>
+<li><a href="#10-反馈与升级路径">10. 反馈与升级路径</a></li>
+</ul>
+</div>
+
+    </nav>
+  </aside>
+  <main class="content">
+    <header class="doc-header">
+      <h1>DSSAD 云平台 · 用户操作手册</h1>
+      <div class="doc-meta">
+        <span>源文件 <code>docs/ops/用户操作手册.md</code></span>
+        <span>由 scripts/md2html.py 生成</span>
+      </div>
+    </header>
+    <div class="doc-lead">
+<blockquote>
+<p>读者：平台运营人员、安全员、车队长（不需要编程背景）。
+系统管理员/开发请看《开发与部署说明》与《服务启停与状态检测命令集》。</p>
+<p>默认地址：控制台 <code>http://&lt;服务器地址&gt;/</code>（生产为 HTTPS）。
+登录账号由管理员发放；生产环境的默认口令已被强制覆盖，请勿使用文档示例口令。</p>
+</blockquote>
+</div>
+<hr>
+<h2 id="1-登录与退出">1. 登录与退出<a class="headerlink" href="#1-登录与退出" title="永久链接">#</a></h2>
+<ol>
+<li>浏览器打开控制台地址，输入用户名与口令，点击「登 录」；</li>
+<li>登录后默认进入「运营总览」；</li>
+<li>退出：点击右上角头像 → 退出登录。<strong>退出后令牌立即在服务端作废</strong>，
+   不是「前端删一下」——拿旧令牌再访问任何接口都会被拒绝；</li>
+<li>口令连续输错请稍后再试（登录接口有独立的限流保护，防止撞库）。</li>
+</ol>
+<blockquote>
+<p>口令遗失：联系系统管理员重置。运营人员无法自助找回。</p>
+</blockquote>
+<h2 id="2-运营总览首页">2. 运营总览（首页）<a class="headerlink" href="#2-运营总览首页" title="永久链接">#</a></h2>
+<p>页面自上而下四块：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>区块</th>
+<th>怎么看</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>统计卡（车辆总数/在线/今日事故/待取证/今日故障/任务/远驾/阻断）</td>
+<td>「待取证事故」与「在线车辆」是每天必看两项；在线率 &lt; 60% 变红</td>
+</tr>
+<tr>
+<td>事故 / 故障趋势 + 故障分类分布</td>
+<td>切换「近 7 天 / 30 天 / 90 天」看趋势；分类分布看主要故障来源</td>
+</tr>
+<tr>
+<td>故障高发车辆 TOP10 + 故障码 TOP10</td>
+<td>高发车辆用于安排检修优先级；故障码表看「次数」列排序</td>
+</tr>
+<tr>
+<td>链路健康</td>
+<td>入站队列持续增长 / 入站丢弃 &gt; 0 时，截图报给运维（说明车端上报量已超过消费能力）</td>
+</tr>
+</tbody>
+</table></div>
+<p>页面每 10 秒自动刷新（右上角开关可关）；「本页最近一次加载」显示数据新鲜度。</p>
+<h2 id="3-车辆管理">3. 车辆管理<a class="headerlink" href="#3-车辆管理" title="永久链接">#</a></h2>
+<ol>
+<li><strong>查车</strong>：顶部搜索框按 VIN/名称模糊检索，或按在线状态筛选；</li>
+<li><strong>看详情</strong>：点「详情」进入单车辆页 —— 实时状态（车速/SOC/续航/里程）、
+   位置地图、轨迹回放（可选日期）、历史视频；</li>
+<li><strong>轨迹回放</strong>：选日期后拖动进度条；路线有抽稀（细节折线在大屏上做平滑），
+   需要更精细的轨迹时缩小时间段；</li>
+<li><strong>下发任务</strong>：在车辆详情中下发轨迹任务（开始/结束），任务记录可在列表中核对。</li>
+</ol>
+<h2 id="4-事件中心事故-故障">4. 事件中心（事故 / 故障）<a class="headerlink" href="#4-事件中心事故-故障" title="永久链接">#</a></h2>
+<ol>
+<li><strong>筛选</strong>：按时间区间、VIN、事件类型组合筛选；</li>
+<li><strong>待归档事故</strong>：页面顶部「待归档事故」卡片数量 &gt; 0 时，下方出现红色「需催办」清单
+   —— 这些事故已超过 10 分钟未收到取证材料，按清单逐台跟进；</li>
+<li><strong>处理闭环</strong>：每条事故可查看取证材料归档状态（已请求/已受理/待上传/已归档）。</li>
+</ol>
+<blockquote>
+<p>事件 ID 是全链路唯一编号：向运维/监管报问题时<strong>必须带上它</strong>。</p>
+</blockquote>
+<h2 id="5-远程驾驶">5. 远程驾驶<a class="headerlink" href="#5-远程驾驶" title="永久链接">#</a></h2>
+<ol>
+<li><strong>发起接管</strong>：填写 VIN 与发起人类型（1 交巡警 / 2 监管平台）→ 系统自动分配
+   最久未使用的远驾舱与驾驶员，并同步上报监管平台；</li>
+<li><strong>结束接管</strong>：填同一 VIN 结束；接管时长自动配对计算；</li>
+<li><strong>台账</strong>：接管记录页可按车辆/是否结束筛选，驾驶员与时长用于事后审计。</li>
+</ol>
+<blockquote>
+<p>注意：短时间内对同一车辆连续发起接管时，系统会自动把「结束报文丢失」的旧接管
+闭合为异常结束，避免台账悬挂（页面无感知，记录里有日志）。</p>
+</blockquote>
+<h2 id="6-地图阻断">6. 地图阻断<a class="headerlink" href="#6-地图阻断" title="永久链接">#</a></h2>
+<ol>
+<li><strong>看图</strong>：页面按当日生效的阻断设施绘制平面图（等比例、经度已做纬度修正）；</li>
+<li><strong>看清单</strong>：右侧清单按类型分组，点击任一行，平面图高亮该区域并显示详情
+   （生效时段/限速/数据来源/回执状态）；</li>
+<li><strong>立即同步</strong>：正常情况每日 00:05 自动拉取；当日数据异常时可点「立即同步」手动补拉。</li>
+</ol>
+<h2 id="7-视频取证">7. 视频取证<a class="headerlink" href="#7-视频取证" title="永久链接">#</a></h2>
+<ol>
+<li><strong>待取证清单</strong>：优先处理「待上传」状态的事故；</li>
+<li><strong>取证材料归档</strong>：车端四方向视频回传后在此页核对归档完整性；</li>
+<li><strong>手动补录</strong>：底部表单可关联 事故 ID / 摄像头方向 / 视频文件 手工上传补录；</li>
+<li><strong>取证进度</strong>：每个事故的材料到达情况在页面底部进度区汇总。</li>
+</ol>
+<blockquote>
+<p>上传单文件上限 200MB；更大文件请分方向分别上传。</p>
+</blockquote>
+<h2 id="8-链路监控进阶">8. 链路监控（进阶）<a class="headerlink" href="#8-链路监控进阶" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>你看到什么</th>
+<th>说明</th>
+<th>动作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>通道状态 UP</td>
+<td>MQTT 正常</td>
+<td>无</td>
+</tr>
+<tr>
+<td>通道 DOWN / RECONNECTING</td>
+<td>收不到车端数据</td>
+<td>立即报运维（这是 P0）</td>
+</tr>
+<tr>
+<td>入站队列积压</td>
+<td>报文进得来消费不过来</td>
+<td>报运维，附积压数值</td>
+</tr>
+<tr>
+<td>入站丢弃 &gt; 0</td>
+<td>数据已不可恢复地丢了</td>
+<td>立即报运维（P0）</td>
+</tr>
+<tr>
+<td>限流触发次数 &gt; 0</td>
+<td>有车辆上报过猛被限流</td>
+<td>结合 VIN 判断是否车端异常</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>「平台健康检查全绿」不代表收得到数据——通道必须看本页或让运维跑通道探针。</p>
+</blockquote>
+<h2 id="9-常见问题">9. 常见问题<a class="headerlink" href="#9-常见问题" title="永久链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>现象</th>
+<th>原因与处理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>页面点菜单跳回登录页</td>
+<td>令牌已过期（12 小时）或已在别处登出，重新登录即可</td>
+</tr>
+<tr>
+<td>总览数字不更新</td>
+<td>看页面底部「最近一次加载」时间；若时间不动，检查网络后点「刷新」</td>
+</tr>
+<tr>
+<td>某车一直显示在线但联系不上驾驶员</td>
+<td>在线=心跳在报，不代表有人；用轨迹页看车实际位置，必要时发起接管</td>
+</tr>
+<tr>
+<td>上传视频失败</td>
+<td>超过 200MB 或网络中断；分文件重传</td>
+</tr>
+<tr>
+<td>地图阻断图空白</td>
+<td>当日上游无数据；点「立即同步」，仍为空则联系运维查监管平台侧</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="10-反馈与升级路径">10. 反馈与升级路径<a class="headerlink" href="#10-反馈与升级路径" title="永久链接">#</a></h2>
+<ol>
+<li>一般问题 → 企业内部运维群（附：页面名 + 事件 ID/车 VIN + 截图）；</li>
+<li>疑似数据丢失/通道中断 → 直接电话运维，并说明「链路监控页看到的现象」；</li>
+<li>功能需求 → 汇总后由项目管理统一排期（需求流程见《需求规格说明书》）。</li>
+</ol>
+  </main>
+</div>
+<button id="to-top" type="button" title="回到顶部" aria-label="回到顶部">&#8593;</button>
+<script>
+
+(function () {
+  'use strict';
+
+  /* --- 1. 侧边栏滚动高亮当前章节 --- */
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  var targets = links
+    .map(function (a) {
+      var id = decodeURIComponent(a.getAttribute('href').slice(1));
+      var el = document.getElementById(id);
+      return el ? { link: a, el: el } : null;
+    })
+    .filter(Boolean);
+
+  function setActive(link) {
+    links.forEach(function (a) { a.classList.remove('active'); });
+    if (!link) return;
+    link.classList.add('active');
+    // 让高亮项始终留在侧边栏可视区内
+    var bar = document.querySelector('.sidebar');
+    if (!bar) return;
+    var r = link.getBoundingClientRect(), b = bar.getBoundingClientRect();
+    if (r.top < b.top + 60 || r.bottom > b.bottom - 40) {
+      bar.scrollTop += r.top - b.top - bar.clientHeight / 3;
+    }
+  }
+
+  var ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      ticking = false;
+      var best = null;
+      for (var i = 0; i < targets.length; i++) {
+        if (targets[i].el.getBoundingClientRect().top <= 120) best = targets[i];
+        else break;
+      }
+      if (best) setActive(best.link);
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* --- 2. 代码块复制按钮 --- */
+  document.querySelectorAll('.highlight').forEach(function (block) {
+    var code = block.querySelector('code');
+    if (!code) return;
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.addEventListener('click', function () {
+      var text = code.innerText;
+      var done = function () {
+        btn.textContent = '已复制';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = '复制';
+          btn.classList.remove('done');
+        }, 1400);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+    block.appendChild(btn);
+  });
+
+  // file:// 下 navigator.clipboard 不可用时的兜底
+  function fallback(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* 忽略 */ }
+    document.body.removeChild(ta);
+  }
+
+  /* --- 3. 回到顶部 --- */
+  var top = document.getElementById('to-top');
+  if (top) {
+    top.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    window.addEventListener('scroll', function () {
+      top.classList.toggle('show', window.scrollY > 500);
+    }, { passive: true });
+  }
+
+  /* --- 4. 窄屏侧边栏 --- */
+  var menuBtn = document.getElementById('menu-btn');
+  var sidebar = document.querySelector('.sidebar');
+  if (menuBtn && sidebar) {
+    menuBtn.addEventListener('click', function () { sidebar.classList.toggle('open'); });
+    sidebar.addEventListener('click', function (e) {
+      if (e.target.tagName === 'A') sidebar.classList.remove('open');
+    });
+  }
+})();
+
+</script>
+</body>
+</html>
