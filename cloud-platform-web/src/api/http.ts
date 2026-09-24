@@ -122,7 +122,20 @@ http.interceptors.response.use(
     ElMessage.error(api.message || `请求失败（业务码 ${api.code}）`)
     return Promise.reject(new ApiError(api.code, api.message))
   },
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
+    // ---- GET 幂等请求的网络级失败自动重试 1 次 ----
+    // 场景：无线网络瞬断 / 代理抖动 / 首包超时。查询类请求无副作用，重试安全；
+    // 服务端已应答的 4xx/5xx（error.response 存在）不重试 —— 那是确定性失败，重试只会拖时间。
+    // 重试在拦截器里做而不是包装函数里做，保证 toast 只在「最终失败」时弹一次。
+    const config = error.config as (InternalAxiosRequestConfig & { __retryCount?: number }) | undefined
+    const networkFailure =
+      !error.response && (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT' || error.code === 'ERR_NETWORK')
+    if (config?.method === 'get' && networkFailure && (config.__retryCount ?? 0) < 1) {
+      config.__retryCount = (config.__retryCount ?? 0) + 1
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      return http.request(config)
+    }
+
     // 网络层失败：区分「连不上」与「超时」，这两种的排查方向完全不同
     let message: string
     if (error.code === 'ECONNABORTED') {
@@ -169,6 +182,37 @@ export async function upload<T>(
     }
   })
   return response.data
+}
+
+/**
+ * 文件下载（CSV 导出等）。
+ *
+ * <p>与普通 GET 的区别：`responseType: 'blob'`（二进制不走统一响应体解包），
+ * 且从 `Content-Disposition` 解析服务端文件名（含导出时间戳）。
+ * 成功后创建临时 objectURL 触发浏览器下载，随后立即释放。
+ */
+export async function download(
+  url: string,
+  params?: Record<string, unknown>,
+  fallbackName = 'export.csv'
+): Promise<void> {
+  const response = await http.get<Blob>(url, {
+    params,
+    responseType: 'blob',
+    timeout: 2 * 60 * 1000
+  })
+  const disposition = (response.headers['content-disposition'] as string | undefined) ?? ''
+  const match = disposition.match(/filename="?([^";]+)"?/i)
+  const filename = match?.[1] ? decodeURIComponent(match[1]) : fallbackName
+
+  const objectUrl = URL.createObjectURL(response.data)
+  const anchor = document.createElement('a')
+  anchor.href = objectUrl
+  anchor.download = filename
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  URL.revokeObjectURL(objectUrl)
 }
 
 export default http

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import { dictApi, eventApi } from '@/api'
+import { download } from '@/api/http'
 import type {
   AccidentEvent,
   AccidentMediaStatus,
@@ -97,12 +99,12 @@ const topCodeDays = ref(7)
  * 是**最需要盯**的中间态（应答了但不传，说明车端存储或网络有问题）。
  * MEDIA_FAILED 不进主线，它是终态失败，必须人工介入。
  */
-const MEDIA_FLOW: AccidentMediaStatus[] = ['REPORTED', 'MEDIA_REQUESTED', 'MEDIA_ACCEPTED', 'MEDIA_RECEIVED']
+const MEDIA_FLOW: AccidentMediaStatus[] = ['REPORTED', 'MEDIA_REQUESTED', 'MEDIA_ACCEPTED', 'MEDIA_ARCHIVED']
 const MEDIA_FLOW_LABEL: Record<string, string> = {
   REPORTED: '已上报',
   MEDIA_REQUESTED: '已请求取证',
   MEDIA_ACCEPTED: '车端已应答',
-  MEDIA_RECEIVED: '取证完成'
+  MEDIA_ARCHIVED: '取证完成'
 }
 
 /** 表格里的状态标签元数据（含失败态）。 */
@@ -114,7 +116,7 @@ function mediaStatusMeta(status?: AccidentMediaStatus): { label: string; type: '
       return { label: '已请求取证', type: 'primary' }
     case 'MEDIA_ACCEPTED':
       return { label: '车端已应答', type: 'warning' }
-    case 'MEDIA_RECEIVED':
+    case 'MEDIA_ARCHIVED':
       return { label: '取证完成', type: 'success' }
     case 'MEDIA_FAILED':
       return { label: '取证失败', type: 'danger' }
@@ -136,7 +138,7 @@ function mediaStep(status?: AccidentMediaStatus): number {
  * 数组，直接扔给 Date 会得到 Invalid Date（见 utils/format.ts 顶部说明）。
  */
 function isStuck(event: AccidentEvent): boolean {
-  if (event.mediaStatus === 'MEDIA_RECEIVED') return false
+  if (event.mediaStatus === 'MEDIA_ARCHIVED') return false
   const occurred = parseTime(event.occurredAt)
   if (!occurred) return false
   return Date.now() - occurred.getTime() > 10 * 60 * 1000
@@ -205,6 +207,9 @@ async function loadDict() {
 }
 
 async function loadAccidents() {
+  // 竞态守卫：快速连续查询时，慢的旧响应不得覆盖快的新响应
+  // （表现层症状是「筛了 A 车却显示 B 车的数据」，且难以稳定复现）
+  const seq = ++accidentSeq
   accidentLoading.value = true
   try {
     const result = await eventApi.accidents({
@@ -214,15 +219,20 @@ async function loadAccidents() {
       page: accidentQuery.page,
       size: accidentQuery.size
     })
+    if (seq !== accidentSeq) return
     accidents.value = result.list ?? []
     accidentTotal.value = result.total ?? 0
   } catch {
+    if (seq !== accidentSeq) return
     accidents.value = []
     accidentTotal.value = 0
   } finally {
-    accidentLoading.value = false
+    if (seq === accidentSeq) accidentLoading.value = false
   }
 }
+
+/** 当前事故查询序号：每次发起自增，响应回来时对不上号即视为过期。 */
+let accidentSeq = 0
 
 async function loadPending() {
   pendingLoading.value = true
@@ -236,6 +246,7 @@ async function loadPending() {
 }
 
 async function loadFaults() {
+  const seq = ++faultSeq
   faultLoading.value = true
   try {
     const result = await eventApi.faults({
@@ -245,15 +256,20 @@ async function loadFaults() {
       page: faultQuery.page,
       size: faultQuery.size
     })
+    if (seq !== faultSeq) return
     faults.value = result.list ?? []
     faultTotal.value = result.total ?? 0
   } catch {
+    if (seq !== faultSeq) return
     faults.value = []
     faultTotal.value = 0
   } finally {
-    faultLoading.value = false
+    if (seq === faultSeq) faultLoading.value = false
   }
 }
+
+/** 当前故障查询序号，语义同 accidentSeq。 */
+let faultSeq = 0
 
 async function loadTopCodes() {
   try {
@@ -308,6 +324,52 @@ function resetFaultQuery() {
   faultQuery.hours = 168
   faultQuery.page = 1
   void loadFaults()
+}
+
+// ==================== CSV 导出 ====================
+
+// 服务端对导出做了行数上限与只读约束，前端只负责「把当前筛选条件原样带过去」，
+// 保证用户看到的列表与拿到的文件内容一致 —— 这是导出功能最重要的正确性约定。
+const exporting = ref(false)
+
+async function exportAccidents() {
+  exporting.value = true
+  try {
+    await download(
+      '/api/v1/events/accidents/export',
+      {
+        vin: accidentQuery.vin.trim() || undefined,
+        mediaStatus: accidentQuery.mediaStatus,
+        hours: accidentQuery.hours
+      },
+      'accidents.csv'
+    )
+    ElMessage.success('事故清单已开始下载')
+  } catch {
+    // 失败提示由 http 层统一弹出，这里不重复
+  } finally {
+    exporting.value = false
+  }
+}
+
+async function exportFaults() {
+  exporting.value = true
+  try {
+    await download(
+      '/api/v1/events/faults/export',
+      {
+        vin: faultQuery.vin.trim() || undefined,
+        minSeverity: faultQuery.minSeverity,
+        hours: faultQuery.hours
+      },
+      'faults.csv'
+    )
+    ElMessage.success('故障清单已开始下载')
+  } catch {
+    // 同上
+  } finally {
+    exporting.value = false
+  }
 }
 
 /** 从待归档清单直接跳到对应事故详情，省掉「再去列表里搜一遍」的重复劳动。 */
@@ -437,7 +499,7 @@ onMounted(async () => {
                 <el-option label="已上报" value="REPORTED" />
                 <el-option label="已请求取证" value="MEDIA_REQUESTED" />
                 <el-option label="车端已应答" value="MEDIA_ACCEPTED" />
-                <el-option label="取证完成" value="MEDIA_RECEIVED" />
+                <el-option label="取证完成" value="MEDIA_ARCHIVED" />
                 <el-option label="取证失败" value="MEDIA_FAILED" />
               </el-select>
             </el-form-item>
@@ -451,6 +513,7 @@ onMounted(async () => {
             <el-form-item>
               <el-button type="primary" @click="loadAccidents">查询</el-button>
               <el-button @click="resetAccidentQuery">重置</el-button>
+              <el-button :loading="exporting" @click="exportAccidents">导出 CSV</el-button>
             </el-form-item>
           </el-form>
 
@@ -544,6 +607,7 @@ onMounted(async () => {
             <el-form-item>
               <el-button type="primary" @click="loadFaults">查询</el-button>
               <el-button @click="resetFaultQuery">重置</el-button>
+              <el-button :loading="exporting" @click="exportFaults">导出 CSV</el-button>
             </el-form-item>
           </el-form>
 

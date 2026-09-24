@@ -397,7 +397,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 <li><a href="#61-认证2-个">6.1 认证（2 个）</a></li>
 <li><a href="#62-运营总览4-个">6.2 运营总览（4 个）</a></li>
 <li><a href="#63-车辆7-个">6.3 车辆（7 个）</a></li>
-<li><a href="#64-事件6-个">6.4 事件（6 个）</a></li>
+<li><a href="#64-事件8-个">6.4 事件（8 个）</a></li>
 <li><a href="#65-运营调度8-个">6.5 运营调度（8 个）</a></li>
 <li><a href="#66-地图阻断5-个">6.6 地图阻断（5 个）</a></li>
 <li><a href="#67-字典6-个">6.7 字典（6 个）</a></li>
@@ -569,6 +569,11 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 <td>2026-09-22</td>
 <td>首版。冻结 MQTT 20 类报文、企业云端 5 个 HTTP 接口、平台管理 47 个 REST 接口</td>
 </tr>
+<tr>
+<td>V1.1.0</td>
+<td>2026-09-24</td>
+<td>新增事件导出 2 个接口（6.4.7 / 6.4.8，CSV）；取证终态枚举统一为 <code>MEDIA_ARCHIVED</code>（修正早期 <code>MEDIA_RECEIVED</code> 笔误）</td>
+</tr>
 </tbody>
 </table></div>
 <hr>
@@ -685,7 +690,7 @@ span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 
 </tr>
 <tr>
 <td>平台管理 API（认证 / 总览 / 车辆 / 事件 / 运营 / 阻断 / 字典 / 监控 / 模拟器）</td>
-<td style="text-align: right;">47</td>
+<td style="text-align: right;">49</td>
 <td><code>X-Token</code> 请求头</td>
 <td>6</td>
 </tr>
@@ -4115,14 +4120,23 @@ currentPoint = [104.06, 30.67]   ❌ 经度在前（成都/重庆一带会正好
 <td>等待 HTTP 上传</td>
 </tr>
 <tr>
-<td><code>MEDIA_RECEIVED</code></td>
+<td><code>MEDIA_ARCHIVED</code></td>
 <td>视频已归档</td>
 <td>收到上传并成功落盘</td>
 <td><strong>终态</strong>（闭环完成）</td>
 </tr>
+<tr>
+<td><code>MEDIA_FAILED</code></td>
+<td>取证失败</td>
+<td>媒体请求失败或超时</td>
+<td>人工介入（车端本地至少存 10 天可补传）</td>
+</tr>
 </tbody>
 </table></div>
-<p><strong>超时催办口径</strong>：距事故上报时间超过 <code>timeoutMinutes</code>（默认 10 分钟，可调）仍未到达 <code>MEDIA_RECEIVED</code>，
+<blockquote>
+<p>实体枚举名为 <code>MEDIA_ARCHIVED</code>（早期文档曾写作 <code>MEDIA_RECEIVED</code>，以实体为准）。</p>
+</blockquote>
+<p><strong>超时催办口径</strong>：距事故上报时间超过 <code>timeoutMinutes</code>（默认 10 分钟，可调）仍未到达 <code>MEDIA_ARCHIVED</code>，
 即出现在 <code>accidents/pending</code> 清单中，供运营人员主动联系车端补传。</p>
 <p><strong>四方向归档明细</strong>：事故详情（<code>GET /api/v1/events/accidents/{eventId}</code>）会返回每个方向的归档情况，
 <strong>缺失的方向会被显式标出</strong>——这比「只列出已收到的文件」更能暴露取证不完整的问题。</p>
@@ -4879,7 +4893,7 @@ currentPoint = [104.06, 30.67]   ❌ 经度在前（成都/重庆一带会正好
 <p>每次收到 <code>inh/up</code>（连接/重连时上报）都追加一条，因此该列表可直接用于
 「车辆软件版本是否按要求升级」的审计。</p>
 </blockquote>
-<h3 id="64-事件6-个">6.4 事件（6 个）<a class="headerlink" href="#64-事件6-个" title="永久链接">#</a></h3>
+<h3 id="64-事件8-个">6.4 事件（8 个）<a class="headerlink" href="#64-事件8-个" title="永久链接">#</a></h3>
 <h4 id="641-get-apiv1eventsaccidents-事故列表分页">6.4.1 GET /api/v1/events/accidents — 事故列表（分页）<a class="headerlink" href="#641-get-apiv1eventsaccidents-事故列表分页" title="永久链接">#</a></h4>
 <div class="table-wrap"><table>
 <thead>
@@ -4904,7 +4918,7 @@ currentPoint = [104.06, 30.67]   ❌ 经度在前（成都/重庆一带会正好
 <td>enum</td>
 <td>否</td>
 <td>—</td>
-<td><code>REPORTED</code> / <code>MEDIA_REQUESTED</code> / <code>MEDIA_ACCEPTED</code> / <code>MEDIA_RECEIVED</code></td>
+<td><code>REPORTED</code> / <code>MEDIA_REQUESTED</code> / <code>MEDIA_ACCEPTED</code> / <code>MEDIA_ARCHIVED</code> / <code>MEDIA_FAILED</code>（见 5.3）</td>
 </tr>
 <tr>
 <td><code>hours</code></td>
@@ -5218,6 +5232,83 @@ currentPoint = [104.06, 30.67]   ❌ 经度在前（成都/重庆一带会正好
 </tbody>
 </table></div>
 <p>响应 <code>data</code>：<code>[{ "errorCode", "codeName", "category", "categoryLabel", "count" }]</code></p>
+<h4 id="647-get-apiv1eventsaccidentsexport-事故清单导出csv">6.4.7 GET /api/v1/events/accidents/export — 事故清单导出（CSV）<a class="headerlink" href="#647-get-apiv1eventsaccidentsexport-事故清单导出csv" title="永久链接">#</a></h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>参数</th>
+<th>类型</th>
+<th>必需</th>
+<th>默认</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>vin</code></td>
+<td>String</td>
+<td>否</td>
+<td>—</td>
+<td>按车辆筛选</td>
+</tr>
+<tr>
+<td><code>mediaStatus</code></td>
+<td>enum</td>
+<td>否</td>
+<td>—</td>
+<td>同 6.4.1</td>
+</tr>
+<tr>
+<td><code>hours</code></td>
+<td>int</td>
+<td>否</td>
+<td><code>168</code></td>
+<td>时间窗（1 ~ 2160）</td>
+</tr>
+</tbody>
+</table></div>
+<p>响应：<strong><code>text/csv;charset=UTF-8</code> 文件流</strong>（<code>Content-Disposition: attachment</code>，文件名含导出时间戳），
+<strong>不走统一响应体</strong>。UTF-8 带 BOM，Excel 直接打开不乱码。</p>
+<ul>
+<li>列：事件ID / VIN / 企业ID / 发生时间 / 事故描述 / 纬度 / 经度 / 取证状态（中文）/ 已收媒体数 / 应收媒体数</li>
+<li>行数上限 <strong>10000</strong>（服务端硬限制，超出请缩小时间窗）；只读无副作用，可重复点击。</li>
+</ul>
+<h4 id="648-get-apiv1eventsfaultsexport-故障清单导出csv">6.4.8 GET /api/v1/events/faults/export — 故障清单导出（CSV）<a class="headerlink" href="#648-get-apiv1eventsfaultsexport-故障清单导出csv" title="永久链接">#</a></h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>参数</th>
+<th>类型</th>
+<th>必需</th>
+<th>默认</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>vin</code></td>
+<td>String</td>
+<td>否</td>
+<td>—</td>
+<td>按车辆筛选</td>
+</tr>
+<tr>
+<td><code>minSeverity</code></td>
+<td>int</td>
+<td>否</td>
+<td>—</td>
+<td>严重等级下限（含）</td>
+</tr>
+<tr>
+<td><code>hours</code></td>
+<td>int</td>
+<td>否</td>
+<td><code>168</code></td>
+<td>时间窗（1 ~ 2160）</td>
+</tr>
+</tbody>
+</table></div>
+<p>响应：同 6.4.7。列：记录ID / VIN / 上报时间 / 故障项数 / 最高严重等级 / 纬度 / 经度。</p>
 <h3 id="65-运营调度8-个">6.5 运营调度（8 个）<a class="headerlink" href="#65-运营调度8-个" title="永久链接">#</a></h3>
 <h4 id="651-get-apiv1operationstasks-任务列表分页">6.5.1 GET /api/v1/operations/tasks — 任务列表（分页）<a class="headerlink" href="#651-get-apiv1operationstasks-任务列表分页" title="永久链接">#</a></h4>
 <div class="table-wrap"><table>

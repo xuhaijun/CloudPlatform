@@ -51,6 +51,9 @@ public class EventService {
             AccidentEvent.MediaStatus.MEDIA_REQUESTED,
             AccidentEvent.MediaStatus.MEDIA_ACCEPTED);
 
+    /** 导出单次最大行数：10 秒内可稳定序列化的规模上限，超出请缩小时间窗。 */
+    public static final int EXPORT_MAX_ROWS = 10000;
+
     private final AccidentEventRepository accidentRepository;
     private final FaultRecordRepository faultRecordRepository;
     private final FaultItemRepository faultItemRepository;
@@ -286,6 +289,30 @@ public class EventService {
     @Transactional(readOnly = true)
     public Optional<FaultRecord> findFault(Long id) {
         return faultRecordRepository.findWithItems(id);
+    }
+
+    /**
+     * 事故清单导出（CSV 用）：与 {@link #pageAccidents} 同一套筛选条件，
+     * 但不分页 —— 以「单次最多 {@value #EXPORT_MAX_ROWS} 行」为硬上限。
+     *
+     * <p>上限是必须的：不设上限的导出既是慢查询放大器（全表扫描 +
+     * 数万行序列化占满虚拟线程），也是内存放大器。
+     */
+    @Transactional(readOnly = true)
+    public List<AccidentEvent> listAccidentsForExport(String vin, AccidentEvent.MediaStatus mediaStatus,
+                                                      Instant from, Instant to) {
+        Pageable limit = PageRequest.of(0, EXPORT_MAX_ROWS);
+        return accidentRepository.search(
+                StringUtils.hasText(vin) ? vin : null, mediaStatus, from, to, limit).getContent();
+    }
+
+    /** 故障清单导出（CSV 用），约束同 {@link #listAccidentsForExport}。 */
+    @Transactional(readOnly = true)
+    public List<FaultRecord> listFaultsForExport(String vin, Integer minSeverity,
+                                                 Instant from, Instant to) {
+        Pageable limit = PageRequest.of(0, EXPORT_MAX_ROWS);
+        return faultRecordRepository.search(
+                StringUtils.hasText(vin) ? vin : null, minSeverity, from, to, limit).getContent();
     }
 
     /** 近 N 天故障码 Top 榜。 */

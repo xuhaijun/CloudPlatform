@@ -132,7 +132,7 @@ export type AccidentMediaStatus =
   | 'REPORTED'
   | 'MEDIA_REQUESTED'
   | 'MEDIA_ACCEPTED'
-  | 'MEDIA_RECEIVED'
+  | 'MEDIA_ARCHIVED'
   | 'MEDIA_FAILED'
   | string
 

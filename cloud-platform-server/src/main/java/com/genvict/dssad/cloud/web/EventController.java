@@ -3,6 +3,7 @@ package com.genvict.dssad.cloud.web;
 import com.genvict.dssad.cloud.common.api.ApiResponse;
 import com.genvict.dssad.cloud.common.exception.BizException;
 import com.genvict.dssad.cloud.common.model.PageResult;
+import com.genvict.dssad.cloud.common.util.CsvBuilder;
 import com.genvict.dssad.cloud.common.util.TimeUtils;
 import com.genvict.dssad.cloud.config.AppProperties;
 import com.genvict.dssad.cloud.domain.entity.AccidentEvent;
@@ -11,13 +12,20 @@ import com.genvict.dssad.cloud.domain.entity.FaultRecord;
 import com.genvict.dssad.cloud.domain.entity.MediaAsset;
 import com.genvict.dssad.cloud.service.EventService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,5 +122,88 @@ public class EventController {
         return ApiResponse.ok(eventService.topFaultCodes(
                 java.time.Instant.now().minus(Duration.ofDays(Math.min(Math.max(days, 1), 90))),
                 Math.min(Math.max(limit, 1), 100)));
+    }
+
+    // ==================== CSV 导出（监管上报 / 离线分析刚需） ====================
+
+    /**
+     * 事故清单导出（CSV，UTF-8 带 BOM，Excel 直接打开不乱码）。
+     *
+     * <p>筛选条件与列表接口一致（vin / mediaStatus / hours），行数上限
+     * {@value EventService#EXPORT_MAX_ROWS}；导出动作只读、无副作用，可重复点击。
+     */
+    @GetMapping("/accidents/export")
+    public ResponseEntity<byte[]> exportAccidents(
+            @RequestParam(required = false) String vin,
+            @RequestParam(required = false) AccidentEvent.MediaStatus mediaStatus,
+            @RequestParam(defaultValue = "168") int hours) {
+        long now = System.currentTimeMillis();
+        long from = now - Duration.ofHours(Math.min(Math.max(hours, 1), 2160)).toMillis();
+        List<AccidentEvent> rows = eventService.listAccidentsForExport(vin, mediaStatus,
+                TimeUtils.toInstant(from), TimeUtils.toInstant(now));
+
+        CsvBuilder csv = CsvBuilder.of(
+                "事件ID", "VIN", "企业ID", "发生时间", "事故描述", "纬度", "经度",
+                "取证状态", "已收媒体数", "应收媒体数");
+        for (AccidentEvent e : rows) {
+            csv.row(
+                    e.getEventId(), e.getVin(), e.getEnterpriseId(),
+                    TimeUtils.format(TimeUtils.toEpochMillis(e.getOccurredAt())), e.getAccidentDesc(),
+                    e.getLatitude(), e.getLongitude(),
+                    mediaStatusLabel(e.getMediaStatus()),
+                    e.getMediaCount(), e.getMediaExpectedCount());
+        }
+        return csvResponse(csv, "accidents");
+    }
+
+    /** 故障清单导出（CSV），约束同事故导出。 */
+    @GetMapping("/faults/export")
+    public ResponseEntity<byte[]> exportFaults(
+            @RequestParam(required = false) String vin,
+            @RequestParam(required = false) Integer minSeverity,
+            @RequestParam(defaultValue = "168") int hours) {
+        long now = System.currentTimeMillis();
+        long from = now - Duration.ofHours(Math.min(Math.max(hours, 1), 2160)).toMillis();
+        List<FaultRecord> rows = eventService.listFaultsForExport(vin, minSeverity,
+                TimeUtils.toInstant(from), TimeUtils.toInstant(now));
+
+        CsvBuilder csv = CsvBuilder.of(
+                "记录ID", "VIN", "上报时间", "故障项数", "最高严重等级", "纬度", "经度");
+        for (FaultRecord r : rows) {
+            csv.row(
+                    r.getId(), r.getVin(),
+                    TimeUtils.format(TimeUtils.toEpochMillis(r.getReportedAt())),
+                    r.getErrorNum(), r.getMaxSeverity(), r.getLatitude(), r.getLongitude());
+        }
+        return csvResponse(csv, "faults");
+    }
+
+    /** 取证状态中文标签（导出面向运营/监管人员，用业务语言而非枚举名）。 */
+    private static String mediaStatusLabel(AccidentEvent.MediaStatus status) {
+        if (status == null) {
+            return "";
+        }
+        return switch (status) {
+            case REPORTED -> "已上报待取证";
+            case MEDIA_REQUESTED -> "已请求媒体";
+            case MEDIA_ACCEPTED -> "车端已受理";
+            case MEDIA_ARCHIVED -> "已归档";
+            case MEDIA_FAILED -> "取证失败";
+        };
+    }
+
+    /**
+     * 组装 CSV 下载响应。
+     *
+     * <p>文件名保持 ASCII（避免各浏览器对 Content-Disposition 编码处理的差异）；
+     * 时间戳精确到秒，同秒内重复导出会覆盖同名文件 —— 对导出场景这是合理语义。
+     */
+    private static ResponseEntity<byte[]> csvResponse(CsvBuilder csv, String prefix) {
+        String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+        String filename = URLEncoder.encode(prefix + "-" + timestamp + ".csv", StandardCharsets.UTF_8);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType("text/csv;charset=UTF-8"))
+                .body(csv.toCsvBytes());
     }
 }

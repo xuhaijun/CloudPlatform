@@ -53,6 +53,7 @@
 | 版本 | 日期 | 变更摘要 |
 |---|---|---|
 | V1.0.0 | 2026-09-22 | 首版。冻结 MQTT 20 类报文、企业云端 5 个 HTTP 接口、平台管理 47 个 REST 接口 |
+| V1.1.0 | 2026-09-24 | 新增事件导出 2 个接口（6.4.7 / 6.4.8，CSV）；取证终态枚举统一为 `MEDIA_ARCHIVED`（修正早期 `MEDIA_RECEIVED` 笔误） |
 
 ---
 
@@ -115,7 +116,7 @@
 | MQTT 报文类型 | 18（上行 10 / 下行 8） | MQTT 用户名密码 + Topic 身份 | 3.3 |
 | 企业云端 HTTP（对外） | 4 | HMAC-SHA256 签名（第 4.1 节） | 4.2 – 4.5 |
 | 车端媒体上传 | 1 | `ackMsgId` 业务态鉴权（第 5 章） | 5 |
-| 平台管理 API（认证 / 总览 / 车辆 / 事件 / 运营 / 阻断 / 字典 / 监控 / 模拟器） | 47 | `X-Token` 请求头 | 6 |
+| 平台管理 API（认证 / 总览 / 车辆 / 事件 / 运营 / 阻断 / 字典 / 监控 / 模拟器） | 49 | `X-Token` 请求头 | 6 |
 | HTTP 状态码语义 | — | **恒返回 200，业务码在响应体 `code`** | 2.2 |
 | 业务错误码 | 12 | — | 2.3 |
 
@@ -1491,9 +1492,12 @@ dssad:
 | `REPORTED` | 已上报，尚未发起媒体请求 | 收到 `accident/up` 并入库 | 平台**立即**下发 `accident-media/down` |
 | `MEDIA_REQUESTED` | 已下发媒体请求 | `accident-media/down` 发布成功 | 等待车端受理 |
 | `MEDIA_ACCEPTED` | 车端已受理 | 收到 `accident-media-resp/up` 且 `res=1` | 等待 HTTP 上传 |
-| `MEDIA_RECEIVED` | 视频已归档 | 收到上传并成功落盘 | **终态**（闭环完成） |
+| `MEDIA_ARCHIVED` | 视频已归档 | 收到上传并成功落盘 | **终态**（闭环完成） |
+| `MEDIA_FAILED` | 取证失败 | 媒体请求失败或超时 | 人工介入（车端本地至少存 10 天可补传） |
 
-**超时催办口径**：距事故上报时间超过 `timeoutMinutes`（默认 10 分钟，可调）仍未到达 `MEDIA_RECEIVED`，
+> 实体枚举名为 `MEDIA_ARCHIVED`（早期文档曾写作 `MEDIA_RECEIVED`，以实体为准）。
+
+**超时催办口径**：距事故上报时间超过 `timeoutMinutes`（默认 10 分钟，可调）仍未到达 `MEDIA_ARCHIVED`，
 即出现在 `accidents/pending` 清单中，供运营人员主动联系车端补传。
 
 **四方向归档明细**：事故详情（`GET /api/v1/events/accidents/{eventId}`）会返回每个方向的归档情况，
@@ -1765,14 +1769,14 @@ dssad:
 > 每次收到 `inh/up`（连接/重连时上报）都追加一条，因此该列表可直接用于
 > 「车辆软件版本是否按要求升级」的审计。
 
-### 6.4 事件（6 个）
+### 6.4 事件（8 个）
 
 #### 6.4.1 GET /api/v1/events/accidents — 事故列表（分页）
 
 | 参数 | 类型 | 必需 | 默认 | 说明 |
 |---|---|---|---|---|
 | `vin` | String | 否 | — | 按车辆筛选 |
-| `mediaStatus` | enum | 否 | — | `REPORTED` / `MEDIA_REQUESTED` / `MEDIA_ACCEPTED` / `MEDIA_RECEIVED` |
+| `mediaStatus` | enum | 否 | — | `REPORTED` / `MEDIA_REQUESTED` / `MEDIA_ACCEPTED` / `MEDIA_ARCHIVED` / `MEDIA_FAILED`（见 5.3） |
 | `hours` | int | 否 | `168` | 时间窗（1 ~ 2160） |
 | `page` / `size` | int | 否 | 1 / 20 | 分页 |
 
@@ -1861,6 +1865,30 @@ dssad:
 | `limit` | int | `10` | 1 ~ 100 | 返回条数 |
 
 响应 `data`：`[{ "errorCode", "codeName", "category", "categoryLabel", "count" }]`
+
+#### 6.4.7 GET /api/v1/events/accidents/export — 事故清单导出（CSV）
+
+| 参数 | 类型 | 必需 | 默认 | 说明 |
+|---|---|---|---|---|
+| `vin` | String | 否 | — | 按车辆筛选 |
+| `mediaStatus` | enum | 否 | — | 同 6.4.1 |
+| `hours` | int | 否 | `168` | 时间窗（1 ~ 2160） |
+
+响应：**`text/csv;charset=UTF-8` 文件流**（`Content-Disposition: attachment`，文件名含导出时间戳），
+**不走统一响应体**。UTF-8 带 BOM，Excel 直接打开不乱码。
+
+- 列：事件ID / VIN / 企业ID / 发生时间 / 事故描述 / 纬度 / 经度 / 取证状态（中文）/ 已收媒体数 / 应收媒体数
+- 行数上限 **10000**（服务端硬限制，超出请缩小时间窗）；只读无副作用，可重复点击。
+
+#### 6.4.8 GET /api/v1/events/faults/export — 故障清单导出（CSV）
+
+| 参数 | 类型 | 必需 | 默认 | 说明 |
+|---|---|---|---|---|
+| `vin` | String | 否 | — | 按车辆筛选 |
+| `minSeverity` | int | 否 | — | 严重等级下限（含） |
+| `hours` | int | 否 | `168` | 时间窗（1 ~ 2160） |
+
+响应：同 6.4.7。列：记录ID / VIN / 上报时间 / 故障项数 / 最高严重等级 / 纬度 / 经度。
 
 ### 6.5 运营调度（8 个）
 
